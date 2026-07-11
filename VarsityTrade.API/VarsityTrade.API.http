@@ -1,0 +1,6 @@
+@VarsityTrade.API_HostAddress = http://localhost:5023
+
+GET {{VarsityTrade.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

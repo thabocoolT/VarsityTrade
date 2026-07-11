@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="VarsityTrade.API/VarsityTrade.API.csproj" />
+  <Project Path="VarsityTrade.Application/VarsityTrade.Application.csproj" />
+  <Project Path="VarsityTrade.Core/VarsityTrade.Core.csproj" />
+  <Project Path="VarsityTrade.Infrastructure/VarsityTrade.Infrastructure.csproj" />
+</Solution>
