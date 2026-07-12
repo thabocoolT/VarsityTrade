@@ -7,11 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="16.2.0" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\VarsityTrade.Core\VarsityTrade.Core.csproj" />
   </ItemGroup>
 
@@ -19,6 +14,10 @@
     <Folder Include="Interfaces\" />
     <Folder Include="Mappings\" />
     <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.2.0" />
   </ItemGroup>
 
 </Project>
