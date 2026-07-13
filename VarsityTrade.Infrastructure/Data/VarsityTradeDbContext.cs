@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Text;
 using VarsityTrade.Core.Entities;
 using Notification = VarsityTrade.Core.Entities.Notification;
+using SystemSettings = VarsityTrade.Core.Entities.SystemSettings; // Resolves conflict with built-in SystemSettings type
 
 
 namespace VarsityTrade.Infrastructure.Data
@@ -13,6 +15,8 @@ namespace VarsityTrade.Infrastructure.Data
     public class VarsityTradeDbContext : IdentityDbContext<User, Microsoft.AspNetCore.Identity.IdentityRole<int>, int>
 
     {
+        public DbSet<SystemSettings> SystemSettings { get; set; } = null!;
+
         public VarsityTradeDbContext(DbContextOptions<VarsityTradeDbContext> options) : base(options) { }
        
         public DbSet<University> Universities { get; set; }
