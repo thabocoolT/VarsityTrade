@@ -10,7 +10,7 @@ namespace VarsityTrade.Core.Entities
     {
         public int UniversityId { get; set; }
         public int? LocationId { get; set; }
-        public string FistName { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string? ProfilePhoto { get; set;  }
         public string? Bio {  get; set; }

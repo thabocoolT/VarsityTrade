@@ -1,29 +1,132 @@
-using Microsoft.EntityFrameworkCore; // Provides UseSqlServer and EF Core services
-using VarsityTrade.Infrastructure.Data; // Provides VarsityTradeDbContext and VarsityTradeSeeder
+using Microsoft.AspNetCore.Authentication.JwtBearer; // Provides JWT bearer authentication
+using Microsoft.AspNetCore.Identity; // Provides Identity services
+using Microsoft.EntityFrameworkCore; // Provides UseSqlServer
+using Microsoft.IdentityModel.Tokens; // Provides TokenValidationParameters
+using System.Text; // Provides Encoding for secret key
+using VarsityTrade.Application.Services; // Provides AuthService
+using VarsityTrade.Core.Entities; // Provides User entity
+using VarsityTrade.Core.Interfaces; // Provides IAuthService
+using VarsityTrade.Infrastructure.Data; // Provides VarsityTradeDbContext and
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ─────────────────────────────────────────────────────────────
-// SERVICES
-// Register all services before building the app
+// DATABASE
 // ─────────────────────────────────────────────────────────────
 
-// Register the DbContext with SQL Server
-// The connection string is read from appsettings.json
-// This makes the DbContext available throughout the application via dependency injection
+// Register DbContext with SQL Server — reads connection string from appsettings.json
 builder.Services.AddDbContext<VarsityTradeDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register the seeder as a scoped service
-// Scoped means a new instance is created per request — correct for database operations
+// ─────────────────────────────────────────────────────────────
+// IDENTITY
+// ─────────────────────────────────────────────────────────────
+
+// Register ASP.NET Identity with our custom User entity
+// AddEntityFrameworkStores connects Identity to our DbContext
+// so it uses our VarsityTradeDB database for user storage
+builder.Services.AddIdentity<User, IdentityRole<int>>(options =>
+{
+    // Password policy — enforce strong passwords
+    options.Password.RequireDigit = true;  // Must contain a number
+    options.Password.RequireLowercase = true;  // Must contain lowercase letter
+    options.Password.RequireUppercase = true;  // Must contain uppercase letter
+    options.Password.RequireNonAlphanumeric = false; // Special chars optional
+    options.Password.RequiredLength = 8;     // Minimum 8 characters
+
+    // Lock out after 5 failed attempts for 15 minutes — prevents brute force attacks
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+
+    // Email must be unique across all users
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<VarsityTradeDbContext>() // Use our DbContext for storage
+.AddDefaultTokenProviders(); // Adds token providers for password reset etc
+
+// ─────────────────────────────────────────────────────────────
+// JWT AUTHENTICATION
+// ─────────────────────────────────────────────────────────────
+
+// Read JWT settings from appsettings.json
+var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]
+    ?? throw new InvalidOperationException("JWT SecretKey is missing from configuration");
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
+var jwtAudience = builder.Configuration["JwtSettings:Audience"];
+
+// Register JWT Bearer authentication
+// This tells the API to validate incoming JWT tokens on protected endpoints
+builder.Services.AddAuthentication(options =>
+{
+    // Set JWT Bearer as the default authentication scheme
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    // Define how incoming tokens are validated
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true, // Check the token was issued by our API
+        ValidateAudience = true, // Check the token is intended for our client
+        ValidateLifetime = true, // Reject expired tokens
+        ValidateIssuerSigningKey = true, // Verify the token signature
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        // The signing key must match the key used to generate the token
+        IssuerSigningKey = new SymmetricSecurityKey(
+                                       Encoding.UTF8.GetBytes(jwtSecret))
+    };
+});
+
+// ─────────────────────────────────────────────────────────────
+// APPLICATION SERVICES
+// ─────────────────────────────────────────────────────────────
+
+// Register AuthService — scoped means one instance per HTTP request
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Register the database seeder
 builder.Services.AddScoped<VarsityTradeSeeder>();
 
-// Register controllers — scans for all classes inheriting from ControllerBase
-builder.Services.AddControllers();
+// ─────────────────────────────────────────────────────────────
+// CONTROLLERS & SWAGGER
+// ─────────────────────────────────────────────────────────────
 
-// Register Swagger for API documentation and testing
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Configure Swagger to support JWT authentication
+// This adds an Authorize button to the Swagger UI so you can test protected endpoints
+builder.Services.AddSwaggerGen(options =>
+{
+    // Add a security definition — tells Swagger about our JWT scheme
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter: Bearer {your JWT token}"
+    });
+
+    // Require the Bearer token on all endpoints by default
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id   = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // ─────────────────────────────────────────────────────────────
 // BUILD
@@ -32,42 +135,32 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // ─────────────────────────────────────────────────────────────
-// SEED
-// Run the seeder on startup before any requests are handled
-// CreateScope creates a temporary DI scope to resolve scoped services
+// SEED DATABASE ON STARTUP
 // ─────────────────────────────────────────────────────────────
+
 using (var scope = app.Services.CreateScope())
 {
-    // Resolve the seeder from the DI container
     var seeder = scope.ServiceProvider.GetRequiredService<VarsityTradeSeeder>();
-
-    // Run the seed method — inserts data only if tables are empty
     await seeder.SeedAsync();
 }
 
 // ─────────────────────────────────────────────────────────────
 // MIDDLEWARE PIPELINE
-// Order matters — each middleware runs in the order it is added
 // ─────────────────────────────────────────────────────────────
 
-// Enable Swagger UI only in development — not in production
 if (app.Environment.IsDevelopment())
 {
-    // Swagger generates the JSON spec at /swagger/v1/swagger.json
     app.UseSwagger();
-
-    // SwaggerUI serves the interactive documentation page at /swagger
     app.UseSwaggerUI();
 }
 
-// Redirect all HTTP requests to HTTPS for security
 app.UseHttpsRedirection();
 
-// Enable the authorisation middleware — required even before we add auth in Step 4.4
+// UseAuthentication must come before UseAuthorization
+// Authentication identifies who the user is
+// Authorization checks what they are allowed to do
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Map all controller routes automatically based on route attributes
 app.MapControllers();
-
-// Start the application and begin listening for requests
 app.Run();

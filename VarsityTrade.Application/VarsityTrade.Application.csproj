@@ -8,16 +8,18 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VarsityTrade.Core\VarsityTrade.Core.csproj" />
+    <ProjectReference Include="..\VarsityTrade.Infrastructure\VarsityTrade.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Interfaces\" />
     <Folder Include="Mappings\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
   </ItemGroup>
 
 </Project>
