@@ -12,7 +12,7 @@ namespace VarsityTrade.Core.Entities
         public string? SellerBio { get; set; }
         public bool CampusPickup { get; set; } = true;
         public bool DeliveryAvailable { get; set; } = false;
-        public bool OpenToTrade { get; set; } = false;
+        public bool OpenToTrades { get; set; } = false;
         public decimal AverageRating { get; set; } = 0.00m;
         public int TotalSales { get; set; } = 0;
         public bool IsActive { get; set; } = true;

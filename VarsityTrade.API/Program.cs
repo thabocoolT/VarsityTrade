@@ -85,6 +85,11 @@ builder.Services.AddAuthentication(options =>
 
 // Register AuthService — scoped means one instance per HTTP request
 builder.Services.AddScoped<IAuthService, AuthService>();
+// Register ListingService — handles all listing CRUD operations
+builder.Services.AddScoped<IListingService, ListingService>();
+
+// Register SellerProfileService — handles seller profile activation and updates
+builder.Services.AddScoped<ISellerProfileService, SellerProfileService>();
 
 // Register the database seeder
 builder.Services.AddScoped<VarsityTradeSeeder>();
