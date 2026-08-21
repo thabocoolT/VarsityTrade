@@ -326,6 +326,7 @@ namespace VarsityTrade.Infrastructure.Data
                 .HasForeignKey(l => l.ListingStatusId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+           
         }
 
 

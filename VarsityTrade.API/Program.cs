@@ -94,6 +94,9 @@ builder.Services.AddScoped<ISellerProfileService, SellerProfileService>();
 // Register the database seeder
 builder.Services.AddScoped<VarsityTradeSeeder>();
 
+// Register MessagingService — handles all conversation and message operations
+builder.Services.AddScoped<IMessagingService, MessagingService>();
+
 // ─────────────────────────────────────────────────────────────
 // CONTROLLERS & SWAGGER
 // ─────────────────────────────────────────────────────────────

@@ -52,6 +52,8 @@ namespace VarsityTrade.Application.Services
             if (existingUser != null)
                 return null;//Email already taken-return null to signal failure
 
+          
+
             //Create the location record first so we can link it to the user
             //Location is stored separately to support the 1-to-many relationship
             var location = new Location
