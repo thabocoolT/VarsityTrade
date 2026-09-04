@@ -61,7 +61,7 @@ namespace VarsityTrade.Application.Services
                 Suburb = request.Suburb,
                 City = request.City,
                 Province = request.Province,
-                ResidentName = request.ResidenceName,
+                ResidenceName = request.ResidenceName,
 
             };
 

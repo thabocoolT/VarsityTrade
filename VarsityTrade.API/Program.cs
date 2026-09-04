@@ -97,6 +97,12 @@ builder.Services.AddScoped<VarsityTradeSeeder>();
 // Register MessagingService — handles all conversation and message operations
 builder.Services.AddScoped<IMessagingService, MessagingService>();
 
+// Register OfferService — handles offer creation, acceptance, rejection, and cancellation
+builder.Services.AddScoped<IOfferService, OfferService>();
+
+// Register TransactionService — handles transaction history and review eligibility checks
+builder.Services.AddScoped<ITransactionService, TransactionService>();
+
 // ─────────────────────────────────────────────────────────────
 // CONTROLLERS & SWAGGER
 // ─────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ namespace VarsityTrade.Core.Entities
         public string Suburb { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string Province { get; set; } = string.Empty;
-        public string? ResidentName { get; set; }
+        public string? ResidenceName { get; set; }
 
         public ICollection<User> Users { get; set; }=new List<User>();
 
