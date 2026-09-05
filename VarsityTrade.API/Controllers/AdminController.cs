@@ -33,6 +33,8 @@ namespace VarsityTrade.API.Controllers
         {
             var roleClaim = User.FindFirst("role");
             return roleClaim?.Value == "Admin";
+
+
         }
 
         // ── USER MANAGEMENT ──────────────────────────────────────────

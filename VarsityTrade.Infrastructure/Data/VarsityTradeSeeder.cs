@@ -6,6 +6,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using VarsityTrade.Core.Entities; // Provides access to all entity classes
 using SystemSettings = VarsityTrade.Core.Entities.SystemSettings; // Resolves conflict with built-in SystemSettings type
+using Microsoft.AspNetCore.Identity;
 
 namespace VarsityTrade.Infrastructure.Data
 {
@@ -17,26 +18,27 @@ namespace VarsityTrade.Infrastructure.Data
     {
         //The DbContxt is injected so we can interact with the database
         private readonly VarsityTradeDbContext _context;
+        private readonly UserManager<User> _userManager;
 
         //Constructor receives the DbContext via dependency injection
-        public VarsityTradeSeeder(VarsityTradeDbContext context)
+        public VarsityTradeSeeder(
+         VarsityTradeDbContext context,
+         UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         //Main entry point-called on startup to seed the database
         //Each method checks if data already exists before inserting to avoid duplicates
         public async Task SeedAsync()
         {
-            //Seed each table in order - lookup tables first
-            //Order matters because some tables depend on others
             await SeedUniversitiesAsync();
             await SeedConditionsAsync();
             await SeedCategoriesAsync();
             await SeedListingStatusesAsync();
             await SeedSystemSettingsAsync();
-
-
+            await SeedAdminUserAsync();
         }
         //-------------------------------------------
         //Universities
@@ -277,7 +279,48 @@ namespace VarsityTrade.Infrastructure.Data
         }
 
 
+        private async Task SeedAdminUserAsync()
+        {
+            var adminEmail = "admin@varsitytrade.co.za";
+            var adminPassword = "AdminPassword123";
 
-        
+            // Check if admin already exists
+            var existingAdmin = await _userManager.FindByEmailAsync(adminEmail);
+
+            if (existingAdmin != null)
+                return;
+
+            // Get an existing university
+            var university = await _context.Universities.FirstAsync();
+
+            var admin = new User
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+
+                FirstName = "System",
+                LastName = "Admin",
+
+                UniversityId = university.UniversityId,
+
+                Role = "Admin",
+                IsActive = true,
+                IsBanned = false,
+                StudentVerified = true
+            };
+
+            var result = await _userManager.CreateAsync(admin, adminPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ",
+                    result.Errors.Select(e => e.Description));
+
+                throw new Exception($"Failed to create admin user: {errors}");
+            }
+        }
+
     }
+
 }
