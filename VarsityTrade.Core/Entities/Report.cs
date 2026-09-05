@@ -13,7 +13,7 @@ namespace VarsityTrade.Core.Entities
         public string ReportType { get; set; } = null!;
         public string Description { get; set; }=null!;
         public string? EvidenceImage { get; set; }
-        public string status { get; set; } = "Open";
+        public string Status { get; set; } = "Open";
         public string? AdminNotes { get; set; }
         public int? ResolvedById { get; set; }
 

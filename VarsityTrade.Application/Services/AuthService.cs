@@ -101,25 +101,34 @@ namespace VarsityTrade.Application.Services
         // ─────────────────────────────────────────────────────────────
         public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
         {
-            //Find the user by email-returns null if not found
+            // Find the user by email
             var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null) return null;
+            if (user == null)
+                return null;
 
-            //Check if the user is banned or deactivated
+            // Check if banned or inactive
             if (user.IsBanned || !user.IsActive)
-                return null;//Banned or inactive users cannot log in
+                return null;
 
-            //Verify the password against the stored hash
+            // Verify password
             var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!passwordValid)
                 return null;
 
-            //Update the LastLoginAt timestamp for audit purposes
-            user.LastLoginAt = DateTime.UtcNow;
-            await _userManager.UpdateAsync(user);
+            // Reload the user fresh from the database to get the latest Role value
+            // This ensures role changes made directly in the database are reflected in the token
+            var freshUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == user.Id);
 
-            //Generate tokens and return the auth response
-            return await GenerateAuthResponseAsync(user);
+            if (freshUser == null)
+                return null;
+
+            // Update LastLoginAt
+            freshUser.LastLoginAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            // Generate tokens using the freshly loaded user — contains the latest Role
+            return await GenerateAuthResponseAsync(freshUser);
 
         }
         // ─────────────────────────────────────────────────────────────

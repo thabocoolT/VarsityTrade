@@ -18,7 +18,9 @@ namespace VarsityTrade.Infrastructure.Data
         public DbSet<SystemSettings> SystemSettings { get; set; } = null!;
 
         public VarsityTradeDbContext(DbContextOptions<VarsityTradeDbContext> options) : base(options) { }
-       
+        // AuditLog tracks all admin actions for accountability and auditing
+        public DbSet<AuditLog> AuditLogs { get; set; }
+
         public DbSet<University> Universities { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<SellerProfile> SellerProfiles { get; set; }

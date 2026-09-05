@@ -109,6 +109,8 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 // Register NotificationService — handles in-app notifications across all platform events
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
+// Register AdminService — handles all admin operations across users, listings, reports, and banner
+builder.Services.AddScoped<IAdminService, AdminService>();
 // ─────────────────────────────────────────────────────────────
 // CONTROLLERS & SWAGGER
 // ─────────────────────────────────────────────────────────────
