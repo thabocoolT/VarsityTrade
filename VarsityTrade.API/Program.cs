@@ -103,6 +103,12 @@ builder.Services.AddScoped<IOfferService, OfferService>();
 // Register TransactionService — handles transaction history and review eligibility checks
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
+// Register ReviewService — handles review creation and retrieval gated by transactions
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
+// Register NotificationService — handles in-app notifications across all platform events
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 // ─────────────────────────────────────────────────────────────
 // CONTROLLERS & SWAGGER
 // ─────────────────────────────────────────────────────────────

@@ -34,7 +34,7 @@ namespace VarsityTrade.Infrastructure.Data
         public DbSet<OfferItem> OfferItems { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Review> Reviews { get; set; }
-        public DbSet<Notification> Notifictions { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         public DbSet<Report> Reports { get; set; }
         public DbSet<HeroBannerSlide> HeroBannerSlides { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
