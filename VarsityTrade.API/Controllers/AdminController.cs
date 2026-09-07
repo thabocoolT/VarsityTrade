@@ -29,12 +29,29 @@ namespace VarsityTrade.API.Controllers
 
         // Helper to check if the current user has the Admin role
         // Reads the role claim from the JWT token
+        // Helper to check if the current user has the Admin role
+        // Checks all possible claim locations to handle different JWT configurations
         private bool IsAdmin()
         {
+            // Print all claims to help diagnose — remove after fixing
+            var allClaims = User.Claims.Select(c => $"{c.Type}={c.Value}");
+
+            // Check custom role claim first
             var roleClaim = User.FindFirst("role");
-            return roleClaim?.Value == "Admin";
+            if (roleClaim?.Value == "Admin")
+                return true;
 
+            // Check standard ClaimTypes.Role as fallback
+            var standardRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role);
+            if (standardRole?.Value == "Admin")
+                return true;
 
+            // Check the http claim type as another fallback
+            var httpRole = User.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+            if (httpRole?.Value == "Admin")
+                return true;
+
+            return false;
         }
 
         // ── USER MANAGEMENT ──────────────────────────────────────────

@@ -64,16 +64,18 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    // Define how incoming tokens are validated
+    // Prevent the JWT middleware from remapping claim names
+    // Without this the role claim gets renamed and IsAdmin() cannot find it
+    options.MapInboundClaims = false;
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true, // Check the token was issued by our API
-        ValidateAudience = true, // Check the token is intended for our client
-        ValidateLifetime = true, // Reject expired tokens
-        ValidateIssuerSigningKey = true, // Verify the token signature
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
-        // The signing key must match the key used to generate the token
         IssuerSigningKey = new SymmetricSecurityKey(
                                        Encoding.UTF8.GetBytes(jwtSecret))
     };

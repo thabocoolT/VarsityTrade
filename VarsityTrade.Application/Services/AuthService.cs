@@ -101,35 +101,35 @@ namespace VarsityTrade.Application.Services
         // ─────────────────────────────────────────────────────────────
         public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
         {
-            // Find the user by email
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
+            // Find the user via Identity — used only for password verification
+            var identityUser = await _userManager.FindByEmailAsync(request.Email);
+            if (identityUser == null)
                 return null;
 
             // Check if banned or inactive
-            if (user.IsBanned || !user.IsActive)
+            if (identityUser.IsBanned || !identityUser.IsActive)
                 return null;
 
-            // Verify password
-            var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
+            // Verify password against the stored hash
+            var passwordValid = await _userManager.CheckPasswordAsync(identityUser, request.Password);
             if (!passwordValid)
                 return null;
 
-            // Reload the user fresh from the database to get the latest Role value
-            // This ensures role changes made directly in the database are reflected in the token
+            // Reload the user DIRECTLY from the DbContext to get the latest Role value
+            // UserManager caches the user — direct context query always returns fresh data
             var freshUser = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == user.Id);
+                .FirstOrDefaultAsync(u => u.Id == identityUser.Id);
 
             if (freshUser == null)
                 return null;
 
-            // Update LastLoginAt
+            // Update LastLoginAt on the fresh user
             freshUser.LastLoginAt = DateTime.UtcNow;
+            _context.Users.Update(freshUser);
             await _context.SaveChangesAsync();
 
-            // Generate tokens using the freshly loaded user — contains the latest Role
+            // Generate tokens using the fresh user — this picks up the latest Role from the database
             return await GenerateAuthResponseAsync(freshUser);
-
         }
         // ─────────────────────────────────────────────────────────────
         // REFRESH TOKEN
