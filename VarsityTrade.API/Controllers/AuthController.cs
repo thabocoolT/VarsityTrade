@@ -26,6 +26,7 @@ namespace VarsityTrade.API.Controllers
         // POST /api/auth/register
         // Registers a new student account
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Registers a new student account and returns a JWT token pair.</summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
         {
@@ -44,6 +45,7 @@ namespace VarsityTrade.API.Controllers
         // POST /api/auth/login
         // Logs in an existing student and returns JWT tokens
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Logs in an existing student and returns a JWT token pair.</summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
@@ -62,6 +64,7 @@ namespace VarsityTrade.API.Controllers
         // POST /api/auth/refresh
         // Generates a new access token using a valid refresh token
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Generates a new access token using a valid refresh token.</summary>
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] string refreshToken)
         {

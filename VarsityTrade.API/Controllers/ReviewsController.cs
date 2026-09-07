@@ -31,6 +31,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/reviews/seller/{sellerProfileId}
         // Returns all reviews for a specific seller — public profile page
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all reviews received by a specific seller — for the public profile page.</summary>
         [HttpGet("seller/{sellerProfileId}")]
         public async Task<IActionResult> GetReviewsBySeller(int sellerProfileId)
         {
@@ -43,6 +44,7 @@ namespace VarsityTrade.API.Controllers
         // Returns all reviews written by the logged in buyer
         // Used on the My Reviews page in the buyer dashboard
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all reviews written by the logged in buyer.</summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMyReviews()
         {
@@ -58,6 +60,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/reviews/{id}
         // Returns a single review by ID
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns a single review by ID.</summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetReviewById(int id)
         {
@@ -73,6 +76,7 @@ namespace VarsityTrade.API.Controllers
         // POST /api/reviews
         // Creates a new review — buyer only, gated by completed transaction
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Creates a new review — gated by completed transaction. One review per transaction.</summary>
         [HttpPost]
         public async Task<IActionResult> CreateReview([FromBody] ReviewRequestDto request)
         {

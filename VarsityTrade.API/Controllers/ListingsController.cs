@@ -24,6 +24,7 @@ namespace VarsityTrade.API.Controllers
         //Returns all active listings for a specific university
         //Requires authentication-only logged in students can browse
         //-------------------------------------------------
+        /// <summary>Returns all active listings for a specific university — campus locked.</summary>
         [HttpGet("University/{university}")]
         [Authorize]//Must be logged in to view listins
         public async Task<IActionResult> GetListingsByUniversity(int universityId)
@@ -35,6 +36,7 @@ namespace VarsityTrade.API.Controllers
         //--------------------------------------------------------
         //GET/api/listings/user/{userId}
         //Returns all active listings for a specific user
+        /// <summary>Returns a single listing by ID and increments the view count.</summary>
         [HttpGet("{id}")]
         [Authorize]
         public async Task<IActionResult>GetListingById(int id)
@@ -53,6 +55,7 @@ namespace VarsityTrade.API.Controllers
         //POST/api/listings
         //CREATE a new listing-seller only
         //--------------------------------------------------------
+        /// <summary>Creates a new listing for the logged in seller.</summary>
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreateListing([FromBody] ListingRequestDto request)
@@ -82,6 +85,7 @@ namespace VarsityTrade.API.Controllers
         //--------------------------------------------------------
         //PUT/api/listings/{id}
         //UPDATE an existing listing-seller only
+        /// <summary>Updates an existing listing — seller must own the listing.</summary>
 
         [HttpPut("{id}")]
         [Authorize]
@@ -105,6 +109,7 @@ namespace VarsityTrade.API.Controllers
         //DELETE/api/listings/{id}
         //Soft delete a listing-seller only
         //--------------------------------------------------------
+        /// <summary>Soft deletes a listing — seller must own the listing.</summary>
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteListing(int id)

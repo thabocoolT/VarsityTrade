@@ -9,6 +9,8 @@
     <EnableSdkContainerDebugging>True</EnableSdkContainerDebugging>
     <ContainerBaseImage>mcr.microsoft.com/dotnet/aspnet:10.0-nanoserver-ltsc2022</ContainerBaseImage>
     <UserSecretsId>04d8b1ba-38de-4e78-be67-611d3761da96</UserSecretsId>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

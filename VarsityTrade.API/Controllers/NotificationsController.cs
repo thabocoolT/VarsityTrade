@@ -31,6 +31,7 @@ namespace VarsityTrade.API.Controllers
         // Returns all notifications for the logged in user
         // Used on the Notifications page
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all notifications for the logged in user ordered newest first.</summary>
         [HttpGet]
         public async Task<IActionResult> GetNotifications()
         {
@@ -46,6 +47,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/notifications/unread-count
         // Returns the count of unread notifications — for the bell badge
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns the count of unread notifications — for the navbar bell badge.</summary>
         [HttpGet("unread-count")]
         public async Task<IActionResult> GetUnreadCount()
         {
@@ -61,6 +63,7 @@ namespace VarsityTrade.API.Controllers
         // PUT /api/notifications/{id}/read
         // Marks a single notification as read
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Marks a single notification as read.</summary>
         [HttpPut("{id}/read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
@@ -76,6 +79,7 @@ namespace VarsityTrade.API.Controllers
         // PUT /api/notifications/read-all
         // Marks all notifications as read — bulk action
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Marks all notifications as read — bulk action.</summary>
         [HttpPut("read-all")]
         public async Task<IActionResult> MarkAllAsRead()
         {

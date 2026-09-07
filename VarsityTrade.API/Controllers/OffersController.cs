@@ -31,6 +31,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/offers/my
         // Returns all offers made by the logged in buyer
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all offers made by the logged in buyer.</summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMyOffers()
         {
@@ -46,6 +47,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/offers/received
         // Returns all offers received by the logged in seller
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all offers received by the logged in seller.</summary>
         [HttpGet("received")]
         public async Task<IActionResult> GetReceivedOffers()
         {
@@ -61,6 +63,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/offers/{id}
         // Returns a single offer by ID — user must be buyer or seller
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns a single offer by ID — user must be buyer or seller.</summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOfferById(int id)
         {
@@ -80,6 +83,7 @@ namespace VarsityTrade.API.Controllers
         // POST /api/offers
         // Creates a new offer on a listing
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Creates a new cash, trade, or combined offer on a listing.</summary>
         [HttpPost]
         public async Task<IActionResult> CreateOffer([FromBody] OfferRequestDto request)
         {
@@ -99,6 +103,7 @@ namespace VarsityTrade.API.Controllers
         // PUT /api/offers/{id}/accept
         // Seller accepts an offer — creates a Transaction automatically
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Seller accepts an offer — creates a transaction and rejects all competing offers.</summary>
         [HttpPut("{id}/accept")]
         public async Task<IActionResult> AcceptOffer(int id)
         {
@@ -118,6 +123,7 @@ namespace VarsityTrade.API.Controllers
         // PUT /api/offers/{id}/reject
         // Seller rejects an offer
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Seller rejects a pending offer.</summary>
         [HttpPut("{id}/reject")]
         public async Task<IActionResult> RejectOffer(int id)
         {
@@ -137,6 +143,7 @@ namespace VarsityTrade.API.Controllers
         // PUT /api/offers/{id}/cancel
         // Buyer cancels their own pending offer
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Buyer cancels their own pending offer.</summary>
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> CancelOffer(int id)
         {

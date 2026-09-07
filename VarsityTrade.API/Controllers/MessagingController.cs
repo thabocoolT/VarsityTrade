@@ -36,6 +36,7 @@ namespace VarsityTrade.API.Controllers
         // Returns all conversations for the logged in user
         // Used on the inbox page
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all conversations for the logged in user — buyer and seller threads.</summary>
         [HttpGet("conversation")]
         public async Task<IActionResult> GetConversations()
         {
@@ -55,6 +56,7 @@ namespace VarsityTrade.API.Controllers
         // GET /api/messaging/conversations/{id}/messages
         // Returns all messages in a conversation — marks them as read
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns a single conversation by ID — user must be a participant.</summary>
         [HttpGet("conversations/{id}/messages")]
         public async Task<IActionResult> GetMessages(int id)
         {
@@ -71,6 +73,7 @@ namespace VarsityTrade.API.Controllers
         // Starts a new conversation — buyer clicks Message Seller
         // Returns existing conversation if one already exists
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all messages in a conversation and marks them as read.</summary>
         [HttpPost("conversations")]
         public async Task<IActionResult> StartConversation(
             [FromBody] StartConversationRequestDto request)
@@ -93,6 +96,7 @@ namespace VarsityTrade.API.Controllers
         // POST /api/messaging/conversations/{id}/messages
         // Sends a new message in an existing conversation
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Starts a new conversation or returns the existing one for this listing and buyer.</summary>
         [HttpPost("conversation/{id}")]
         public async Task<IActionResult> SendMessage(
             int id,
@@ -116,6 +120,7 @@ namespace VarsityTrade.API.Controllers
         //Marks all messages ina conversation as read
         //Called when a user opens a conversation thread
         //-------------------------------------------------------------------------------
+        /// <summary>Marks all messages in a conversation as read.</summary>
         [HttpPut("conversations/{id}/read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {

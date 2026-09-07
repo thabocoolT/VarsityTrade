@@ -20,6 +20,7 @@ namespace VarsityTrade.API.Controllers
         // ─────────────────────────────────────────────────────────────
         // GET /api/sellerprofiles/{id}
         // Returns a seller profile by ID — for the public profile page
+        /// <summary>Returns a seller profile by ID — for the public profile page.</summary>
         // ─────────────────────────────────────────────────────────────
         [HttpGet("{id}")]
         [Authorize] 
@@ -36,8 +37,9 @@ namespace VarsityTrade.API.Controllers
         // GET /api/sellerprofiles/me
         //Return the logged in seller's own profile-for the seller dashboard
         //-----------------------------------------------------------
+        /// <summary>Returns the logged in seller's own profile.</summary>
 
-        [HttpGet("me")]
+        [HttpGet("my")]
         [Authorize]
         public async Task<IActionResult> GetMySellerProfile()
         {
@@ -61,6 +63,7 @@ namespace VarsityTrade.API.Controllers
         //Activate a seller profile for the logged in user
         //A buyer becomes a seller by activating a seller profile
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Activates a seller profile for the logged in user — one time setup.</summary>
         [HttpPost("activate")]
         [Authorize]
         public async Task<IActionResult> ActivateSellerProfile([FromBody] SellerProfileRequestDto request)
@@ -85,6 +88,7 @@ namespace VarsityTrade.API.Controllers
         //PUT /api/sellerprofiles/me
         //Update the logged in seller's own profile
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Updates the logged in seller's profile settings.</summary>
         [HttpPut("my")]
         [Authorize]
         public async Task<IActionResult>UpdateMySellerProfile([FromBody] SellerProfileRequestDto request)

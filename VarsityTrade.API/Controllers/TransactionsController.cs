@@ -33,6 +33,7 @@ namespace VarsityTrade.API.Controllers
         // Returns all transactions where the user is the buyer
         // Used on the buyer's purchase history page
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all completed transactions where the user is the buyer.</summary>
         [HttpGet("purchases")]
         public async Task<IActionResult> GetMyPurchases()
         {
@@ -49,6 +50,7 @@ namespace VarsityTrade.API.Controllers
         // Returns all transactions where the user is the seller
         // Used on the seller's sales history page
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns all completed transactions where the user is the seller.</summary>
         [HttpGet("sales")]
         public async Task<IActionResult> GetMySales()
         {
@@ -65,6 +67,7 @@ namespace VarsityTrade.API.Controllers
         // Returns a single transaction — user must be buyer or seller
         // Also used to check review eligibility before showing the review form
         // ─────────────────────────────────────────────────────────────
+        /// <summary>Returns a single transaction by ID — used to check review eligibility.</summary>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTransactionById(int id)
         {

@@ -57,6 +57,7 @@ namespace VarsityTrade.API.Controllers
         // ── USER MANAGEMENT ──────────────────────────────────────────
 
         // GET /api/admin/users
+        /// <summary>Returns all registered users across all universities — Admin only.</summary>
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -68,6 +69,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // GET /api/admin/users/{id}
+        /// <summary>Returns a single user by ID — Admin only.</summary>
         [HttpGet("users/{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {
@@ -82,6 +84,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // PUT /api/admin/users/{id}
+        /// <summary>Updates a user's details — Admin only.</summary>
         [HttpPut("users/{id}")]
         public async Task<IActionResult> UpdateUser(int id, [FromBody] AdminUpdateUserDto request)
         {
@@ -98,6 +101,7 @@ namespace VarsityTrade.API.Controllers
         // ── LISTING MANAGEMENT ────────────────────────────────────────
 
         // GET /api/admin/listings
+        /// <summary>Returns all listings across all universities — Admin only.</summary>
         [HttpGet("listings")]
         public async Task<IActionResult> GetAllListings()
         {
@@ -109,6 +113,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // DELETE /api/admin/listings/{id}
+        /// <summary>Soft deletes a listing — Admin only.</summary>
         [HttpDelete("listings/{id}")]
         public async Task<IActionResult> RemoveListing(int id)
         {
@@ -127,6 +132,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // PUT /api/admin/listings/{id}/featured
+        /// <summary>Toggles the featured status of a listing — Admin only.</summary>
         [HttpPut("listings/{id}/featured")]
         public async Task<IActionResult> ToggleFeatured(int id)
         {
@@ -143,6 +149,7 @@ namespace VarsityTrade.API.Controllers
         // ── REPORTS ───────────────────────────────────────────────────
 
         // GET /api/admin/reports
+        /// <summary>Returns all reports in the reports queue — Admin only.</summary>
         [HttpGet("reports")]
         public async Task<IActionResult> GetAllReports()
         {
@@ -154,6 +161,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // GET /api/admin/reports/{id}
+        /// <summary>Returns a single report by ID — Admin only.</summary>
         [HttpGet("reports/{id}")]
         public async Task<IActionResult> GetReportById(int id)
         {
@@ -168,6 +176,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // PUT /api/admin/reports/{id}/resolve
+        /// <summary>Resolves or dismisses a report — Admin only.</summary>
         [HttpPut("reports/{id}/resolve")]
         public async Task<IActionResult> ResolveReport(int id, [FromBody] ResolveReportDto request)
         {
@@ -188,6 +197,7 @@ namespace VarsityTrade.API.Controllers
         // ── HERO BANNER ───────────────────────────────────────────────
 
         // GET /api/admin/banner
+        /// <summary>Returns all hero banner slides ordered by sort order — Admin only.</summary>
         [HttpGet("banner")]
         public async Task<IActionResult> GetAllSlides()
         {
@@ -199,6 +209,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // POST /api/admin/banner
+        /// <summary>Creates a new hero banner slide — Admin only.</summary>
         [HttpPost("banner")]
         public async Task<IActionResult> CreateSlide([FromBody] HeroBannerSlideRequestDto request)
         {
@@ -213,6 +224,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // PUT /api/admin/banner/{id}
+        /// <summary>Updates an existing hero banner slide — Admin only.</summary>
         [HttpPut("banner/{id}")]
         public async Task<IActionResult> UpdateSlide(int id, [FromBody] HeroBannerSlideRequestDto request)
         {
@@ -227,6 +239,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // DELETE /api/admin/banner/{id}
+        /// <summary>Deletes a hero banner slide — Admin only.</summary>
         [HttpDelete("banner/{id}")]
         public async Task<IActionResult> DeleteSlide(int id)
         {
@@ -241,6 +254,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // PUT /api/admin/banner/{id}/visibility
+        /// <summary>Toggles the visibility of a hero banner slide — Admin only.</summary>
         [HttpPut("banner/{id}/visibility")]
         public async Task<IActionResult> ToggleVisibility(int id)
         {
@@ -257,6 +271,7 @@ namespace VarsityTrade.API.Controllers
         // ── SYSTEM SETTINGS ───────────────────────────────────────────
 
         // GET /api/admin/settings
+        /// <summary>Returns all system settings — Admin only.</summary>
         [HttpGet("settings")]
         public async Task<IActionResult> GetSystemSettings()
         {
@@ -268,6 +283,7 @@ namespace VarsityTrade.API.Controllers
         }
 
         // PUT /api/admin/settings/{key}
+        /// <summary>Updates a system setting value by key — Admin only.</summary>
         [HttpPut("settings/{key}")]
         public async Task<IActionResult> UpdateSystemSetting(string key, [FromBody] string value)
         {
@@ -284,6 +300,7 @@ namespace VarsityTrade.API.Controllers
         // ── PLATFORM STATS ────────────────────────────────────────────
 
         // GET /api/admin/stats
+        /// <summary>Returns platform-wide statistics across all universities — Admin only.</summary>
         [HttpGet("stats")]
         public async Task<IActionResult> GetPlatformStats()
         {

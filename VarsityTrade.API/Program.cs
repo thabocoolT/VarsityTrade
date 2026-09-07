@@ -122,9 +122,28 @@ builder.Services.AddEndpointsApiExplorer();
 
 // Configure Swagger to support JWT authentication
 // This adds an Authorize button to the Swagger UI so you can test protected endpoints
+// Configure Swagger with full API documentation
 builder.Services.AddSwaggerGen(options =>
 {
-    // Add a security definition — tells Swagger about our JWT scheme
+    // API metadata — shown at the top of the Swagger UI page
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Varsity Trade API",
+        Version = "v1",
+        Description = "REST API for Varsity Trade — a university-locked student marketplace for South Africa. " +
+                      "All authenticated endpoints require a Bearer JWT token. " +
+                      "Listing feeds are campus-locked — students only see listings from their own university.",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "Thabo Motau",
+            Email = "thabo@varsitytrade.co.za",
+        }
+
+
+    });
+
+    // JWT Bearer authentication definition
+    // This adds the Authorize button to the Swagger UI
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -132,10 +151,11 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter: Bearer {your JWT token}"
+        Description = "Enter your JWT token in this format: Bearer {your token here}\n\n" +
+                      "Get a token by calling POST /api/auth/login or POST /api/auth/register."
     });
 
-    // Require the Bearer token on all endpoints by default
+    // Require Bearer token on all endpoints by default
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -150,6 +170,14 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+
+    // Group endpoints by controller name for cleaner navigation
+    options.TagActionsBy(api => new[] { api.GroupName ?? api.ActionDescriptor.RouteValues["controller"] });
+    // Include XML comments in Swagger UI — reads from the generated documentation file
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFilename);
+    if (System.IO.File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
 });
 
 // ─────────────────────────────────────────────────────────────
