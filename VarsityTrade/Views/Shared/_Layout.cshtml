@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Varsity Trade</title>
+
+    <!--  Tabler Icons — icon library used throughout the platform -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@latest/tabler-icons.min.css" />
+
+    <!-- Varsity Trade brand stylesheet -->
+    <link rel="stylesheet" href="~/css/varsitytrade.css" asp-append-version="true" />
+
+    <!-- Page-specific styles injected here -->
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- ── ANNOUNCEMENT BAR ─────────────────────────────────── -->
+    <div class="vt-announce">
+        <i class="ti ti-speakerphone" aria-hidden="true"></i>
+        Welcome to Varsity Trade — The #1 Marketplace for Students
+    </div>
+
+    <!-- ── NAVBAR ───────────────────────────────────────────── -->
+    <nav class="vt-nav">
+
+        <!-- Logo -->
+        <a href="/" class="vt-nav-logo">
+            <div class="vt-nav-logo-icon">
+                <i class="ti ti-school" aria-hidden="true"></i>
+            </div>
+            <div>
+                <div class="vt-nav-logo-text">Varsity Trade</div>
+                <div class="vt-nav-logo-sub">Buy. Sell. Trade.</div>
+            </div>
+        </a>
+
+        <!-- Categories dropdown trigger -->
+        <div class="vt-nav-cat">
+            <i class="ti ti-category" aria-hidden="true" style="font-size:13px"></i>
+            All categories
+            <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:12px"></i>
+        </div>
+
+        <!-- Search bar -->
+        <form class="vt-nav-search" asp-controller="Listings" asp-action="Search" method="get">
+            <input type="text"
+                   name="q"
+                   placeholder="Search for items, brands or keywords..."
+                   value="@ViewData["SearchQuery"]" />
+            <button type="submit" class="vt-nav-search-btn">
+                <i class="ti ti-search" aria-hidden="true"></i>
+            </button>
+        </form>
+
+        <!-- Nav links -->
+        <div class="vt-nav-links">
+            <a href="/listings/browse">Explore</a>
+            <a href="/home/how-it-works">How it works</a>
+        </div>
+
+        @if (Context.Session.GetString("AccessToken") != null)
+        {
+            <!-- Authenticated nav icons -->
+            <div class="vt-nav-icons">
+                <a href="/buyer/inbox" class="vt-nav-icon-btn" title="Inbox">
+                    <i class="ti ti-message-circle" aria-hidden="true"></i>
+                </a>
+                <a href="/buyer/notifications" class="vt-nav-icon-btn" title="Notifications">
+                    <i class="ti ti-bell" aria-hidden="true"></i>
+                </a>
+                <a href="/buyer/profile" class="vt-nav-avatar" title="My Profile">
+                    @(Context.Session.GetString("UserInitials") ?? "?")
+                </a>
+
+                <!-- Temporary logout link — will move to sidebar in Step 5.5 -->
+                <a href="/auth/logout" class="vt-nav-icon-btn" title="Log out">
+                    <i class="ti ti-logout" aria-hidden="true"></i>
+                </a>
+            </div>
+            <a href="/listings/create" class="vt-sell-btn">
+                <i class="ti ti-plus" aria-hidden="true"></i> New listing
+            </a>
+        }
+        else
+        {
+            <!-- Guest nav links -->
+            <div class="vt-nav-links">
+                <a href="/auth/login">Log in</a>
+            </div>
+            <a href="/auth/register" class="vt-sell-btn">Register</a>
+        }
+
+    </nav>
+
+    <!-- ── PAGE CONTENT ─────────────────────────────────────── -->
+    <main>
+        @RenderBody()
+    </main>
+
+    <!-- ── FOOTER ───────────────────────────────────────────── -->
+    <footer class="vt-footer">
+        <span class="vt-footer-text">© 2026 Varsity Trade. All rights reserved.</span>
+        <div class="vt-footer-links"> 
+            <a href="#" class="vt-footer-link">About</a>
+            <a href="#" class="vt-footer-link">Terms</a>
+            <a href="#" class="vt-footer-link">Privacy</a>
+            <a href="#" class="vt-footer-link">Contact</a>
+        </div>
+    </footer>
+
+    <!-- Page-specific scripts injected here -->
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

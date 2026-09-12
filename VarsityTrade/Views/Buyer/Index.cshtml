@@ -1,0 +1,112 @@
+﻿@model VarsityTrade.Models.Buyer.BuyerDashboardViewModel
+@{
+    ViewData["Title"] = "My Dashboard";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        @* Welcome bar *@
+        <div class="vt-card" style="background:linear-gradient(135deg,#4B3BC7,#26215C);margin-bottom:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:11px;color:#AFA9EC;margin-bottom:4px;">
+                        <i class="ti ti-user" aria-hidden="true"></i> Buyer Dashboard
+                    </div>
+                    <div style="font-size:16px;font-weight:500;color:#fff;margin-bottom:2px;">
+                        Welcome back, @Model.FirstName 👋
+                    </div>
+                    <div style="font-size:12px;color:#AFA9EC;">@Model.UniversityName</div>
+                </div>
+                <a href="/listings/create" class="vt-btn" style="background:rgba(255,255,255,0.15);color:#fff;">
+                    <i class="ti ti-plus" aria-hidden="true"></i> New listing
+                </a>
+            </div>
+        </div>
+
+        @* Stats row *@
+        <div class="vt-stats-row">
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-primary-light);color:var(--vt-primary);">
+                    <i class="ti ti-heart" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.SavedListingsCount</div>
+                    <div class="vt-stat-label">Saved listings</div>
+                </div>
+            </div>
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-warning-bg);color:var(--vt-warning);">
+                    <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.ActiveOffersCount</div>
+                    <div class="vt-stat-label">Active offers</div>
+                </div>
+            </div>
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-success-bg);color:var(--vt-success);">
+                    <i class="ti ti-message-circle" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.UnreadMessagesCount</div>
+                    <div class="vt-stat-label">Unread messages</div>
+                </div>
+            </div>
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-danger-bg);color:var(--vt-danger);">
+                    <i class="ti ti-bell" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.UnreadNotificationsCount</div>
+                    <div class="vt-stat-label">Notifications</div>
+                </div>
+            </div>
+        </div>
+
+        @* Recent offers *@
+        <div class="vt-card">
+            <div class="vt-card-title">
+                <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Recent offers
+                <a href="/buyer/offers" class="vt-section-link" style="margin-left:auto;font-size:12px;">View all →</a>
+            </div>
+            @if (Model.RecentOffers.Any())
+            {
+                @foreach (var offer in Model.RecentOffers)
+                {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--vt-border-light);">
+                        <div>
+                            <div style="font-size:13px;font-weight:500;">@offer.ListingTitle</div>
+                            <div style="font-size:11px;color:var(--vt-text-muted);">
+                                @offer.OfferType
+                                @if (offer.OfferAmount.HasValue)
+                                {
+                                    <span>· R @offer.OfferAmount.Value.ToString("N0")</span>
+                                }
+                            </div>
+                        </div>
+                        @{
+                            var badgeClass = offer.Status switch
+                            {
+                                "Accepted" => "vt-badge-success",
+                                "Rejected" => "vt-badge-danger",
+                                "Cancelled" => "vt-badge-muted",
+                                _ => "vt-badge-warning"
+                            };
+                        }
+                        <span class="vt-badge @badgeClass">@offer.Status</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="font-size:12px;color:var(--vt-text-muted);text-align:center;padding:16px 0;">
+                    No offers yet. <a href="/listings/browse" style="color:var(--vt-primary);">Browse listings</a> to make your first offer.
+                </p>
+            }
+        </div>
+
+    </div>
+</div>

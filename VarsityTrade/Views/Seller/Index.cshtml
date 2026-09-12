@@ -1,0 +1,160 @@
+﻿@model VarsityTrade.Web.Models.Seller.SellerDashboardViewModel
+@{
+    ViewData["Title"] = "Seller Dashboard";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        @* Welcome bar *@
+        <div class="vt-card" style="background:linear-gradient(135deg,#4B3BC7,#26215C);margin-bottom:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:11px;color:#AFA9EC;margin-bottom:4px;">
+                        <i class="ti ti-store" aria-hidden="true"></i> Seller Dashboard
+                    </div>
+                    <div style="font-size:16px;font-weight:500;color:#fff;margin-bottom:2px;">
+                        @Model.StoreName
+                    </div>
+                    <div style="font-size:12px;color:#AFA9EC;">
+                        ★ @Model.AverageRating.ToString("F1") · @Model.TotalSales sales
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <a href="/buyer" class="vt-btn" style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;">
+                        <i class="ti ti-shopping-cart" aria-hidden="true"></i> Switch to buyer
+                    </a>
+                    <a href="/seller/listings/create" class="vt-btn" style="background:#fff;color:#4B3BC7;font-size:11px;">
+                        <i class="ti ti-plus" aria-hidden="true"></i> New listing
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @* Stats row *@
+        <div class="vt-stats-row">
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-primary-light);color:var(--vt-primary);">
+                    <i class="ti ti-list" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.ActiveListingsCount</div>
+                    <div class="vt-stat-label">Active listings</div>
+                </div>
+            </div>
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-warning-bg);color:var(--vt-warning);">
+                    <i class="ti ti-tag" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.PendingOffersCount</div>
+                    <div class="vt-stat-label">Pending offers</div>
+                </div>
+            </div>
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-success-bg);color:var(--vt-success);">
+                    <i class="ti ti-check" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.TotalSales</div>
+                    <div class="vt-stat-label">Total sales</div>
+                </div>
+            </div>
+            <div class="vt-stat-card">
+                <div class="vt-stat-icon" style="background:var(--vt-primary-light);color:var(--vt-star);">
+                    <i class="ti ti-star" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <div class="vt-stat-num">@Model.AverageRating.ToString("F1")</div>
+                    <div class="vt-stat-label">Average rating</div>
+                </div>
+            </div>
+        </div>
+
+        @* Pending offers *@
+        @if (Model.PendingOffers.Any())
+        {
+            <div class="vt-card" style="margin-bottom:14px;">
+                <div class="vt-card-title">
+                    <i class="ti ti-tag" aria-hidden="true"></i> Pending offers
+                    <a href="/seller/offers" class="vt-section-link" style="margin-left:auto;">View all →</a>
+                </div>
+                @foreach (var offer in Model.PendingOffers)
+                {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--vt-border-light);">
+                        <div>
+                            <div style="font-size:13px;font-weight:500;">@offer.ListingTitle</div>
+                            <div style="font-size:11px;color:var(--vt-text-muted);">
+                                @offer.BuyerFirstName @offer.BuyerLastName · @offer.BuyerSuburb
+                                @if (!string.IsNullOrEmpty(offer.BuyerResidenceName))
+                                {
+                                    <span>· @offer.BuyerResidenceName</span>
+                                }
+                            </div>
+                            <div style="font-size:12px;color:var(--vt-primary);margin-top:2px;">
+                                @offer.OfferType
+                                @if (offer.OfferAmount.HasValue)
+                                {
+                                    <span>· R @offer.OfferAmount.Value.ToString("N0")</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <form asp-controller="Seller" asp-action="AcceptOffer" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="offerId" value="@offer.OfferId" />
+                                <button type="submit" class="vt-btn vt-btn-success" style="font-size:11px;">
+                                    <i class="ti ti-check" aria-hidden="true"></i> Accept
+                                </button>
+                            </form>
+                            <form asp-controller="Seller" asp-action="RejectOffer" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="offerId" value="@offer.OfferId" />
+                                <button type="submit" class="vt-btn vt-btn-danger" style="font-size:11px;">
+                                    <i class="ti ti-x" aria-hidden="true"></i> Reject
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @* Recent listings *@
+        <div class="vt-card">
+            <div class="vt-card-title">
+                <i class="ti ti-list" aria-hidden="true"></i> My listings
+                <a href="/seller/listings" class="vt-section-link" style="margin-left:auto;">View all →</a>
+            </div>
+            @if (Model.RecentListings.Any())
+            {
+                <div class="vt-listing-grid">
+                    @foreach (var listing in Model.RecentListings)
+                    {
+                        <div class="vt-listing-card" style="cursor:default;">
+                            <div class="vt-listing-card-img">
+                                <i class="ti ti-photo" aria-hidden="true"></i>
+                            </div>
+                            <div class="vt-listing-card-body">
+                                <div class="vt-listing-card-title">@listing.Title</div>
+                                <div class="vt-listing-card-price">R @listing.Price.ToString("N0")</div>
+                                <div class="vt-listing-card-meta">
+                                    @listing.Status · @listing.ViewCount views
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p style="text-align:center;font-size:12px;color:var(--vt-text-muted);padding:20px 0;">
+                    No listings yet.
+                    <a href="/seller/listings/create" style="color:var(--vt-primary);">Create your first listing →</a>
+                </p>
+            }
+        </div>
+    </div>
+</div>

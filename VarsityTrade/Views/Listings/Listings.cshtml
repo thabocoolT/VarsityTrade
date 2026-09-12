@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "My Listings";
+    Layout = "_Layout";
+    var listings = ViewBag.Listings as List<VarsityTrade.Web.Models.Seller.SellerListingViewModel> ?? new();
+    var activeFilter = ViewBag.ActiveFilter as string ?? "All";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="vt-card-title" style="margin-bottom:0;">
+                <i class="ti ti-list" aria-hidden="true"></i> My Listings
+            </div>
+            <a href="/seller/listings/create" class="vt-btn vt-btn-primary">
+                <i class="ti ti-plus" aria-hidden="true"></i> New listing
+            </a>
+        </div>
+
+        <div class="vt-filter-tabs">
+            @foreach (var f in new[] { "All", "Active", "Reserved", "Sold", "Expired" })
+            {
+                <a href="/seller/listings?filter=@f"
+                   class="vt-filter-tab @(activeFilter == f ? "active" : "")">@f</a>
+            }
+        </div>
+
+        @if (listings.Any())
+        {
+            <div class="vt-listing-grid">
+                @foreach (var listing in listings)
+                {
+                    <div class="vt-listing-card" style="cursor:default;">
+                        <div class="vt-listing-card-img">
+                            <i class="ti ti-photo" aria-hidden="true"></i>
+                        </div>
+                        <div class="vt-listing-card-body">
+                            @if (listing.IsFeatured)
+                            {
+                                <span class="vt-badge vt-badge-primary" style="margin-bottom:4px;">Featured</span>
+                            }
+                            <div class="vt-listing-card-title">@listing.Title</div>
+                            <div class="vt-listing-card-price">R @listing.Price.ToString("N0")</div>
+                            <div class="vt-listing-card-meta">@listing.Status · @listing.ViewCount views</div>
+                            <div style="display:flex;gap:6px;margin-top:8px;">
+                                <a href="/listings/@listing.ListingId" class="vt-btn vt-btn-outline" style="font-size:10px;padding:4px 8px;">
+                                    View
+                                </a>
+                                <form asp-controller="Seller" asp-action="DeleteListing" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="listingId" value="@listing.ListingId" />
+                                    <button type="submit" class="vt-btn vt-btn-danger" style="font-size:10px;padding:4px 8px;"
+                                            onclick="return confirm('Delete this listing?')">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="vt-card" style="text-align:center;padding:40px;">
+                <i class="ti ti-list" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);display:block;margin-bottom:12px;"></i>
+                <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No listings found</div>
+                <a href="/seller/listings/create" class="vt-btn vt-btn-primary" style="margin-top:12px;">
+                    <i class="ti ti-plus" aria-hidden="true"></i> Create your first listing
+                </a>
+            </div>
+        }
+    </div>
+</div>

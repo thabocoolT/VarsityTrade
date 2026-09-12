@@ -1,0 +1,154 @@
+﻿@model VarsityTrade.Web.Models.Listings.ListingDetailViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+
+    @* Sidebar *@
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+
+        @* Breadcrumb *@
+        <div style="font-size:12px;color:var(--vt-text-muted);margin-bottom:14px;">
+            <a href="/listings/browse" style="color:var(--vt-primary);">Browse</a>
+            <span style="margin:0 6px;">›</span>
+            <a href="/listings/browse?category=@Model.CategoryName" style="color:var(--vt-primary);">@Model.CategoryName</a>
+            <span style="margin:0 6px;">›</span>
+            <span>@Model.Title</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start;">
+
+            @* Left column — listing content *@
+            <div>
+
+                @* Image placeholder *@
+                <div class="vt-card" style="padding:0;overflow:hidden;margin-bottom:14px;">
+                    <div style="height:320px;background:var(--vt-primary-light);display:flex;align-items:center;justify-content:center;color:var(--vt-primary-muted);font-size:64px;">
+                        <i class="ti ti-photo" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                @* Listing details *@
+                <div class="vt-card">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;">
+                        <div>
+                            @if (Model.IsFeatured)
+                            {
+                                <span class="vt-badge vt-badge-primary" style="margin-bottom:6px;">
+                                    <i class="ti ti-star" aria-hidden="true"></i> Featured
+                                </span>
+                            }
+                            <h1 style="font-size:18px;font-weight:500;margin-bottom:4px;">@Model.Title</h1>
+                            <div style="font-size:22px;font-weight:500;color:var(--vt-primary);">
+                                R @Model.Price.ToString("N0")
+                                @if (Model.IsNegotiable)
+                                {
+                                    <span style="font-size:12px;font-weight:400;color:var(--vt-text-muted);margin-left:6px;">Negotiable</span>
+                                }
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <span class="vt-badge vt-badge-muted">@Model.Condition</span>
+                            <span class="vt-badge vt-badge-primary">@Model.ListingType</span>
+                        </div>
+                    </div>
+
+                    <div class="vt-divider"></div>
+
+                    <h3 style="font-size:13px;font-weight:500;margin-bottom:8px;">Description</h3>
+                    <p style="font-size:13px;color:var(--vt-text-secondary);line-height:1.7;margin-bottom:16px;">@Model.Description</p>
+
+                    <div class="vt-divider"></div>
+
+                    @* Item details grid *@
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+                        <div>
+                            <span style="color:var(--vt-text-muted);">Category</span>
+                            <div style="font-weight:500;margin-top:2px;">@Model.CategoryName</div>
+                        </div>
+                        <div>
+                            <span style="color:var(--vt-text-muted);">Condition</span>
+                            <div style="font-weight:500;margin-top:2px;">@Model.Condition</div>
+                        </div>
+                        <div>
+                            <span style="color:var(--vt-text-muted);">Campus pickup</span>
+                            <div style="font-weight:500;margin-top:2px;">@(Model.CampusPickup ? "Available" : "Not available")</div>
+                        </div>
+                        <div>
+                            <span style="color:var(--vt-text-muted);">Delivery</span>
+                            <div style="font-weight:500;margin-top:2px;">@(Model.DeliveryAvailable ? "Available" : "Not available")</div>
+                        </div>
+                        <div>
+                            <span style="color:var(--vt-text-muted);">Views</span>
+                            <div style="font-weight:500;margin-top:2px;">@Model.ViewCount</div>
+                        </div>
+                        <div>
+                            <span style="color:var(--vt-text-muted);">Listed</span>
+                            <div style="font-weight:500;margin-top:2px;">@Model.CreatedAt.ToString("dd MMM yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            @* Right column — seller card and actions *@
+            <div>
+
+                @* Seller card *@
+                <div class="vt-card" style="margin-bottom:12px;">
+                    <div class="vt-card-title">
+                        <i class="ti ti-store" aria-hidden="true"></i> Seller
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <div style="width:44px;height:44px;border-radius:50%;background:var(--vt-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;flex-shrink:0;">
+                            @Model.StoreName[0].ToString().ToUpper()
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:500;">@Model.StoreName</div>
+                            <div style="font-size:11px;color:var(--vt-text-muted);">
+                                <i class="ti ti-building" aria-hidden="true"></i> @Model.UniversityShortName
+                            </div>
+                            <div style="font-size:11px;color:var(--vt-star);">
+                                ★ @Model.SellerRating.ToString("F1")
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Context.Session.GetString("AccessToken") != null)
+                    {
+                        <a href="/buyer/inbox?listingId=@Model.ListingId" class="vt-btn vt-btn-outline" style="width:100%;justify-content:center;margin-bottom:8px;">
+                            <i class="ti ti-message-circle" aria-hidden="true"></i> Message seller
+                        </a>
+                        <a href="/buyer/offers/make?listingId=@Model.ListingId" class="vt-btn vt-btn-primary" style="width:100%;justify-content:center;">
+                            <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Make an offer
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/auth/login" class="vt-btn vt-btn-primary" style="width:100%;justify-content:center;">
+                            <i class="ti ti-login" aria-hidden="true"></i> Log in to contact seller
+                        </a>
+                    }
+                </div>
+
+                @* Safety tips *@
+                <div class="vt-card" style="background:var(--vt-primary-light);border-color:var(--vt-primary-muted);">
+                    <div class="vt-card-title" style="color:var(--vt-primary);border-color:var(--vt-primary-muted);">
+                        <i class="ti ti-shield-check" aria-hidden="true"></i> Safety tips
+                    </div>
+                    <ul style="font-size:12px;color:var(--vt-primary);padding-left:16px;line-height:1.8;">
+                        <li>Always meet on campus in a public area</li>
+                        <li>Inspect the item before paying</li>
+                        <li>Never pay upfront via EFT</li>
+                        <li>Report suspicious listings to admin</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

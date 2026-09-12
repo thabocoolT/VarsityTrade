@@ -1,0 +1,66 @@
+﻿@model VarsityTrade.Web.Models.Buyer.InboxViewModel
+@{
+    ViewData["Title"] = "My Inbox";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        <div class="vt-card-title" style="margin-bottom:14px;">
+            <i class="ti ti-message-circle" aria-hidden="true"></i> My Inbox
+            @if (Model.UnreadCount > 0)
+            {
+                <span class="vt-badge vt-badge-danger" style="margin-left:8px;">@Model.UnreadCount unread</span>
+            }
+        </div>
+
+        @if (Model.Conversations.Any())
+        {
+            <div class="vt-card" style="padding:0;overflow:hidden;">
+                @foreach (var conv in Model.Conversations)
+                {
+                    <a href="/buyer/inbox/@conv.ConversationId"
+                       style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:0.5px solid var(--vt-border-light);text-decoration:none;@(conv.UnreadCount > 0 ? "background:var(--vt-primary-light);" : "")">
+                        <div style="width:40px;height:40px;border-radius:50%;background:var(--vt-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;">
+                            @conv.StoreName[0].ToString().ToUpper()
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+                                <span style="font-size:13px;font-weight:500;">@conv.StoreName</span>
+                                <span style="font-size:10px;color:var(--vt-text-muted);">
+                                    @(conv.LastMessageAt?.ToString("dd MMM") ?? conv.CreatedAt.ToString("dd MMM"))
+                                </span>
+                            </div>
+                            <div style="font-size:12px;color:var(--vt-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                @conv.ListingTitle
+                            </div>
+                            @if (!string.IsNullOrEmpty(conv.LastMessageContent))
+                            {
+                                <div style="font-size:11px;color:var(--vt-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                    @conv.LastMessageContent
+                                </div>
+                            }
+                        </div>
+                        @if (conv.UnreadCount > 0)
+                        {
+                            <span class="vt-badge vt-badge-primary">@conv.UnreadCount</span>
+                        }
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="vt-card" style="text-align:center;padding:40px;">
+                <i class="ti ti-message-circle" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);display:block;margin-bottom:12px;"></i>
+                <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No conversations yet</div>
+                <p style="font-size:12px;color:var(--vt-text-muted);">
+                    Browse listings and message a seller to start a conversation.
+                </p>
+                <a href="/listings/browse" class="vt-btn vt-btn-primary" style="margin-top:16px;">Browse listings</a>
+            </div>
+        }
+    </div>
+</div>

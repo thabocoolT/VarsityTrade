@@ -1,0 +1,120 @@
+﻿@model VarsityTrade.Web.Models.Listings.BrowseViewModel
+@{
+    ViewData["Title"] = "Browse Listings";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+
+    @* Sidebar *@
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+
+        @* Campus lock banner — shown for authenticated users *@
+        @if (Context.Session.GetString("AccessToken") != null)
+        {
+            <div class="vt-campus-lock">
+                <i class="ti ti-building" aria-hidden="true"></i>
+                <span>You are browsing listings from <strong>@Model.UniversityName</strong> only.</span>
+            </div>
+        }
+
+        @* Page header *@
+        <div class="vt-section-head" style="margin-bottom:14px;">
+            <div>
+                <h1 style="font-size:16px;font-weight:500;margin-bottom:2px;">
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                    {
+                        <span>Results for "@Model.SearchQuery"</span>
+                    }
+                    else
+                    {
+                        <span>Browse Listings</span>
+                    }
+                </h1>
+                <p style="font-size:12px;color:var(--vt-text-muted);">
+                    @Model.TotalCount listing@(Model.TotalCount != 1 ? "s" : "") found
+                </p>
+            </div>
+
+            @* Sort dropdown *@
+            <select class="vt-form-select" style="width:auto;font-size:12px;">
+                <option>Sort: Newest first</option>
+                <option>Price: Low to high</option>
+                <option>Price: High to low</option>
+            </select>
+        </div>
+
+        @* Filter tabs *@
+        <div class="vt-filter-tabs">
+            <a href="/listings/browse" class="vt-filter-tab @(string.IsNullOrEmpty(Model.SelectedCondition) ? "active" : "")">All</a>
+            <a href="/listings/browse?condition=New" class="vt-filter-tab @(Model.SelectedCondition == "New" ? "active" : "")">New</a>
+            <a href="/listings/browse?condition=Like New" class="vt-filter-tab @(Model.SelectedCondition == "Like New" ? "active" : "")">Like New</a>
+            <a href="/listings/browse?condition=Good" class="vt-filter-tab @(Model.SelectedCondition == "Good" ? "active" : "")">Good</a>
+            <a href="/listings/browse?condition=Fair" class="vt-filter-tab @(Model.SelectedCondition == "Fair" ? "active" : "")">Fair</a>
+        </div>
+
+        @* Listings grid *@
+        @if (Model.Listings.Any())
+        {
+            <div class="vt-listing-grid">
+                @foreach (var listing in Model.Listings)
+                {
+                    <a href="/listings/@listing.ListingId" class="vt-listing-card">
+                        <div class="vt-listing-card-img">
+                            @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
+                            {
+                                <img src="@listing.CoverImageUrl" alt="@listing.Title" />
+                            }
+                            else
+                            {
+                                <i class="ti ti-photo" aria-hidden="true"></i>
+                            }
+                        </div>
+                        <div class="vt-listing-card-body">
+                            @if (listing.IsFeatured)
+                            {
+                                <span class="vt-badge vt-badge-primary" style="margin-bottom:4px;">
+                                    <i class="ti ti-star" aria-hidden="true"></i> Featured
+                                </span>
+                            }
+                            <div class="vt-listing-card-title">@listing.Title</div>
+                            <div class="vt-listing-card-price">R @listing.Price.ToString("N0")</div>
+                            <div class="vt-listing-card-meta">
+                                @listing.Condition · @listing.CategoryName
+                            </div>
+                            <div class="vt-listing-card-meta" style="margin-top:4px;">
+                                <i class="ti ti-store" aria-hidden="true"></i> @listing.StoreName
+                                &nbsp;·&nbsp;
+                                <i class="ti ti-eye" aria-hidden="true"></i> @listing.ViewCount views
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            @* Empty state *@
+            <div style="text-align:center;padding:60px 20px;background:var(--vt-bg-card);border:0.5px solid var(--vt-border);border-radius:var(--vt-radius-xl);">
+                <i class="ti ti-search" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);margin-bottom:12px;display:block;"></i>
+                <h3 style="font-size:15px;font-weight:500;margin-bottom:6px;">No listings found</h3>
+                <p style="font-size:12px;color:var(--vt-text-muted);">
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                    {
+                        <span>No listings match "@Model.SearchQuery". Try a different search term.</span>
+                    }
+                    else
+                    {
+                        <span>No active listings at your university yet. Be the first to sell something!</span>
+                    }
+                </p>
+                <a href="/listings/create" class="vt-btn vt-btn-primary" style="margin-top:16px;">
+                    <i class="ti ti-plus" aria-hidden="true"></i> Create a listing
+                </a>
+            </div>
+        }
+
+    </div>
+</div>

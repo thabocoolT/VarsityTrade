@@ -1,0 +1,142 @@
+﻿@{
+    ViewData["Title"] = "Varsity Trade — Student Marketplace";
+    Layout = "_Layout";
+    var recentListings = ViewBag.RecentListings as List<VarsityTrade.Web.Models.Listings.ListingCardViewModel> ?? new();
+    var featuredListings = ViewBag.FeaturedListings as List<VarsityTrade.Web.Models.Listings.ListingCardViewModel> ?? new();
+}
+
+<div class="vt-body-no-sidebar">
+
+    @* Hero banner *@
+    <div style="background:linear-gradient(135deg,#4B3BC7,#26215C);border-radius:var(--vt-radius-xl);padding:40px 48px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+            <div style="background:rgba(255,255,255,0.15);color:#fff;font-size:11px;border-radius:var(--vt-radius-sm);padding:4px 10px;display:inline-block;margin-bottom:12px;">
+                <i class="ti ti-shield-check" aria-hidden="true"></i> Campus-locked marketplace
+            </div>
+            <h1 style="font-size:28px;font-weight:500;color:#fff;margin-bottom:8px;line-height:1.3;">
+                Buy, sell and trade<br>with your campus community
+            </h1>
+            <p style="font-size:14px;color:#AFA9EC;margin-bottom:20px;">
+                Safe, student-only marketplace. Every listing is locked to your university.
+            </p>
+            <div style="display:flex;gap:10px;">
+                <a href="/listings/browse" class="vt-btn" style="background:#fff;color:#4B3BC7;">
+                    <i class="ti ti-search" aria-hidden="true"></i> Browse listings
+                </a>
+                @if (Context.Session.GetString("AccessToken") != null)
+                {
+                    <a href="/listings/create" class="vt-btn" style="background:rgba(255,255,255,0.15);color:#fff;">
+                        <i class="ti ti-plus" aria-hidden="true"></i> Sell something
+                    </a>
+                }
+                else
+                {
+                    <a href="/auth/register" class="vt-btn" style="background:rgba(255,255,255,0.15);color:#fff;">
+                        <i class="ti ti-user-plus" aria-hidden="true"></i> Join free
+                    </a>
+                }
+            </div>
+        </div>
+        <div style="font-size:80px;color:rgba(255,255,255,0.15);">
+            <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+        </div>
+    </div>
+
+    @* Category quick links *@
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;">
+        @{
+            var categories = new[] {
+                ("ti-device-laptop",  "Electronics",     "Electronics"),
+                ("ti-book",           "Study Materials", "Study Materials"),
+                ("ti-armchair",       "Furniture",       "Furniture"),
+                ("ti-shirt",          "Clothing",        "Clothing & Accessories"),
+                ("ti-home",           "Household",       "Household & Kitchen"),
+                ("ti-bike",           "Sports",          "Sports & Fitness"),
+                ("ti-tool",           "Services",        "Services"),
+                ("ti-dots",           "Other",           "Other"),
+            };
+        }
+        @foreach (var (icon, label, catName) in categories)
+        {
+            <a href="/listings/browse?category=@catName"
+               style="display:flex;align-items:center;gap:6px;border:0.5px solid var(--vt-border);border-radius:var(--vt-radius-md);padding:6px 12px;font-size:12px;color:var(--vt-text-secondary);background:#fff;text-decoration:none;">
+                <i class="ti @icon" aria-hidden="true"></i>
+                @label
+            </a>
+        }
+    </div>
+
+    @* Recent listings *@
+    @if (recentListings.Any())
+    {
+        <div class="vt-section-head">
+            <span class="vt-section-title">Recently added</span>
+            <a href="/listings/browse" class="vt-section-link">View all →</a>
+        </div>
+        <div class="vt-listing-grid" style="margin-bottom:24px;">
+            @foreach (var listing in recentListings)
+            {
+                <a href="/listings/@listing.ListingId" class="vt-listing-card">
+                    <div class="vt-listing-card-img">
+                        @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
+                        {
+                            <img src="@listing.CoverImageUrl" alt="@listing.Title" />
+                        }
+                        else
+                        {
+                            <i class="ti ti-photo" aria-hidden="true"></i>
+                        }
+                    </div>
+                    <div class="vt-listing-card-body">
+                        <div class="vt-listing-card-title">@listing.Title</div>
+                        <div class="vt-listing-card-price">R @listing.Price.ToString("N0")</div>
+                        <div class="vt-listing-card-meta">@listing.Condition · @listing.CategoryName</div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+
+    @* How it works *@
+    <div class="vt-card" style="margin-bottom:24px;">
+        <div class="vt-card-title">
+            <i class="ti ti-info-circle" aria-hidden="true"></i> How Varsity Trade works
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center;">
+            @{
+                var steps = new[] {
+                    ("ti-user-plus",        "1. Register",     "Create your free account and select your university"),
+                    ("ti-search",           "2. Browse",       "Explore listings from students at your campus only"),
+                    ("ti-message-circle",   "3. Connect",      "Message sellers and make offers directly"),
+                    ("ti-arrows-exchange",  "4. Trade",        "Meet on campus and complete your trade safely"),
+                };
+            }
+            @foreach (var (icon, title, desc) in steps)
+            {
+                <div>
+                    <div style="width:48px;height:48px;background:var(--vt-primary-light);border-radius:var(--vt-radius-lg);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px;color:var(--vt-primary);">
+                        <i class="ti @icon" aria-hidden="true"></i>
+                    </div>
+                    <div style="font-size:13px;font-weight:500;margin-bottom:4px;">@title</div>
+                    <div style="font-size:12px;color:var(--vt-text-muted);">@desc</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* CTA for guests *@
+    @if (Context.Session.GetString("AccessToken") == null)
+    {
+        <div style="background:linear-gradient(135deg,#4B3BC7,#26215C);border-radius:var(--vt-radius-xl);padding:24px 32px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="font-size:16px;font-weight:500;color:#fff;margin-bottom:4px;">Ready to start trading?</div>
+                <div style="font-size:12px;color:#AFA9EC;">Join thousands of students buying and selling on campus.</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <a href="/auth/login" class="vt-btn" style="background:rgba(255,255,255,0.15);color:#fff;">Log in</a>
+                <a href="/auth/register" class="vt-btn" style="background:#fff;color:#4B3BC7;">Register free</a>
+            </div>
+        </div>
+    }
+
+</div>

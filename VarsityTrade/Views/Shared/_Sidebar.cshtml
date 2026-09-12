@@ -1,0 +1,94 @@
+﻿@* Collapsible burger sidebar — shown on all authenticated pages *@
+@* The active class is set by passing SidebarPage in ViewData *@
+
+@{
+    var page = ViewData["SidebarPage"]?.ToString() ?? "";
+    var isSeller = Context.Session.GetString("HasSellerProfile") == "true";
+    var isAdmin = Context.Session.GetString("UserRole") == "Admin";
+}
+
+<div class="vt-sidebar">
+
+    <!-- Burger toggle -->
+    <div class="vt-burger" title="Menu">
+        <i class="ti ti-menu-2" aria-hidden="true"></i>
+    </div>
+
+    <div class="vt-sidebar-divider"></div>
+
+    @if (isAdmin)
+    {
+        <!-- Admin sidebar icons -->
+        <a href="/admin" class="vt-sidebar-icon @(page == "admin-dashboard" ? "active" : "")" title="Admin Dashboard">
+            <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
+        </a>
+        <a href="/admin/users" class="vt-sidebar-icon @(page == "admin-users" ? "active" : "")" title="Manage Users">
+            <i class="ti ti-users" aria-hidden="true"></i>
+        </a>
+        <a href="/admin/listings" class="vt-sidebar-icon @(page == "admin-listings" ? "active" : "")" title="Manage Listings">
+            <i class="ti ti-list" aria-hidden="true"></i>
+        </a>
+        <a href="/admin/reports" class="vt-sidebar-icon @(page == "admin-reports" ? "active" : "")" title="Reports">
+            <i class="ti ti-flag" aria-hidden="true"></i>
+        </a>
+        <a href="/admin/stats" class="vt-sidebar-icon @(page == "admin-stats" ? "active" : "")" title="Statistics">
+            <i class="ti ti-chart-bar" aria-hidden="true"></i>
+        </a>
+        <a href="/admin/banner" class="vt-sidebar-icon @(page == "admin-banner" ? "active" : "")" title="Banner Manager">
+            <i class="ti ti-photo" aria-hidden="true"></i>
+        </a>
+    }
+    else
+    {
+        <!-- Buyer sidebar icons -->
+        <a href="/buyer" class="vt-sidebar-icon @(page == "buyer-dashboard" ? "active" : "")" title="Dashboard">
+            <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
+        </a>
+        <a href="/listings/browse" class="vt-sidebar-icon @(page == "browse" ? "active" : "")" title="Browse">
+            <i class="ti ti-search" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/saved" class="vt-sidebar-icon @(page == "saved" ? "active" : "")" title="Saved Listings">
+            <i class="ti ti-heart" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/inbox" class="vt-sidebar-icon @(page == "inbox" ? "active" : "")" title="Inbox">
+            <i class="ti ti-message-circle" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/offers" class="vt-sidebar-icon @(page == "offers" ? "active" : "")" title="My Offers">
+            <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/reviews" class="vt-sidebar-icon @(page == "reviews" ? "active" : "")" title="My Reviews">
+            <i class="ti ti-star" aria-hidden="true"></i>
+        </a>
+
+        @if (isSeller)
+        {
+            <div class="vt-sidebar-divider"></div>
+
+            <!-- Seller sidebar icons -->
+            <a href="/seller" class="vt-sidebar-icon @(page == "seller-dashboard" ? "active" : "")" title="Seller Dashboard">
+                <i class="ti ti-store" aria-hidden="true"></i>
+            </a>
+            <a href="/seller/listings" class="vt-sidebar-icon @(page == "seller-listings" ? "active" : "")" title="My Listings">
+                <i class="ti ti-list" aria-hidden="true"></i>
+            </a>
+            <a href="/seller/offers" class="vt-sidebar-icon @(page == "seller-offers" ? "active" : "")" title="Received Offers">
+                <i class="ti ti-tag" aria-hidden="true"></i>
+            </a>
+        }
+
+        <div class="vt-sidebar-divider"></div>
+
+        <!-- Common bottom icons -->
+        <a href="/buyer/profile" class="vt-sidebar-icon @(page == "profile" ? "active" : "")" title="My Profile">
+            <i class="ti ti-user" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/notifications" class="vt-sidebar-icon @(page == "notifications" ? "active" : "")" title="Notifications">
+            <i class="ti ti-bell" aria-hidden="true"></i>
+        </a>
+        <div class="vt-sidebar-divider"></div>
+        <a href="/auth/logout" class="vt-sidebar-icon" title="Log out">
+            <i class="ti ti-logout" aria-hidden="true"></i>
+        </a>
+    }
+
+</div>

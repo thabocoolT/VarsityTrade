@@ -1,0 +1,106 @@
+﻿@model VarsityTrade.Web.Models.Seller.CreateListingViewModel
+@{
+    ViewData["Title"] = "Create Listing";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        <div class="vt-card-title" style="margin-bottom:14px;">
+            <i class="ti ti-plus" aria-hidden="true"></i> Create new listing
+        </div>
+
+        <div class="vt-card">
+            <form asp-action="CreateListing" asp-controller="Seller" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="vt-form-error" style="margin-bottom:12px;"></div>
+
+                <div class="vt-form-group">
+                    <label class="vt-form-label">Title</label>
+                    <input asp-for="Title" class="vt-form-input" placeholder="e.g. HP Pavilion Laptop 2022" />
+                    <span asp-validation-for="Title" class="vt-form-error"></span>
+                </div>
+
+                <div class="vt-form-group">
+                    <label class="vt-form-label">Description</label>
+                    <textarea asp-for="Description" class="vt-form-input" rows="4"
+                              placeholder="Describe your item in detail — condition, age, any defects..."></textarea>
+                    <span asp-validation-for="Description" class="vt-form-error"></span>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="vt-form-group">
+                        <label class="vt-form-label">Price (R)</label>
+                        <input asp-for="Price" class="vt-form-input" type="number" min="0" step="0.01" placeholder="0.00" />
+                        <span asp-validation-for="Price" class="vt-form-error"></span>
+                    </div>
+                    <div class="vt-form-group">
+                        <label class="vt-form-label">Quantity</label>
+                        <input asp-for="Quantity" class="vt-form-input" type="number" min="1" placeholder="1" />
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="vt-form-group">
+                        <label class="vt-form-label">Category</label>
+                        <select asp-for="CategoryId" class="vt-form-select">
+                            <option value="">Select category...</option>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <option value="@cat.CategoryId">@cat.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CategoryId" class="vt-form-error"></span>
+                    </div>
+                    <div class="vt-form-group">
+                        <label class="vt-form-label">Condition</label>
+                        <select asp-for="ConditionId" class="vt-form-select">
+                            <option value="">Select condition...</option>
+                            @foreach (var cond in Model.Conditions)
+                            {
+                                <option value="@cond.ConditionId">@cond.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="ConditionId" class="vt-form-error"></span>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="vt-form-group">
+                        <label class="vt-form-label">Listing type</label>
+                        <select asp-for="ListingType" class="vt-form-select">
+                            <option value="Sale">Sale</option>
+                            <option value="Trade">Trade</option>
+                            <option value="Sale or Trade">Sale or Trade</option>
+                        </select>
+                    </div>
+                    <div class="vt-form-group" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
+                        <input asp-for="IsNegotiable" type="checkbox" style="width:16px;height:16px;" />
+                        <label asp-for="IsNegotiable" class="vt-form-label" style="margin-bottom:0;">Price is negotiable</label>
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:16px;margin-bottom:16px;">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                        <input asp-for="CampusPickup" type="checkbox" style="width:16px;height:16px;" />
+                        Campus pickup available
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
+                        <input asp-for="DeliveryAvailable" type="checkbox" style="width:16px;height:16px;" />
+                        Delivery available
+                    </label>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button type="submit" class="vt-btn vt-btn-primary">
+                        <i class="ti ti-check" aria-hidden="true"></i> Publish listing
+                    </button>
+                    <a href="/seller/listings" class="vt-btn vt-btn-outline">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

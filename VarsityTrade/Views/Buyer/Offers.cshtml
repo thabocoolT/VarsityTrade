@@ -1,0 +1,81 @@
+﻿@model VarsityTrade.Web.Models.Buyer.OffersViewModel
+@{
+    ViewData["Title"] = "My Offers";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        <div class="vt-card-title" style="margin-bottom:14px;">
+            <i class="ti ti-arrows-exchange" aria-hidden="true"></i> My Offers
+        </div>
+
+        <div class="vt-filter-tabs">
+            @foreach (var f in new[] { "All", "Pending", "Accepted", "Rejected", "Cancelled" })
+            {
+                <a href="/buyer/offers?filter=@f" class="vt-filter-tab @(Model.ActiveFilter == f ? "active" : "")">@f</a>
+            }
+        </div>
+
+        @if (Model.Offers.Any())
+        {
+            @foreach (var offer in Model.Offers)
+            {
+                <div class="vt-card" style="margin-bottom:10px;">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                        <div style="flex:1;">
+                            <div style="font-size:14px;font-weight:500;margin-bottom:4px;">@offer.ListingTitle</div>
+                            <div style="font-size:12px;color:var(--vt-text-muted);margin-bottom:6px;">
+                                @offer.OfferType offer
+                                @if (offer.OfferAmount.HasValue)
+                                {
+                                    <span>· R @offer.OfferAmount.Value.ToString("N0")</span>
+                                }
+                                · @offer.CreatedAt.ToString("dd MMM yyyy")
+                            </div>
+                            @if (offer.OfferItems.Any())
+                            {
+                                <div style="font-size:11px;color:var(--vt-text-muted);">
+                                    Trade items: @string.Join(", ", offer.OfferItems.Select(i => i.Title))
+                                </div>
+                            }
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                            @{
+                                var badgeClass = offer.Status switch
+                                {
+                                    "Accepted" => "vt-badge-success",
+                                    "Rejected" => "vt-badge-danger",
+                                    "Cancelled" => "vt-badge-muted",
+                                    _ => "vt-badge-warning"
+                                };
+                            }
+                            <span class="vt-badge @badgeClass">@offer.Status</span>
+                            @if (offer.Status == "Pending")
+                            {
+                                <form asp-controller="Buyer" asp-action="CancelOffer" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="offerId" value="@offer.OfferId" />
+                                    <button type="submit" class="vt-btn vt-btn-danger" style="font-size:11px;padding:4px 10px;">
+                                        Cancel
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="vt-card" style="text-align:center;padding:40px;">
+                <i class="ti ti-arrows-exchange" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);display:block;margin-bottom:12px;"></i>
+                <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No offers yet</div>
+                <p style="font-size:12px;color:var(--vt-text-muted);">Browse listings and make an offer on something you want.</p>
+                <a href="/listings/browse" class="vt-btn vt-btn-primary" style="margin-top:16px;">Browse listings</a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,63 @@
+﻿@model VarsityTrade.Web.Models.Auth.LoginViewModel
+@{
+    ViewData["Title"] = "Log in";
+    Layout = "_Layout";
+}
+
+<div class="vt-body-no-sidebar" style="max-width:480px; margin:40px auto;">
+
+    <div class="vt-card">
+
+        <div style="text-align:center; margin-bottom:24px;">
+            <div style="width:48px;height:48px;background:var(--vt-primary);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:#fff;">
+                <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+            </div>
+            <h1 style="font-size:20px;font-weight:500;margin-bottom:4px;">Welcome back</h1>
+            <p style="font-size:12px;color:var(--vt-text-muted);">Log in to your Varsity Trade account</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div style="background:var(--vt-danger-bg);border:0.5px solid var(--vt-danger);border-radius:var(--vt-radius-md);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--vt-danger);">
+                <i class="ti ti-alert-circle" aria-hidden="true"></i>
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <form asp-action="Login" asp-controller="Auth" asp-route-area="" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="vt-form-group">
+                <label asp-for="Email" class="vt-form-label"></label>
+                <input asp-for="Email" class="vt-form-input" placeholder="your@email.co.za" autocomplete="email" />
+                <span asp-validation-for="Email" class="vt-form-error"></span>
+            </div>
+
+            <div class="vt-form-group">
+                <label asp-for="Password" class="vt-form-label"></label>
+                <input asp-for="Password" class="vt-form-input" placeholder="••••••••" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="vt-form-error"></span>
+            </div>
+
+            <button type="submit" class="vt-btn vt-btn-primary" style="width:100%;justify-content:center;margin-bottom:12px;">
+                <i class="ti ti-login" aria-hidden="true"></i> Log in
+            </button>
+
+        </form>
+
+        <div class="vt-divider"></div>
+
+        <p style="font-size:12px;color:var(--vt-text-muted);text-align:center;">
+            Don't have an account?
+            <a href="/auth/register" style="color:var(--vt-primary);font-weight:500;">Register here</a>
+        </p>
+
+        <div style="background:var(--vt-primary-light);border-radius:var(--vt-radius-md);padding:10px 14px;margin-top:12px;font-size:11px;color:var(--vt-primary);">
+            <i class="ti ti-lock" aria-hidden="true"></i>
+            <strong>Campus-locked marketplace.</strong>
+            After login you will only see listings from students at your registered university.
+        </div>
+
+    </div>
+
+</div>

@@ -3,4 +3,5 @@
   <Project Path="VarsityTrade.Application/VarsityTrade.Application.csproj" />
   <Project Path="VarsityTrade.Core/VarsityTrade.Core.csproj" />
   <Project Path="VarsityTrade.Infrastructure/VarsityTrade.Infrastructure.csproj" />
+  <Project Path="VarsityTrade/VarsityTrade.csproj" Id="5dd6cf78-5d97-4111-b9ce-4e5e0cc74873" />
 </Solution>

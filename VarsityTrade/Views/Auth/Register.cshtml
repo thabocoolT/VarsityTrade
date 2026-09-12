@@ -1,0 +1,114 @@
+﻿@model VarsityTrade.Web.Models.Auth.RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "_Layout";
+}
+
+<div class="vt-body-no-sidebar" style="max-width:560px; margin:40px auto;">
+
+    <div class="vt-card">
+
+        <div style="text-align:center; margin-bottom:24px;">
+            <div style="width:48px;height:48px;background:var(--vt-primary);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:22px;color:#fff;">
+                <i class="ti ti-user-plus" aria-hidden="true"></i>
+            </div>
+            <h1 style="font-size:20px;font-weight:500;margin-bottom:4px;">Create your account</h1>
+            <p style="font-size:12px;color:var(--vt-text-muted);">Join the student marketplace at your university</p>
+        </div>
+
+        <form asp-action="Register" asp-controller="Auth" asp-route-area="" method="post">
+            @Html.AntiForgeryToken()
+
+            @* Validation summary *@
+            <div asp-validation-summary="ModelOnly" class="vt-form-error" style="margin-bottom:12px;"></div>
+
+            @* Personal info *@
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="vt-form-group">
+                    <label asp-for="FirstName" class="vt-form-label"></label>
+                    <input asp-for="FirstName" class="vt-form-input" placeholder="Thabo" />
+                    <span asp-validation-for="FirstName" class="vt-form-error"></span>
+                </div>
+                <div class="vt-form-group">
+                    <label asp-for="LastName" class="vt-form-label"></label>
+                    <input asp-for="LastName" class="vt-form-input" placeholder="Cool Tee" />
+                    <span asp-validation-for="LastName" class="vt-form-error"></span>
+                </div>
+            </div>
+
+            <div class="vt-form-group">
+                <label asp-for="Email" class="vt-form-label"></label>
+                <input asp-for="Email" class="vt-form-input" placeholder="thabo@email.co.za" />
+                <span asp-validation-for="Email" class="vt-form-error"></span>
+            </div>
+
+            <div class="vt-form-group">
+                <label asp-for="Password" class="vt-form-label"></label>
+                <input asp-for="Password" class="vt-form-input" placeholder="Min 8 characters" />
+                <span asp-validation-for="Password" class="vt-form-error"></span>
+            </div>
+
+            @* University selection *@
+            <div class="vt-form-group">
+                <label asp-for="UniversityId" class="vt-form-label"></label>
+                <select asp-for="UniversityId" class="vt-form-select">
+                    <option value="">Select your university...</option>
+                    @foreach (var uni in Model.Universities)
+                    {
+                        <option value="@uni.UniversityId">@uni.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="UniversityId" class="vt-form-error"></span>
+                <div class="vt-form-hint">
+                    <i class="ti ti-lock" aria-hidden="true"></i>
+                    This permanently locks your marketplace to your campus. Choose carefully.
+                </div>
+            </div>
+
+            @* Location info *@
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="vt-form-group">
+                    <label asp-for="Suburb" class="vt-form-label"></label>
+                    <input asp-for="Suburb" class="vt-form-input" placeholder="Hatfield" />
+                    <span asp-validation-for="Suburb" class="vt-form-error"></span>
+                </div>
+                <div class="vt-form-group">
+                    <label asp-for="City" class="vt-form-label"></label>
+                    <input asp-for="City" class="vt-form-input" placeholder="Pretoria" />
+                    <span asp-validation-for="City" class="vt-form-error"></span>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="vt-form-group">
+                    <label asp-for="Province" class="vt-form-label"></label>
+                    <input asp-for="Province" class="vt-form-input" placeholder="Gauteng" />
+                    <span asp-validation-for="Province" class="vt-form-error"></span>
+                </div>
+                <div class="vt-form-group">
+                    <label asp-for="ResidenceName" class="vt-form-label"></label>
+                    <input asp-for="ResidenceName" class="vt-form-input" placeholder="Jubilee Res (optional)" />
+                </div>
+            </div>
+
+            <div class="vt-form-group">
+                <label asp-for="StudentNumber" class="vt-form-label"></label>
+                <input asp-for="StudentNumber" class="vt-form-input" placeholder="Optional" />
+            </div>
+
+            <button type="submit" class="vt-btn vt-btn-primary" style="width:100%;justify-content:center;margin-top:4px;">
+                <i class="ti ti-user-plus" aria-hidden="true"></i> Create account
+            </button>
+
+        </form>
+
+        <div class="vt-divider"></div>
+
+        <p style="font-size:12px;color:var(--vt-text-muted);text-align:center;">
+            Already have an account?
+            <a href="/auth/login" style="color:var(--vt-primary);font-weight:500;">Log in here</a>
+        </p>
+
+    </div>
+
+</div>

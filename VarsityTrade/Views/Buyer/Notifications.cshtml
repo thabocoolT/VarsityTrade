@@ -1,0 +1,73 @@
+﻿@model VarsityTrade.Web.Models.Buyer.NotificationsViewModel
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "_Layout";
+}
+
+<div class="vt-body">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="vt-card-title" style="margin-bottom:0;">
+                <i class="ti ti-bell" aria-hidden="true"></i> Notifications
+                @if (Model.UnreadCount > 0)
+                {
+                    <span class="vt-badge vt-badge-danger" style="margin-left:8px;">@Model.UnreadCount unread</span>
+                }
+            </div>
+            @if (Model.UnreadCount > 0)
+            {
+                <form asp-controller="Buyer" asp-action="MarkAllNotificationsRead" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="vt-btn vt-btn-outline" style="font-size:11px;">
+                        Mark all as read
+                    </button>
+                </form>
+            }
+        </div>
+
+        @if (Model.Notifications.Any())
+        {
+            <div class="vt-card" style="padding:0;overflow:hidden;">
+                @foreach (var notification in Model.Notifications)
+                {
+                    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:0.5px solid var(--vt-border-light);@(!notification.IsRead ? "background:var(--vt-primary-light);" : "")">
+                        <div style="width:36px;height:36px;border-radius:var(--vt-radius-md);background:var(--vt-primary-light);color:var(--vt-primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">
+                            @{
+                                var icon = notification.NotificationType switch
+                                {
+                                    "NewMessage" => "ti-message-circle",
+                                    "OfferReceived" => "ti-arrows-exchange",
+                                    "OfferAccepted" => "ti-check",
+                                    "OfferRejected" => "ti-x",
+                                    "PriceDrop" => "ti-trending-down",
+                                    "ReviewReminder" => "ti-star",
+                                    _ => "ti-bell"
+                                };
+                            }
+                            <i class="ti @icon" aria-hidden="true"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:500;margin-bottom:2px;">@notification.Title</div>
+                            <div style="font-size:12px;color:var(--vt-text-muted);margin-bottom:4px;">@notification.Body</div>
+                            <div style="font-size:11px;color:var(--vt-text-faint);">@notification.CreatedAt.ToString("dd MMM yyyy · HH:mm")</div>
+                        </div>
+                        @if (!notification.IsRead)
+                        {
+                            <div style="width:8px;height:8px;border-radius:50%;background:var(--vt-primary);flex-shrink:0;margin-top:6px;"></div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="vt-card" style="text-align:center;padding:40px;">
+                <i class="ti ti-bell" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);display:block;margin-bottom:12px;"></i>
+                <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No notifications yet</div>
+                <p style="font-size:12px;color:var(--vt-text-muted);">You'll be notified about messages, offers, and activity here.</p>
+            </div>
+        }
+    </div>
+</div>
