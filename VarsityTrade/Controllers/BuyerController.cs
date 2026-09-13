@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc; // Provides Controller and IActionResult
-using VarsityTrade.Models.Buyer;
+
 using VarsityTrade.Web.Models.Buyer; // Provides Buyer view models
 using VarsityTrade.Web.Models.Listings; // Provides ListingCardViewModel
 using VarsityTrade.Web.Services; // Provides ApiService

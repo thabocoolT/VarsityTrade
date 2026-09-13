@@ -3,7 +3,8 @@
 
 @{
     var page = ViewData["SidebarPage"]?.ToString() ?? "";
-    var isSeller = Context.Session.GetString("HasSellerProfile") == "true";
+    var isSeller = Context.Session.GetString("HasSellerProfile") == "true"
+    || Context.Request.Cookies["HasSellerProfile"] == "true";
     var isAdmin = Context.Session.GetString("UserRole") == "Admin";
 }
 
@@ -64,14 +65,22 @@
         {
             <div class="vt-sidebar-divider"></div>
 
-            <!-- Seller sidebar icons -->
-            <a href="/seller" class="vt-sidebar-icon @(page == "seller-dashboard" ? "active" : "")" title="Seller Dashboard">
+            <!-- Seller mode -->
+            <a href="/seller/switch"
+               class="vt-sidebar-icon @(page == "seller-dashboard" ? "active" : "")"
+               title="Switch to Seller">
                 <i class="ti ti-store" aria-hidden="true"></i>
             </a>
-            <a href="/seller/listings" class="vt-sidebar-icon @(page == "seller-listings" ? "active" : "")" title="My Listings">
+
+            <a href="/seller/listings"
+               class="vt-sidebar-icon @(page == "seller-listings" ? "active" : "")"
+               title="My Listings">
                 <i class="ti ti-list" aria-hidden="true"></i>
             </a>
-            <a href="/seller/offers" class="vt-sidebar-icon @(page == "seller-offers" ? "active" : "")" title="Received Offers">
+
+            <a href="/seller/offers"
+               class="vt-sidebar-icon @(page == "seller-offers" ? "active" : "")"
+               title="Received Offers">
                 <i class="ti ti-tag" aria-hidden="true"></i>
             </a>
         }

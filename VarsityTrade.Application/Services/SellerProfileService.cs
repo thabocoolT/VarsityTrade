@@ -61,17 +61,33 @@ namespace VarsityTrade.Application.Services
         // Called when a buyer activates their seller profile for the first time
         // Each user can only have one seller profile — enforced by unique constraint
         // ─────────────────────────────────────────────────────────────
-        public async Task<SellerProfileResponseDto?> ActivateSellerProfileAsync(int userId, SellerProfileRequestDto request)
+        public async Task<SellerProfileResponseDto?> ActivateSellerProfileAsync(
+     int userId,
+     SellerProfileRequestDto request)
         {
-            // Check if the user already has a seller profile
+            // Check whether this user already has a seller profile
             var existing = await _context.SellerProfiles
                 .FirstOrDefaultAsync(sp => sp.UserId == userId);
 
-            // Return null if already activated — cannot create a second profile
+            // Profile already exists
             if (existing != null)
-                return null;
+            {
+                // If it was previously inactive, reactivate it
+                existing.StoreName = request.StoreName;
+                existing.SellerBio = request.SellerBio;
+                existing.CampusPickup = request.CampusPickup;
+                existing.DeliveryAvailable = request.DeliveryAvailable;
+                existing.OpenToTrades = request.OpenToTrades;
+                existing.IsActive = true;
+                existing.UpdatedAt = DateTime.UtcNow;
 
-            // Create the new seller profile
+                _context.SellerProfiles.Update(existing);
+                await _context.SaveChangesAsync();
+
+                return await GetSellerProfileByUserIdAsync(userId);
+            }
+
+            // No existing profile — create one
             var profile = new SellerProfile
             {
                 UserId = userId,
@@ -80,8 +96,8 @@ namespace VarsityTrade.Application.Services
                 CampusPickup = request.CampusPickup,
                 DeliveryAvailable = request.DeliveryAvailable,
                 OpenToTrades = request.OpenToTrades,
-                AverageRating = 0.00m,  // New sellers start with no rating
-                TotalSales = 0,       // New sellers start with no sales
+                AverageRating = 0.00m,
+                TotalSales = 0,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
             };
@@ -89,7 +105,6 @@ namespace VarsityTrade.Application.Services
             await _context.SellerProfiles.AddAsync(profile);
             await _context.SaveChangesAsync();
 
-            // Reload with related data for the response
             return await GetSellerProfileByUserIdAsync(userId);
         }
 

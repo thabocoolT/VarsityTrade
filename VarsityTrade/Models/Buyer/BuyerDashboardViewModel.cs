@@ -1,6 +1,6 @@
 ﻿using VarsityTrade.Web.Models.Listings; // Provides ListingCardViewModel
 
-namespace VarsityTrade.Models.Buyer
+namespace VarsityTrade.Web.Models.Buyer
 {
     // View model for the Buyer Dashboard page
     public class BuyerDashboardViewModel

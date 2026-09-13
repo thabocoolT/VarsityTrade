@@ -75,27 +75,60 @@ namespace VarsityTrade.Web.Controllers
         // My Listings — shows all the seller's listings
         // ─────────────────────────────────────────────────────────────
         [HttpGet("listings")]
-        public async Task<IActionResult> Listings(string filter = "All")
+public async Task<IActionResult> Listings(string filter = "All")
+{
+    var auth = RequireAuth();
+    if (auth != null) return auth;
+
+    // Make sure the user actually has a seller profile
+    var profile = await _api.GetAsync<dynamic>("api/sellerprofiles/my");
+
+    if (profile == null)
+    {
+        Response.Cookies.Delete("HasSellerProfile");
+        HttpContext.Session.Remove("HasSellerProfile");
+
+        return RedirectToAction("Activate");
+    }
+
+    // Remember seller capability
+    HttpContext.Session.SetString("HasSellerProfile", "true");
+
+    Response.Cookies.Append(
+        "HasSellerProfile",
+        "true",
+        new CookieOptions
         {
-            var auth = RequireAuth();
-            if (auth != null) return auth;
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddDays(30)
+        });
 
-            var universityId = HttpContext.Session.GetString("UniversityId") ?? "1";
-            var listings = await _api.GetAsync<List<SellerListingViewModel>>(
-                $"api/listings/university/{universityId}");
+    var universityId = HttpContext.Session.GetString("UniversityId") ?? "1";
 
-            var filtered = listings ?? new List<SellerListingViewModel>();
+    var listings = await _api.GetAsync<List<SellerListingViewModel>>(
+        $"api/listings/university/{universityId}");
 
-            if (filter != "All")
-                filtered = filtered
-                    .Where(l => l.Status.Equals(filter, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+    var filtered = listings ?? new List<SellerListingViewModel>();
 
-            ViewBag.Listings = filtered;
-            ViewBag.ActiveFilter = filter;
-            ViewData["SidebarPage"] = "seller-listings";
-            return View();
-        }
+    if (filter != "All")
+    {
+        filtered = filtered
+            .Where(l => l.Status.Equals(
+                filter,
+                StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    ViewBag.Listings = filtered;
+    ViewBag.ActiveFilter = filter;
+    ViewData["SidebarPage"] = "seller-listings";
+
+    // IMPORTANT:
+    // The actual view is inside Views/Listings/
+    return View("~/Views/Listings/Listings.cshtml");
+}
 
         // ─────────────────────────────────────────────────────────────
         // GET /seller/listings/create
@@ -252,6 +285,55 @@ namespace VarsityTrade.Web.Controllers
 
             // Update session to reflect seller profile activation
             HttpContext.Session.SetString("HasSellerProfile", "true");
+
+            //Store seller status in a persistent cookie
+            //This survives the normal session timeout and allows the UI
+            //to keep showing the "Switch to seller" option
+            Response.Cookies.Append("HasSellerProfile", "true", new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddDays(30),
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax
+            });
+            return RedirectToAction("Index");
+        }
+        // ─────────────────────────────────────────────────────────────
+        // GET /seller/switch
+        // Switches the current logged-in buyer into seller mode
+        // ─────────────────────────────────────────────────────────────
+        [HttpGet("switch")]
+        public async Task<IActionResult> SwitchToSeller()
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            // Do not trust the cookie alone.
+            // Confirm the seller profile actually exists in the database.
+            var profile = await _api.GetAsync<dynamic>("api/sellerprofiles/my");
+
+            if (profile == null)
+            {
+                HttpContext.Session.Remove("HasSellerProfile");
+                Response.Cookies.Delete("HasSellerProfile");
+
+                return RedirectToAction("Activate");
+            }
+
+            // Seller profile exists — remember seller capability
+            HttpContext.Session.SetString("HasSellerProfile", "true");
+
+            Response.Cookies.Append(
+                "HasSellerProfile",
+                "true",
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTimeOffset.UtcNow.AddDays(30)
+                });
+
             return RedirectToAction("Index");
         }
 

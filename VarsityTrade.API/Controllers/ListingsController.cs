@@ -29,7 +29,9 @@ namespace VarsityTrade.API.Controllers
         [Authorize]//Must be logged in to view listins
         public async Task<IActionResult> GetListingsByUniversity(int universityId)
         {
-            var listings=await _listingService.GetListingsByUniversityAsync(universityId);
+            var listings = await _listingService
+                .GetListingsByUniversityAsync(universityId);
+
             return Ok(listings);
         }
 

@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace VarsityTrade.Views.Listings
+namespace VarsityTrade.Web.Views.Seller
 {
-    public class ListingsModel : PageModel
+    public class CreateListingModel : PageModel
     {
         public void OnGet()
         {
