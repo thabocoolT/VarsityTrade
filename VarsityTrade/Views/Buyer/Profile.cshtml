@@ -1,44 +1,189 @@
 ﻿@{
     ViewData["Title"] = "My Profile";
+    ViewData["SidebarPage"] = "profile";
     Layout = "_Layout";
+    var hasSellerProfile = Context.Session.GetString("HasSellerProfile") == "true";
+    var currentMode = Context.Session.GetString("CurrentMode") ?? "Buyer";
+    var isSeller = currentMode == "Seller";
+    var firstName = Context.Session.GetString("FirstName") ?? "";
+    var lastName = Context.Session.GetString("LastName") ?? "";
+    var email = Context.Session.GetString("UserEmail") ?? "";
+    var initials = Context.Session.GetString("UserInitials") ?? "?";
 }
 
 <div class="vt-body">
     @await Html.PartialAsync("_Sidebar")
 
-    <div>
-        <div class="vt-card">
-            <div class="vt-card-title">
-                <i class="ti ti-user" aria-hidden="true"></i> My Profile
-            </div>
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start;">
 
-            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-                <div style="width:64px;height:64px;border-radius:50%;background:var(--vt-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:500;">
-                    @(Context.Session.GetString("UserInitials") ?? "?")
+        <div>
+
+            @* Profile banner *@
+            <div style="background:linear-gradient(135deg,#4B3BC7,#26215C);border-radius:12px;padding:18px;display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+                <div style="position:relative;">
+                    <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:500;border:2px solid rgba(255,255,255,0.4);">
+                        @initials
+                    </div>
                 </div>
                 <div>
-                    <div style="font-size:17px;font-weight:500;">
-                        @Context.Session.GetString("FirstName") @Context.Session.GetString("LastName")
+                    <div style="font-size:16px;font-weight:500;color:#fff;margin-bottom:3px;">@firstName @lastName</div>
+                    <div style="font-size:11px;color:#AFA9EC;display:flex;gap:10px;flex-wrap:wrap;">
+                        <span><i class="ti ti-mail" aria-hidden="true"></i> @email</span>
+                        <span><i class="ti ti-building" aria-hidden="true"></i> NWU Vaal Campus</span>
                     </div>
-                    <div style="font-size:12px;color:var(--vt-text-muted);">
-                        @Context.Session.GetString("UserEmail")
-                    </div>
-                    <span class="vt-badge vt-badge-primary" style="margin-top:4px;">
-                        @Context.Session.GetString("UserRole")
-                    </span>
                 </div>
             </div>
 
-            <div class="vt-divider"></div>
+            @* Mode switch — only if has seller profile *@
+            @if (hasSellerProfile)
+            {
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
+                    <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
+                        <i class="ti ti-switch-horizontal" aria-hidden="true"></i> Switch account mode
+                    </div>
+                    <p style="font-size:12px;color:#888;margin-bottom:12px;">
+                        You have both a Buyer and Seller account. Switch between modes to access different features.
+                    </p>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        @if (isSeller)
+                        {
+                            <a href="/seller/switch-to-buyer" class="vt-btn vt-btn-primary">
+                                <i class="ti ti-shopping-cart" aria-hidden="true"></i> Switch to Buyer mode
+                            </a>
+                            <span class="vt-badge vt-badge-warning" style="padding:4px 10px;">Currently in Seller mode</span>
+                        }
+                        else
+                        {
+                            <a href="/seller/switch-to-seller" class="vt-btn vt-btn-primary">
+                                <i class="ti ti-store" aria-hidden="true"></i> Switch to Seller mode
+                            </a>
+                            <span class="vt-badge vt-badge-primary" style="padding:4px 10px;">Currently in Buyer mode</span>
+                        }
+                    </div>
+                </div>
+            }
 
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
-                <a href="/seller/activate" class="vt-btn vt-btn-primary">
-                    <i class="ti ti-store" aria-hidden="true"></i> Activate Seller Profile
-                </a>
-                <a href="/auth/logout" class="vt-btn vt-btn-outline">
+            @* Personal information *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
+                    <i class="ti ti-user" aria-hidden="true"></i> Personal information
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                    <div>
+                        <label class="vt-form-label">First name</label>
+                        <input class="vt-form-input" type="text" value="@firstName" readonly />
+                    </div>
+                    <div>
+                        <label class="vt-form-label">Last name</label>
+                        <input class="vt-form-input" type="text" value="@lastName" readonly />
+                    </div>
+                </div>
+                <div class="vt-form-group">
+                    <label class="vt-form-label">Email address</label>
+                    <div style="background:#f5f4f9;border:0.5px solid #e0ddf5;border-radius:7px;padding:7px 10px;font-size:11px;color:#888;display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+                        <i class="ti ti-lock" aria-hidden="true"></i> Email address cannot be changed.
+                    </div>
+                    <input class="vt-form-input" type="text" value="@email" disabled />
+                </div>
+                <div class="vt-form-group">
+                    <label class="vt-form-label">University</label>
+                    <div style="background:#f5f4f9;border:0.5px solid #e0ddf5;border-radius:7px;padding:7px 10px;font-size:11px;color:#888;display:flex;align-items:center;gap:5px;margin-bottom:6px;">
+                        <i class="ti ti-lock" aria-hidden="true"></i> University cannot be changed — it is locked to your campus marketplace.
+                    </div>
+                    <input class="vt-form-input" type="text" value="NWU Vaal Campus" disabled />
+                </div>
+            </div>
+
+            @* Danger zone *@
+            <div style="background:#fff;border:0.5px solid #F5A8A8;border-radius:12px;padding:16px;">
+                <div style="font-size:12px;font-weight:500;color:#B91C1C;margin-bottom:8px;display:flex;align-items:center;gap:5px;">
+                    <i class="ti ti-alert-triangle" aria-hidden="true"></i> Danger zone
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f0eefb;">
+                    <div>
+                        <div style="font-size:12px;font-weight:500;color:#26215C;">Deactivate account</div>
+                        <div style="font-size:11px;color:#888;">Your account and listings will be hidden. You can reactivate at any time.</div>
+                    </div>
+                    <button class="vt-btn vt-btn-danger" style="white-space:nowrap;font-size:11px;">Deactivate</button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+                    <div>
+                        <div style="font-size:12px;font-weight:500;color:#26215C;">Delete account permanently</div>
+                        <div style="font-size:11px;color:#888;">This action is irreversible. All your data will be removed.</div>
+                    </div>
+                    <button class="vt-btn vt-btn-danger" style="white-space:nowrap;font-size:11px;">Delete account</button>
+                </div>
+            </div>
+
+        </div>
+
+        @* Right sidebar *@
+        <div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-id-badge" aria-hidden="true"></i> Account summary
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
+                    <span style="color:#888;">Role</span>
+                    <span style="font-weight:500;">@Context.Session.GetString("UserRole")</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
+                    <span style="color:#888;">Seller profile</span>
+                    @if (hasSellerProfile)
+                    {
+                        <span style="font-weight:500;color:#27500A;">Active</span>
+                    }
+                    else
+                    {
+                        <span style="font-weight:500;color:#B45309;">Not activated</span>
+                    }
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:12px;">
+                    <span style="color:#888;">Current mode</span>
+                    <span style="font-weight:500;">@currentMode</span>
+                </div>
+            </div>
+
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-shield-check" aria-hidden="true"></i> Account badges
+                </div>
+                <span style="font-size:10px;border-radius:5px;padding:3px 8px;display:inline-flex;align-items:center;gap:3px;margin-bottom:6px;background:#EAF3DE;color:#27500A;">
+                    <i class="ti ti-check" aria-hidden="true"></i> Verified student
+                </span><br>
+                <span style="font-size:10px;border-radius:5px;padding:3px 8px;display:inline-flex;align-items:center;gap:3px;margin-bottom:6px;background:#EEEDFE;color:#3C3489;">
+                    <i class="ti ti-building" aria-hidden="true"></i> Campus locked
+                </span><br>
+                @if (hasSellerProfile)
+                {
+                    <span style="font-size:10px;border-radius:5px;padding:3px 8px;display:inline-flex;align-items:center;gap:3px;background:#EAF3DE;color:#27500A;">
+                        <i class="ti ti-store" aria-hidden="true"></i> Seller activated
+                    </span>
+                }
+                else
+                {
+                    <span style="font-size:10px;border-radius:5px;padding:3px 8px;display:inline-flex;align-items:center;gap:3px;background:#f5f4f9;color:#666;border:0.5px solid #e0ddf5;">
+                        <i class="ti ti-store" aria-hidden="true"></i> Seller not activated
+                    </span>
+                }
+
+                @* Only show activate button if not yet a seller *@
+                @if (!hasSellerProfile)
+                {
+                    <div style="margin-top:12px;padding-top:10px;border-top:0.5px solid #e0ddf5;">
+                        <a href="/seller/activate" class="vt-btn vt-btn-primary" style="width:100%;justify-content:center;font-size:11px;">
+                            <i class="ti ti-store" aria-hidden="true"></i> Activate seller profile
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <a href="/auth/logout" class="vt-btn vt-btn-outline" style="width:100%;justify-content:center;">
                     <i class="ti ti-logout" aria-hidden="true"></i> Log out
                 </a>
             </div>
         </div>
+
     </div>
 </div>

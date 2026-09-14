@@ -60,6 +60,9 @@ namespace VarsityTrade.Web.Controllers.Auth
             // Store the token and user info in session
             StoreUserSession(result);
 
+            // Check if this user already has a seller profile and store it in session
+            await CheckAndStoreSellerProfileAsync(result.AccessToken);
+
             // Redirect based on role
             if (result.Role == "Admin")
                 return RedirectToAction("Index", "Admin", new { area = "" });
@@ -159,14 +162,19 @@ namespace VarsityTrade.Web.Controllers.Auth
             HttpContext.Session.SetString("UserEmail", result.Email);
             HttpContext.Session.SetString("UserRole", result.Role);
             HttpContext.Session.SetString("UniversityId", result.UniversityId.ToString());
-
-            // Store first and last name separately for display
             HttpContext.Session.SetString("FirstName", result.FirstName);
             HttpContext.Session.SetString("LastName", result.LastName);
 
             // Store initials for the avatar circle in the navbar
             var initials = $"{result.FirstName[0]}{result.LastName[0]}".ToUpper();
             HttpContext.Session.SetString("UserInitials", initials);
+
+            // HasSellerProfile defaults to false — will be updated after checking the API
+            HttpContext.Session.SetString("HasSellerProfile", "false");
+
+            // Default mode is Buyer — user switches to Seller explicitly
+            // This controls which sidebar and features are shown
+            HttpContext.Session.SetString("CurrentMode", "Buyer");
         }
 
         // Loads the list of universities from the API for the register dropdown
@@ -175,6 +183,41 @@ namespace VarsityTrade.Web.Controllers.Auth
             // The universities endpoint is public — no auth required
             var universities = await _api.GetAsync<List<UniversityOption>>("api/universities");
             return universities ?? new List<UniversityOption>();
+        }
+        // Checks if the logged in user has an active seller profile
+        // and stores the result in session so the sidebar and navbar show correctly
+        private async Task CheckAndStoreSellerProfileAsync(string accessToken)
+        {
+            try
+            {
+                // Set the token in session so ApiService can attach it
+                HttpContext.Session.SetString("AccessToken", accessToken);
+
+                // Use GetWithStatusAsync so we can distinguish 200 vs 404 vs 401
+                var (success, _, statusCode) = await _api.GetWithStatusAsync<SellerProfileExistsViewModel>(
+                    "api/sellerprofiles/my");
+
+
+
+                if (success && statusCode == 200)
+                {
+                    // User has an active seller profile
+                    HttpContext.Session.SetString("HasSellerProfile", "true");
+                }
+                else
+                {
+                    // 404 = no seller profile yet, 401 = token issue
+                    HttpContext.Session.SetString("HasSellerProfile", "false");
+                }
+
+                // Always start in Buyer mode on login
+                HttpContext.Session.SetString("CurrentMode", "Buyer");
+            }
+            catch
+            {
+                HttpContext.Session.SetString("HasSellerProfile", "false");
+                HttpContext.Session.SetString("CurrentMode", "Buyer");
+            }
         }
     }
 }

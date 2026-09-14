@@ -158,5 +158,25 @@ namespace VarsityTrade.Web.Services
             var data = JsonConvert.DeserializeObject<T>(responseJson);
             return (true, data, statusCode);
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET WITH STATUS — returns the HTTP status code alongside the data
+        // Used when we need to distinguish between 404 (not found) and
+        // 401 (unauthorized) vs 200 (success)
+        // ─────────────────────────────────────────────────────────────
+        public async Task<(bool Success, T? Data, int StatusCode)> GetWithStatusAsync<T>(string endpoint)
+        {
+            SetAuthHeader();
+
+            var response = await _httpClient.GetAsync($"{_apiBaseUrl}/{endpoint}");
+            var statusCode = (int)response.StatusCode;
+
+            if (!response.IsSuccessStatusCode)
+                return (false, default, statusCode);
+
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonConvert.DeserializeObject<T>(json);
+            return (true, data, statusCode);
+        }
     }
 }

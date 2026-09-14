@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc; // Provides Controller and IActionResult
 using VarsityTrade.Web.Models.Listings; // Provides Listing view models
 using VarsityTrade.Web.Services; // Provides ApiService
+using System.Text.Json; // Provides JsonElement for safe API response mapping
 
 namespace VarsityTrade.Web.Controllers
 {
@@ -25,29 +26,41 @@ namespace VarsityTrade.Web.Controllers
         [HttpGet("browse")]
         public async Task<IActionResult> Browse(string? q, string? category, string? condition)
         {
-            // Get the university ID from session — set at login
             var universityIdStr = HttpContext.Session.GetString("UniversityId");
-
-            // If not logged in use university 1 as default for guest browsing
             var universityId = int.TryParse(universityIdStr, out var uid) ? uid : 1;
 
-            // Get the university name for the campus lock banner
-            var universityName = await GetUniversityNameAsync(universityId);
-
-            // Fetch listings from the API for this university
-            var listings = await _api.GetAsync<List<ListingCardViewModel>>(
+            // Fetch raw listings from API
+            var raw = await _api.GetAsync<List<System.Text.Json.JsonElement>>(
                 $"api/listings/university/{universityId}");
+
+            // Map to view model — handles different field name casings from the API
+            var listings = raw?.Select(l => new ListingCardViewModel
+            {
+                ListingId = l.TryGetProperty("listingId", out var lid) ? lid.GetInt32() : 0,
+                Title = l.TryGetProperty("title", out var t) ? t.GetString()! : "",
+                Price = l.TryGetProperty("price", out var p) ? p.GetDecimal() : 0,
+                Condition = l.TryGetProperty("condition", out var cond) ? cond.GetString()! : "",
+                CategoryName = l.TryGetProperty("categoryName", out var cat) ? cat.GetString()! : "",
+                Status = l.TryGetProperty("status", out var st) ? st.GetString()! : "",
+                StoreName = l.TryGetProperty("storeName", out var sn) ? sn.GetString()! : "",
+                ViewCount = l.TryGetProperty("viewCount", out var vc) ? vc.GetInt32() : 0,
+                IsFeatured = l.TryGetProperty("isFeatured", out var feat) ? feat.GetBoolean() : false,
+                UniversityShortName = l.TryGetProperty("universityShortName", out var us) ? us.GetString()! : "",
+                CreatedAt = l.TryGetProperty("createdAt", out var ca) ? ca.GetDateTime() : DateTime.UtcNow,
+            }).ToList() ?? new List<ListingCardViewModel>();
+
+            // Get university name for campus lock banner
+            var universityName = await GetUniversityNameAsync(universityId);
 
             var model = new BrowseViewModel
             {
-                Listings = listings ?? new List<ListingCardViewModel>(),
+                Listings = listings,
                 UniversityName = universityName,
                 SearchQuery = q,
                 SelectedCategory = category,
                 SelectedCondition = condition,
             };
 
-            // Apply client-side filters if provided
             if (!string.IsNullOrEmpty(q))
                 model.Listings = model.Listings
                     .Where(l => l.Title.Contains(q, StringComparison.OrdinalIgnoreCase)

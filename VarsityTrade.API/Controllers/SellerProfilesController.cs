@@ -54,7 +54,7 @@ namespace VarsityTrade.API.Controllers
             var profile=await _sellerProfileService.GetSellerProfileByUserIdAsync(userId);
             
             if(profile == null)
-                return NotFound(new { message = "You do not an active seller profile" });
+                return NotFound(new { message = "You do not have an active seller profile" });
             return Ok(profile);
 
         }

@@ -98,8 +98,8 @@ namespace VarsityTrade.Application.Services
             // Create the new listing entity from the request DTO
             var listing = new Listing
             {
-                SellerProfileId = sellerProfile.SellerProfileId,//Link to seller profile
-                UniversityId = sellerProfile.UserId, // Campus lock from seller's university
+                SellerProfileId = sellerProfile.SellerProfileId,
+                UniversityId = sellerProfile.User.UniversityId, // Must come from the seller's user
                 CategoryId = request.CategoryId,
                 ConditionId = request.ConditionId,
                 ListingStatusId = activeStatus.ListingStatusId,
@@ -111,10 +111,10 @@ namespace VarsityTrade.Application.Services
                 Quantity = request.Quantity,
                 CampusPickup = request.CampusPickup,
                 DeliveryAvailable = request.DeliveryAvailable,
-                ViewCount = 0,        // New listings start with zero views
-                IsFeatured = false,    // Featured status is set by admin only
+                ViewCount = 0,
+                IsFeatured = false,
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(90), // Default 90 day expiry
+                ExpiresAt = DateTime.UtcNow.AddDays(90),
             };
 
             // Save the listing to the database

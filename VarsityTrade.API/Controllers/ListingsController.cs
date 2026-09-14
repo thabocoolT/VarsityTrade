@@ -1,8 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization; // Provides Authorize attribute
 using Microsoft.AspNetCore.Mvc; // Provides ControllerBase, Route, HttpGet etc
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims; // Provides ClaimTypes for reading user identity
 using VarsityTrade.Core.DTOs.Listings; // Provides Listing DTOs
 using VarsityTrade.Core.Interfaces; // Provides IListingService
+using VarsityTrade.Infrastructure.Data; // Provides VarsityTradeDbContext
+
 
 
 namespace VarsityTrade.API.Controllers
@@ -13,10 +16,18 @@ namespace VarsityTrade.API.Controllers
     {
         //IListingService is injected-controller stays thin
         private readonly IListingService _listingService;
+        private readonly VarsityTradeDbContext _context;
 
-        public ListingsController(IListingService listingService)
+        public ListingsController(IListingService listingService, VarsityTradeDbContext context)
         {
-            _listingService= listingService;
+            _listingService = listingService;
+            _context = context;
+        }
+
+        private async Task<VarsityTrade.Core.Entities.SellerProfile?> GetSellerProfileByUserIdAsync(int userId)
+        {
+            return await _context.SellerProfiles
+                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.IsActive);
         }
 
         //--------------------------------------------------------
@@ -130,6 +141,56 @@ namespace VarsityTrade.API.Controllers
 
             //Return 204 No Content on successful deletion
             return NoContent();
+        }
+
+        // Helper to read the current user ID from the JWT token
+        // Same pattern used in all other controllers
+        private int? GetCurrentUserId()
+        {
+            var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?? User.FindFirst("sub");
+            return claim != null ? int.Parse(claim.Value) : null;
+        }
+        /// <summary>Returns all listings belonging to the logged in seller.</summary>
+        [HttpGet("my")]
+        [Authorize]
+        public async Task<IActionResult> GetMyListings()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var sellerProfile = await GetSellerProfileByUserIdAsync(userId.Value);
+            if (sellerProfile == null)
+                return Ok(new List<object>());
+
+            var listings = await _context.Listings
+                .Include(l => l.ListingStatus)
+                .Include(l => l.Category)
+                .Include(l => l.Condition)
+                .Include(l => l.ListingImages)
+                .Where(l => l.SellerProfileId == sellerProfile.SellerProfileId)
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => new
+                {
+                    l.ListingId,
+                    l.Title,
+                    l.Price,
+                    l.ViewCount,
+                    l.IsFeatured,
+                    l.CreatedAt,
+                    l.DeletedAt,
+                    Status = l.ListingStatus != null ? l.ListingStatus.Name : "Unknown",
+                    Condition = l.Condition != null ? l.Condition.Name : "Unknown",
+                    CategoryName = l.Category != null ? l.Category.Name : "Unknown",
+                    CoverImageUrl = l.ListingImages != null
+                        ? l.ListingImages.Where(i => i.IsCoverImage).Select(i => i.ImagePath).FirstOrDefault()
+                          ?? l.ListingImages.Select(i => i.ImagePath).FirstOrDefault()
+                        : null
+                })
+                .ToListAsync();
+
+            return Ok(listings);
         }
     }
 }

@@ -9,14 +9,9 @@
     @await Html.PartialAsync("_Sidebar")
 
     <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div class="vt-card-title" style="margin-bottom:0;">
-                <i class="ti ti-list" aria-hidden="true"></i> My Listings
-            </div>
-            <a href="/seller/listings/create" class="vt-btn vt-btn-primary">
-                <i class="ti ti-plus" aria-hidden="true"></i> New listing
-            </a>
-        </div>
+        <div class="vt-card-title" style="margin-bottom:14px;">
+            <i class="ti ti-list" aria-hidden="true"></i> My Listings
+        </div> 
 
         <div class="vt-filter-tabs">
             @foreach (var f in new[] { "All", "Active", "Reserved", "Sold", "Expired" })

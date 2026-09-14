@@ -14,4 +14,11 @@
         public string Role { get; set; } = string.Empty;
         public int UniversityId { get; set; }
     }
+    // Used to check if a seller profile exists — only needs to know if the call succeeded
+    public class SellerProfileExistsViewModel
+    {
+        public int SellerProfileId { get; set; }
+        public string StoreName { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
 }

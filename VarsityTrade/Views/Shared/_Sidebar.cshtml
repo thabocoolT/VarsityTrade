@@ -1,16 +1,12 @@
-﻿@* Collapsible burger sidebar — shown on all authenticated pages *@
-@* The active class is set by passing SidebarPage in ViewData *@
-
-@{
+﻿@{
     var page = ViewData["SidebarPage"]?.ToString() ?? "";
-    var isSeller = Context.Session.GetString("HasSellerProfile") == "true"
-    || Context.Request.Cookies["HasSellerProfile"] == "true";
+    var currentMode = Context.Session.GetString("CurrentMode") ?? "Buyer";
+    var isSeller = currentMode == "Seller";
     var isAdmin = Context.Session.GetString("UserRole") == "Admin";
 }
 
 <div class="vt-sidebar">
 
-    <!-- Burger toggle -->
     <div class="vt-burger" title="Menu">
         <i class="ti ti-menu-2" aria-hidden="true"></i>
     </div>
@@ -19,8 +15,8 @@
 
     @if (isAdmin)
     {
-        <!-- Admin sidebar icons -->
-        <a href="/admin" class="vt-sidebar-icon @(page == "admin-dashboard" ? "active" : "")" title="Admin Dashboard">
+        @* ADMIN SIDEBAR *@
+        <a href="/admin" class="vt-sidebar-icon @(page == "admin-dashboard" ? "active" : "")" title="Dashboard">
             <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
         </a>
         <a href="/admin/users" class="vt-sidebar-icon @(page == "admin-users" ? "active" : "")" title="Manage Users">
@@ -38,14 +34,54 @@
         <a href="/admin/banner" class="vt-sidebar-icon @(page == "admin-banner" ? "active" : "")" title="Banner Manager">
             <i class="ti ti-photo" aria-hidden="true"></i>
         </a>
+        <div class="vt-sidebar-divider"></div>
+        <a href="/auth/logout" class="vt-sidebar-icon" title="Log out">
+            <i class="ti ti-logout" aria-hidden="true"></i>
+        </a>
+    }
+    else if (isSeller)
+    {
+        @* SELLER MODE SIDEBAR — only selling features *@
+        <a href="/seller" class="vt-sidebar-icon @(page == "seller-dashboard" ? "active" : "")" title="Seller Dashboard">
+            <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
+        </a>
+        <a href="/seller/listings" class="vt-sidebar-icon @(page == "seller-listings" ? "active" : "")" title="My Listings">
+            <i class="ti ti-list" aria-hidden="true"></i>
+        </a>
+        <a href="/seller/listings/create" class="vt-sidebar-icon @(page == "seller-create" ? "active" : "")" title="New Listing">
+            <i class="ti ti-plus" aria-hidden="true"></i>
+        </a>
+        <a href="/seller/offers" class="vt-sidebar-icon @(page == "seller-offers" ? "active" : "")" title="Received Offers">
+            <i class="ti ti-tag" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/inbox" class="vt-sidebar-icon @(page == "seller-inbox" ? "active" : "")" title="Seller Inbox">
+            <i class="ti ti-message-circle" aria-hidden="true"></i>
+        </a>
+        <a href="/seller/reviews" class="vt-sidebar-icon @(page == "seller-reviews" ? "active" : "")" title="My Reviews">
+            <i class="ti ti-star" aria-hidden="true"></i>
+        </a>
+        <div class="vt-sidebar-divider"></div>
+        <a href="/buyer/profile" class="vt-sidebar-icon @(page == "profile" ? "active" : "")" title="Account">
+            <i class="ti ti-user" aria-hidden="true"></i>
+        </a>
+        <a href="/buyer/notifications" class="vt-sidebar-icon @(page == "notifications" ? "active" : "")" title="Notifications">
+            <i class="ti ti-bell" aria-hidden="true"></i>
+        </a>
+        <div class="vt-sidebar-divider"></div>
+        <a href="/seller/switch-to-buyer" class="vt-sidebar-icon" title="Switch to Buyer">
+            <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+        </a>
+        <a href="/auth/logout" class="vt-sidebar-icon" title="Log out">
+            <i class="ti ti-logout" aria-hidden="true"></i>
+        </a>
     }
     else
     {
-        <!-- Buyer sidebar icons -->
+        @* BUYER MODE SIDEBAR — only buying features *@
         <a href="/buyer" class="vt-sidebar-icon @(page == "buyer-dashboard" ? "active" : "")" title="Dashboard">
             <i class="ti ti-layout-dashboard" aria-hidden="true"></i>
         </a>
-        <a href="/listings/browse" class="vt-sidebar-icon @(page == "browse" ? "active" : "")" title="Browse">
+        <a href="/listings/browse" class="vt-sidebar-icon @(page == "browse" ? "active" : "")" title="Browse Listings">
             <i class="ti ti-search" aria-hidden="true"></i>
         </a>
         <a href="/buyer/saved" class="vt-sidebar-icon @(page == "saved" ? "active" : "")" title="Saved Listings">
@@ -60,34 +96,7 @@
         <a href="/buyer/reviews" class="vt-sidebar-icon @(page == "reviews" ? "active" : "")" title="My Reviews">
             <i class="ti ti-star" aria-hidden="true"></i>
         </a>
-
-        @if (isSeller)
-        {
-            <div class="vt-sidebar-divider"></div>
-
-            <!-- Seller mode -->
-            <a href="/seller/switch"
-               class="vt-sidebar-icon @(page == "seller-dashboard" ? "active" : "")"
-               title="Switch to Seller">
-                <i class="ti ti-store" aria-hidden="true"></i>
-            </a>
-
-            <a href="/seller/listings"
-               class="vt-sidebar-icon @(page == "seller-listings" ? "active" : "")"
-               title="My Listings">
-                <i class="ti ti-list" aria-hidden="true"></i>
-            </a>
-
-            <a href="/seller/offers"
-               class="vt-sidebar-icon @(page == "seller-offers" ? "active" : "")"
-               title="Received Offers">
-                <i class="ti ti-tag" aria-hidden="true"></i>
-            </a>
-        }
-
         <div class="vt-sidebar-divider"></div>
-
-        <!-- Common bottom icons -->
         <a href="/buyer/profile" class="vt-sidebar-icon @(page == "profile" ? "active" : "")" title="My Profile">
             <i class="ti ti-user" aria-hidden="true"></i>
         </a>

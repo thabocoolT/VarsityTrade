@@ -62,30 +62,81 @@
 
         @if (Context.Session.GetString("AccessToken") != null)
         {
-            <!-- Authenticated nav icons -->
-            <div class="vt-nav-icons">
-                <a href="/buyer/inbox" class="vt-nav-icon-btn" title="Inbox">
-                    <i class="ti ti-message-circle" aria-hidden="true"></i>
-                </a>
-                <a href="/buyer/notifications" class="vt-nav-icon-btn" title="Notifications">
-                    <i class="ti ti-bell" aria-hidden="true"></i>
-                </a>
-                <a href="/buyer/profile" class="vt-nav-avatar" title="My Profile">
-                    @(Context.Session.GetString("UserInitials") ?? "?")
-                </a>
+            var currentMode = Context.Session.GetString("CurrentMode") ?? "Buyer";
+            var hasSellerProfile = Context.Session.GetString("HasSellerProfile") == "true";
+            var isSeller = currentMode == "Seller";
 
-                <!-- Temporary logout link — will move to sidebar in Step 5.5 -->
-                <a href="/auth/logout" class="vt-nav-icon-btn" title="Log out">
-                    <i class="ti ti-logout" aria-hidden="true"></i>
-                </a>
+            <div class="vt-nav-icons">
+
+                @if (isSeller)
+                {
+                    @* SELLER MODE navbar icons *@
+                    <a href="/buyer/inbox" class="vt-nav-icon-btn" title="Seller Inbox">
+                        <i class="ti ti-message-circle" aria-hidden="true"></i>
+                    </a>
+                    <a href="/buyer/notifications" class="vt-nav-icon-btn" title="Notifications">
+                        <i class="ti ti-bell" aria-hidden="true"></i>
+                    </a>
+                    <a href="/buyer/profile" class="vt-nav-avatar" title="My Account">
+                        @(Context.Session.GetString("UserInitials") ?? "?")
+                    </a>
+                    <a href="/auth/logout" class="vt-nav-icon-btn" title="Log out">
+                        <i class="ti ti-logout" aria-hidden="true"></i>
+                    </a>
+                }
+                else
+                {
+                    @* BUYER MODE navbar icons *@
+                    <a href="/buyer/inbox" class="vt-nav-icon-btn" title="Inbox">
+                        <i class="ti ti-message-circle" aria-hidden="true"></i>
+                    </a>
+                    <a href="/buyer/notifications" class="vt-nav-icon-btn" title="Notifications">
+                        <i class="ti ti-bell" aria-hidden="true"></i>
+                    </a>
+                    <a href="/buyer/profile" class="vt-nav-avatar" title="My Profile">
+                        @(Context.Session.GetString("UserInitials") ?? "?")
+                    </a>
+                    <a href="/auth/logout" class="vt-nav-icon-btn" title="Log out">
+                        <i class="ti ti-logout" aria-hidden="true"></i>
+                    </a>
+                }
+
             </div>
-            <a href="/listings/create" class="vt-sell-btn">
-                <i class="ti ti-plus" aria-hidden="true"></i> New listing
-            </a>
+
+            @* Mode switch button and action button *@
+            @if (isSeller)
+            {
+                @* In seller mode — show Switch to Buyer and New Listing *@
+                <a href="/seller/switch-to-buyer" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
+                    <i class="ti ti-shopping-cart" aria-hidden="true"></i> Switch to buyer
+                </a>
+                <a href="/seller/listings/create" class="vt-sell-btn">
+                    <i class="ti ti-plus" aria-hidden="true"></i> New listing
+                </a>
+            }
+            else
+            {
+                @* In buyer mode — show Switch to Seller only if they have a seller profile *@
+                @if (hasSellerProfile)
+                {
+                    <a href="/seller/switch-to-seller" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
+                        <i class="ti ti-store" aria-hidden="true"></i> My Shop
+                    </a>
+                }
+                else
+                {
+                    <a href="/seller/activate" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
+                        <i class="ti ti-store" aria-hidden="true"></i> Start selling
+                    </a>
+                }
+                <a href="/listings/browse" class="vt-sell-btn">
+                    <i class="ti ti-search" aria-hidden="true"></i> Browse
+                </a>
+            }
         }
         else
         {
-            <!-- Guest nav links -->
+            @* Guest navbar *@
             <div class="vt-nav-links">
                 <a href="/auth/login">Log in</a>
             </div>
