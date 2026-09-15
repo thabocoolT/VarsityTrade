@@ -1,97 +1,184 @@
 ﻿@{
     ViewData["Title"] = "Received Offers";
+    ViewData["SidebarPage"] = "seller-offers";
     Layout = "_Layout";
     var offers = ViewBag.Offers as List<VarsityTrade.Web.Models.Seller.ReceivedOfferViewModel> ?? new();
     var activeFilter = ViewBag.ActiveFilter as string ?? "All";
+    var pendingCount = offers.Count(o => o.Status == "Pending");
+    var acceptedCount = offers.Count(o => o.Status == "Accepted");
+    var rejectedCount = offers.Count(o => o.Status == "Rejected");
 }
 
 <div class="vt-body">
-    @await Html.PartialAsync("_Sidebar")
+    
+    @await Html.PartialAsync("_SidebarFull")
+    <div class="vt-main">
 
-    <div>
-        <div class="vt-card-title" style="margin-bottom:14px;">
-            <i class="ti ti-tag" aria-hidden="true"></i> Received Offers
+        @* Page header *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                    <i class="ti ti-arrows-exchange" aria-hidden="true" style="color:#4B3BC7;"></i> Received offers
+                </div>
+                <div style="font-size:11px;color:#888;">Review and respond to buyer offers</div>
+            </div>
         </div>
 
-        <div class="vt-filter-tabs">
+        @* Stats row *@
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-clock" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@pendingCount</div><div style="font-size:10px;color:#888;">Pending</div></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-check" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@acceptedCount</div><div style="font-size:10px;color:#888;">Accepted</div></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#FDECEA;color:#B91C1C;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-x" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@rejectedCount</div><div style="font-size:10px;color:#888;">Rejected</div></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#EEEDFE;color:#4B3BC7;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-arrows-exchange" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@offers.Count</div><div style="font-size:10px;color:#888;">Total</div></div>
+            </div>
+        </div>
+
+        @* Filter tabs *@
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
             @foreach (var f in new[] { "All", "Pending", "Accepted", "Rejected" })
             {
                 <a href="/seller/offers?filter=@f"
-                   class="vt-filter-tab @(activeFilter == f ? "active" : "")">@f</a>
+                   style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
+                    @f
+                </a>
             }
         </div>
 
+        @* Offer cards — matching wireframe card style *@
         @if (offers.Any())
         {
-            @foreach (var offer in offers)
-            {
-                <div class="vt-card" style="margin-bottom:10px;">
-                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-                        <div style="flex:1;">
-                            <div style="font-size:14px;font-weight:500;margin-bottom:4px;">@offer.ListingTitle</div>
-                            <div style="font-size:12px;color:var(--vt-text-muted);margin-bottom:4px;">
-                                <i class="ti ti-user" aria-hidden="true"></i>
-                                @offer.BuyerFirstName @offer.BuyerLastName
-                                · @offer.BuyerSuburb
-                                @if (!string.IsNullOrEmpty(offer.BuyerResidenceName))
-                                {
-                                    <span>· @offer.BuyerResidenceName</span>
-                                }
-                            </div>
-                            <div style="font-size:13px;color:var(--vt-primary);margin-bottom:4px;">
-                                @offer.OfferType offer
-                                @if (offer.OfferAmount.HasValue)
-                                {
-                                    <span>— R @offer.OfferAmount.Value.ToString("N0")</span>
-                                }
-                            </div>
-                            @if (offer.OfferItems.Any())
-                            {
-                                <div style="font-size:11px;color:var(--vt-text-muted);">
-                                    Trade items: @string.Join(", ", offer.OfferItems.Select(i => i.Title))
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                @foreach (var offer in offers)
+                {
+                    var isUnread = offer.Status == "Pending";
+                    var initials = $"{offer.BuyerFirstName[0]}{offer.BuyerLastName[0]}".ToUpper();
+                    var statusStyle = offer.Status switch
+                    {
+                        "Accepted" => "background:#EAF3DE;color:#27500A;",
+                        "Rejected" => "background:#FDECEA;color:#B91C1C;",
+                        _ => "background:#FEF3E2;color:#B45309;"
+                    };
+                    <div style="background:#fff;border:0.5px solid #e0ddf5;@(isUnread ? "border-left:3px solid #4B3BC7;" : "")border-radius:12px;overflow:hidden;">
+
+                        @* Offer header *@
+                        <div style="padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid #f0eefb;">
+                            <div style="width:38px;height:38px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;">@initials</div>
+                            <div style="flex:1;">
+                                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:2px;">@offer.BuyerFirstName @offer.BuyerLastName</div>
+                                <div style="font-size:11px;color:#888;display:flex;align-items:center;gap:6px;">
+                                    <i class="ti ti-map-pin" aria-hidden="true"></i> @offer.BuyerSuburb
+                                    @if (!string.IsNullOrEmpty(offer.BuyerResidenceName))
+                                    {
+                                        <span>· @offer.BuyerResidenceName</span>
+                                    }
                                 </div>
-                            }
+                            </div>
+                            <span style="font-size:10px;border-radius:5px;padding:4px 10px;font-weight:500;@statusStyle">@offer.Status</span>
                         </div>
-                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-                            @{
-                                var badgeClass = offer.Status switch
+
+                        @* Listing this offer is for *@
+                        <div style="display:flex;align-items:center;gap:8px;background:#f5f4f9;border-radius:7px;padding:7px 10px;margin:10px 16px;">
+                            <div style="width:32px;height:32px;background:#EEEDFE;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:14px;flex-shrink:0;">
+                                <i class="ti ti-tag" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:12px;font-weight:500;color:#26215C;">@offer.ListingTitle</div>
+                                <div style="font-size:11px;color:#4B3BC7;">
+                                    @offer.OfferType offer
+                                    @if (offer.OfferAmount.HasValue)
+                                    {
+                                        <span>— R @offer.OfferAmount.Value.ToString("N0")</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Offer details *@
+                        <div style="padding:0 16px 10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                            <div>
+                                <div style="font-size:10px;color:#888;margin-bottom:3px;">Offer type</div>
+                                <div style="font-size:12px;color:#26215C;font-weight:500;">@offer.OfferType</div>
+                            </div>
+                            <div>
+                                <div style="font-size:10px;color:#888;margin-bottom:3px;">Amount</div>
+                                <div style="font-size:12px;color:#26215C;font-weight:500;">
+                                    @(offer.OfferAmount.HasValue ? $"R {offer.OfferAmount.Value:N0}" : "Trade only")
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size:10px;color:#888;margin-bottom:3px;">Submitted</div>
+                                <div style="font-size:12px;color:#26215C;font-weight:500;">@offer.CreatedAt.ToString("dd MMM")</div>
+                            </div>
+                        </div>
+
+                        @* Trade items *@
+                        @if (offer.OfferItems.Any())
+                        {
+                            <div style="padding:0 16px 10px;">
+                                <div style="font-size:10px;color:#888;margin-bottom:4px;">Trade items offered</div>
+                                @foreach (var item in offer.OfferItems)
                                 {
-                                    "Accepted" => "vt-badge-success",
-                                    "Rejected" => "vt-badge-danger",
-                                    _ => "vt-badge-warning"
-                                };
-                            }
-                            <span class="vt-badge @badgeClass">@offer.Status</span>
+                                    <div style="font-size:12px;color:#26215C;">• @item.Title @(item.EstimatedValue.HasValue ? $"(~R {item.EstimatedValue.Value:N0})" : "")</div>
+                                }
+                            </div>
+                        }
+
+                        @* Accepted pickup note *@
+                        @if (offer.Status == "Accepted")
+                        {
+                            <div style="background:#EAF3DE;border:0.5px solid #A8D080;border-radius:7px;padding:8px 12px;font-size:11px;color:#27500A;display:flex;align-items:center;gap:6px;margin:0 16px 10px;">
+                                <i class="ti ti-check" aria-hidden="true"></i>
+                                Offer accepted — coordinate pickup with @offer.BuyerFirstName at @offer.BuyerSuburb@(!string.IsNullOrEmpty(offer.BuyerResidenceName) ? $", {offer.BuyerResidenceName}" : "").
+                            </div>
+                        }
+
+                        @* Footer actions *@
+                        <div style="padding:10px 16px;border-top:0.5px solid #f0eefb;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="font-size:11px;color:#aaa;">@offer.CreatedAt.ToString("dd MMM yyyy · HH:mm")</div>
                             @if (offer.Status == "Pending")
                             {
                                 <div style="display:flex;gap:6px;">
-                                    <form asp-controller="Seller" asp-action="AcceptOffer" method="post">
+                                    <a href="/buyer/inbox" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:6px;padding:7px 14px;font-size:11px;display:flex;align-items:center;gap:4px;text-decoration:none;">
+                                        <i class="ti ti-message-circle" aria-hidden="true"></i> Message
+                                    </a>
+                                    <form asp-controller="Seller" asp-action="RejectOffer" method="post" style="margin:0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="offerId" value="@offer.OfferId" />
-                                        <button type="submit" class="vt-btn vt-btn-success" style="font-size:11px;">
-                                            <i class="ti ti-check" aria-hidden="true"></i> Accept
+                                        <button type="submit" style="background:#FDECEA;color:#B91C1C;border:none;border-radius:6px;padding:7px 14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:500;">
+                                            <i class="ti ti-x" aria-hidden="true"></i> Decline
                                         </button>
                                     </form>
-                                    <form asp-controller="Seller" asp-action="RejectOffer" method="post">
+                                    <form asp-controller="Seller" asp-action="AcceptOffer" method="post" style="margin:0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="offerId" value="@offer.OfferId" />
-                                        <button type="submit" class="vt-btn vt-btn-danger" style="font-size:11px;">
-                                            <i class="ti ti-x" aria-hidden="true"></i> Reject
+                                        <button type="submit" style="background:#4B3BC7;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:500;">
+                                            <i class="ti ti-check" aria-hidden="true"></i> Accept
                                         </button>
                                     </form>
                                 </div>
                             }
                         </div>
                     </div>
-                </div>
-            }
+                }
+            </div>
         }
         else
         {
-            <div class="vt-card" style="text-align:center;padding:40px;">
-                <i class="ti ti-tag" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);display:block;margin-bottom:12px;"></i>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
+                <i class="ti ti-arrows-exchange" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
                 <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No offers received yet</div>
-                <p style="font-size:12px;color:var(--vt-text-muted);">Offers from buyers will appear here once they are submitted.</p>
+                <p style="font-size:12px;color:#888;">Offers from buyers will appear here once submitted.</p>
             </div>
         }
     </div>

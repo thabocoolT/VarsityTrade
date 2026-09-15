@@ -29,27 +29,28 @@ namespace VarsityTrade.Web.Controllers
             var universityIdStr = HttpContext.Session.GetString("UniversityId");
             var universityId = int.TryParse(universityIdStr, out var uid) ? uid : 1;
 
-            // Fetch raw listings from API
-            var raw = await _api.GetAsync<List<System.Text.Json.JsonElement>>(
-                $"api/listings/university/{universityId}");
+            // Fetch listings directly as the concrete view model
+            // Newtonsoft.Json handles camelCase → PascalCase automatically
+            var listings = await _api.GetAsync<List<ListingCardViewModel>>(
+                $"api/listings/university/{universityId}") ?? new List<ListingCardViewModel>();
 
-            // Map to view model — handles different field name casings from the API
-            var listings = raw?.Select(l => new ListingCardViewModel
-            {
-                ListingId = l.TryGetProperty("listingId", out var lid) ? lid.GetInt32() : 0,
-                Title = l.TryGetProperty("title", out var t) ? t.GetString()! : "",
-                Price = l.TryGetProperty("price", out var p) ? p.GetDecimal() : 0,
-                Condition = l.TryGetProperty("condition", out var cond) ? cond.GetString()! : "",
-                CategoryName = l.TryGetProperty("categoryName", out var cat) ? cat.GetString()! : "",
-                Status = l.TryGetProperty("status", out var st) ? st.GetString()! : "",
-                StoreName = l.TryGetProperty("storeName", out var sn) ? sn.GetString()! : "",
-                ViewCount = l.TryGetProperty("viewCount", out var vc) ? vc.GetInt32() : 0,
-                IsFeatured = l.TryGetProperty("isFeatured", out var feat) ? feat.GetBoolean() : false,
-                UniversityShortName = l.TryGetProperty("universityShortName", out var us) ? us.GetString()! : "",
-                CreatedAt = l.TryGetProperty("createdAt", out var ca) ? ca.GetDateTime() : DateTime.UtcNow,
-            }).ToList() ?? new List<ListingCardViewModel>();
+            // Apply filters
+            if (!string.IsNullOrEmpty(q))
+                listings = listings
+                    .Where(l => l.Title.Contains(q, StringComparison.OrdinalIgnoreCase)
+                             || l.CategoryName.Contains(q, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
-            // Get university name for campus lock banner
+            if (!string.IsNullOrEmpty(category))
+                listings = listings
+                    .Where(l => l.CategoryName.Equals(category, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            if (!string.IsNullOrEmpty(condition))
+                listings = listings
+                    .Where(l => l.Condition.Equals(condition, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
             var universityName = await GetUniversityNameAsync(universityId);
 
             var model = new BrowseViewModel
@@ -60,22 +61,6 @@ namespace VarsityTrade.Web.Controllers
                 SelectedCategory = category,
                 SelectedCondition = condition,
             };
-
-            if (!string.IsNullOrEmpty(q))
-                model.Listings = model.Listings
-                    .Where(l => l.Title.Contains(q, StringComparison.OrdinalIgnoreCase)
-                             || l.CategoryName.Contains(q, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-            if (!string.IsNullOrEmpty(category))
-                model.Listings = model.Listings
-                    .Where(l => l.CategoryName.Equals(category, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-
-            if (!string.IsNullOrEmpty(condition))
-                model.Listings = model.Listings
-                    .Where(l => l.Condition.Equals(condition, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
 
             ViewData["SidebarPage"] = "browse";
             return View(model);

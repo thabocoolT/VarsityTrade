@@ -1,56 +1,137 @@
 ﻿@{
     ViewData["Title"] = "My Listings";
+    ViewData["SidebarPage"] = "seller-listings";
     Layout = "_Layout";
     var listings = ViewBag.Listings as List<VarsityTrade.Web.Models.Seller.SellerListingViewModel> ?? new();
     var activeFilter = ViewBag.ActiveFilter as string ?? "All";
+    var activeCount = listings.Count(l => l.Status == "Active");
+    var soldCount = listings.Count(l => l.Status == "Sold");
+    var totalViews = listings.Sum(l => l.ViewCount);
 }
 
 <div class="vt-body">
-    @await Html.PartialAsync("_Sidebar")
+    
+    @await Html.PartialAsync("_SidebarFull")
+    <div class="vt-main">
 
-    <div>
-        <div class="vt-card-title" style="margin-bottom:14px;">
-            <i class="ti ti-list" aria-hidden="true"></i> My Listings
-        </div> 
+        @* Page header — matches wireframe *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                    <i class="ti ti-list" aria-hidden="true" style="color:#4B3BC7;"></i> My listings
+                </div>
+                <div style="font-size:11px;color:#888;">Manage all your active and past listings</div>
+            </div>
+            <a href="/seller/listings/create" style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px;text-decoration:none;">
+                <i class="ti ti-plus" aria-hidden="true"></i> Create new listing
+            </a>
+        </div>
 
-        <div class="vt-filter-tabs">
-            @foreach (var f in new[] { "All", "Active", "Reserved", "Sold", "Expired" })
+        @* Stats row *@
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#EEEDFE;color:#4B3BC7;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-list" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@activeCount</div><div style="font-size:10px;color:#888;">Active</div></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-check" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@soldCount</div><div style="font-size:10px;color:#888;">Sold</div></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-arrows-exchange" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">0</div><div style="font-size:10px;color:#888;">With offers</div></div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                <div style="width:30px;height:30px;border-radius:8px;background:#f5f4f9;color:#888;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-eye" aria-hidden="true"></i></div>
+                <div><div style="font-size:18px;font-weight:500;color:#26215C;">@totalViews</div><div style="font-size:10px;color:#888;">Total views</div></div>
+            </div>
+        </div>
+
+        @* Toolbar *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;">
+            <div style="flex:1;display:flex;align-items:center;border:0.5px solid #ddd;border-radius:6px;overflow:hidden;background:#f5f4f9;">
+                <i class="ti ti-search" aria-hidden="true" style="padding:0 8px;color:#aaa;font-size:14px;"></i>
+                <input type="text" placeholder="Search your listings..." style="flex:1;border:none;outline:none;padding:6px 10px;font-size:12px;background:transparent;color:#26215C;" />
+            </div>
+            <select style="border:0.5px solid #ddd;border-radius:6px;padding:5px 8px;font-size:12px;color:#444;background:#fff;">
+                <option>Sort: Newest first</option>
+                <option>Price: Low to high</option>
+                <option>Price: High to low</option>
+                <option>Most viewed</option>
+            </select>
+            <div style="display:flex;gap:4px;">
+                <div style="width:28px;height:28px;border:0.5px solid #AFA9EC;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:14px;background:#EEEDFE;">
+                    <i class="ti ti-layout-grid" aria-hidden="true"></i>
+                </div>
+                <div style="width:28px;height:28px;border:0.5px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px;">
+                    <i class="ti ti-list" aria-hidden="true"></i>
+                </div>
+            </div>
+        </div>
+
+        @* Filter tabs *@
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+            @foreach (var f in new[] { "All", "Active", "Sold", "Reserved" })
             {
                 <a href="/seller/listings?filter=@f"
-                   class="vt-filter-tab @(activeFilter == f ? "active" : "")">@f</a>
+                   style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
+                    @f @(f == "All" ? $"({listings.Count})" : f == "Active" ? $"({activeCount})" : f == "Sold" ? $"({soldCount})" : "")
+                </a>
             }
         </div>
 
+        @* Listings grid — 3 columns matching wireframe *@
         @if (listings.Any())
         {
-            <div class="vt-listing-grid">
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
                 @foreach (var listing in listings)
                 {
-                    <div class="vt-listing-card" style="cursor:default;">
-                        <div class="vt-listing-card-img">
+                    var isSold = listing.Status == "Sold";
+                    <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;overflow:hidden;">
+                        <div style="background:#f0eefb;height:86px;display:flex;align-items:center;justify-content:center;color:#7F77DD;font-size:28px;position:relative;">
                             <i class="ti ti-photo" aria-hidden="true"></i>
-                        </div>
-                        <div class="vt-listing-card-body">
-                            @if (listing.IsFeatured)
-                            {
-                                <span class="vt-badge vt-badge-primary" style="margin-bottom:4px;">Featured</span>
-                            }
-                            <div class="vt-listing-card-title">@listing.Title</div>
-                            <div class="vt-listing-card-price">R @listing.Price.ToString("N0")</div>
-                            <div class="vt-listing-card-meta">@listing.Status · @listing.ViewCount views</div>
-                            <div style="display:flex;gap:6px;margin-top:8px;">
-                                <a href="/listings/@listing.ListingId" class="vt-btn vt-btn-outline" style="font-size:10px;padding:4px 8px;">
-                                    View
-                                </a>
-                                <form asp-controller="Seller" asp-action="DeleteListing" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="listingId" value="@listing.ListingId" />
-                                    <button type="submit" class="vt-btn vt-btn-danger" style="font-size:10px;padding:4px 8px;"
-                                            onclick="return confirm('Delete this listing?')">
-                                        Delete
-                                    </button>
-                                </form>
+                            <span style="position:absolute;top:6px;left:6px;font-size:9px;border-radius:4px;padding:2px 6px;@(isSold ? "background:#f5f4f9;color:#888;" : "background:#EAF3DE;color:#27500A;")">@listing.Status</span>
+                            <div style="position:absolute;bottom:6px;right:6px;font-size:9px;color:#888;background:rgba(255,255,255,0.8);border-radius:4px;padding:1px 5px;display:flex;align-items:center;gap:2px;">
+                                <i class="ti ti-eye" aria-hidden="true"></i> @listing.ViewCount
                             </div>
+                        </div>
+                        <div style="padding:8px 10px;">
+                            <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@listing.Title</div>
+                            <div style="font-size:12px;font-weight:500;color:@(isSold ? "#aaa" : "#4B3BC7");margin-bottom:3px;@(isSold ? "text-decoration:line-through;" : "")">R @listing.Price.ToString("N0")</div>
+                            <div style="font-size:10px;color:#888;margin-bottom:6px;">@listing.CategoryName · @listing.Condition · @((int)(DateTime.UtcNow - listing.CreatedAt).TotalDays)d ago</div>
+                            @if (!isSold)
+                            {
+                                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;">
+                                    <a href="/seller/listings/edit/@listing.ListingId" style="background:#EEEDFE;color:#4B3BC7;border:none;border-radius:5px;padding:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;text-decoration:none;">
+                                        <i class="ti ti-edit" aria-hidden="true"></i> Edit
+                                    </a>
+                                    <form asp-controller="Seller" asp-action="MarkAsSold" method="post" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@listing.ListingId" />
+                                        <button type="submit" style="width:100%;background:#EAF3DE;color:#27500A;border:none;border-radius:5px;padding:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;">
+                                            <i class="ti ti-check" aria-hidden="true"></i> Sold
+                                        </button>
+                                    </form>
+                                    <form asp-controller="Seller" asp-action="DeleteListing" method="post" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="listingId" value="@listing.ListingId" />
+                                        <button type="submit" style="width:100%;background:#FDECEA;color:#B91C1C;border:none;border-radius:5px;padding:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;" onclick="return confirm('Delete this listing?')">
+                                            <i class="ti ti-trash" aria-hidden="true"></i> Del
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="display:grid;grid-template-columns:1fr 2fr;gap:4px;">
+                                    <a href="/listings/@listing.ListingId" style="background:#EEEDFE;color:#4B3BC7;border:none;border-radius:5px;padding:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;text-decoration:none;">
+                                        <i class="ti ti-eye" aria-hidden="true"></i> View
+                                    </a>
+                                    <button style="background:#f5f4f9;color:#666;border:none;border-radius:5px;padding:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;">
+                                        <i class="ti ti-refresh" aria-hidden="true"></i> Relist
+                                    </button>
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -58,13 +139,14 @@
         }
         else
         {
-            <div class="vt-card" style="text-align:center;padding:40px;">
-                <i class="ti ti-list" aria-hidden="true" style="font-size:40px;color:var(--vt-primary-muted);display:block;margin-bottom:12px;"></i>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
+                <i class="ti ti-list" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
                 <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No listings found</div>
-                <a href="/seller/listings/create" class="vt-btn vt-btn-primary" style="margin-top:12px;">
+                <a href="/seller/listings/create" style="display:inline-flex;align-items:center;gap:6px;background:#4B3BC7;color:#fff;border-radius:7px;padding:9px 18px;font-size:12px;font-weight:500;text-decoration:none;margin-top:12px;">
                     <i class="ti ti-plus" aria-hidden="true"></i> Create your first listing
                 </a>
             </div>
         }
+
     </div>
 </div>

@@ -265,6 +265,23 @@ a {
     padding: 16px 24px;
     min-height: calc(100vh - 100px);
 }
+.vt-body {
+    display: flex;
+    gap: 14px;
+    padding: 16px 24px;
+    align-items: start;
+    min-height: calc(100vh - 100px);
+}
+
+.vt-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.vt-body-no-sidebar {
+    padding: 16px 24px;
+    min-height: calc(100vh - 100px);
+}
 
 /* ── SIDEBAR ────────────────────────────────────────────────── */
 .vt-sidebar {

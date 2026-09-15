@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc; // Provides Controller and IActionResult
+using System.Text.Json; // Provides JsonElement for safe API response mapping
 using VarsityTrade.Web.Models.Seller; // Provides Seller view models
 using VarsityTrade.Web.Services; // Provides ApiService
-using System.Text.Json; // Provides JsonElement for safe API response mapping
+using Newtonsoft.Json;
 
 namespace VarsityTrade.Web.Controllers
 {
@@ -80,28 +81,25 @@ namespace VarsityTrade.Web.Controllers
             var auth = RequireAuth();
             if (auth != null) return auth;
 
-            var raw = await _api.GetAsync<List<System.Text.Json.JsonElement>>("api/listings/my");
+            var json = await _api.GetAsync<string>("api/listings/my");
 
-            var listings = raw?.Select(l => new SellerListingViewModel
-            {
-                ListingId = l.TryGetProperty("listingId", out var lid) ? lid.GetInt32() : 0,
-                Title = l.TryGetProperty("title", out var t) ? t.GetString()! : "",
-                Price = l.TryGetProperty("price", out var p) ? p.GetDecimal() : 0,
-                Status = l.TryGetProperty("status", out var st) ? st.GetString()! : "",
-                Condition = l.TryGetProperty("condition", out var c) ? c.GetString()! : "",
-                CategoryName = l.TryGetProperty("categoryName", out var cat) ? cat.GetString()! : "",
-                ViewCount = l.TryGetProperty("viewCount", out var vc) ? vc.GetInt32() : 0,
-                IsFeatured = l.TryGetProperty("isFeatured", out var feat) ? feat.GetBoolean() : false,
-                CreatedAt = l.TryGetProperty("createdAt", out var ca) ? ca.GetDateTime() : DateTime.UtcNow,
-            }).ToList() ?? new List<SellerListingViewModel>();
+            var listings = string.IsNullOrWhiteSpace(json)
+                ? new List<SellerListingViewModel>()
+                : JsonConvert.DeserializeObject<List<SellerListingViewModel>>(json)
+                  ?? new List<SellerListingViewModel>();
 
             var filtered = filter == "All"
                 ? listings
-                : listings.Where(l => l.Status.Equals(filter, StringComparison.OrdinalIgnoreCase)).ToList();
+                : listings
+                    .Where(l => l.Status.Equals(
+                        filter,
+                        StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
             ViewBag.Listings = filtered;
             ViewBag.ActiveFilter = filter;
             ViewData["SidebarPage"] = "seller-listings";
+
             return View();
         }
         // ─────────────────────────────────────────────────────────────
@@ -163,6 +161,21 @@ namespace VarsityTrade.Web.Controllers
 
             return RedirectToAction("Listings");
         }
+
+        // ─────────────────────────────────────────────────────────────
+// POST /seller/listings/mark-sold
+// Marks a listing as sold
+// ─────────────────────────────────────────────────────────────
+[HttpPost("listings/mark-sold")]
+public async Task<IActionResult> MarkAsSold(int listingId)
+{
+    var auth = RequireAuth();
+    if (auth != null) return auth;
+
+    // Call the API to update the listing status to Sold
+    // Deferred to QA — will wire to a dedicated endpoint in Phase 5.8
+    return RedirectToAction("Listings");
+}
 
         // ─────────────────────────────────────────────────────────────
         // GET /seller/offers

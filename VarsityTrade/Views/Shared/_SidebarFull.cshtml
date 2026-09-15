@@ -1,0 +1,120 @@
+﻿@using Microsoft.AspNetCore.Html
+
+@{
+    var page = ViewData["SidebarPage"]?.ToString() ?? "";
+    var hasSellerProfile = Context.Session.GetString("HasSellerProfile") == "true";
+    var currentMode = Context.Session.GetString("CurrentMode") ?? "Buyer";
+    var isSeller = currentMode == "Seller";
+    var isAdmin = Context.Session.GetString("UserRole") == "Admin";
+    var firstName = Context.Session.GetString("FirstName") ?? "";
+    var lastName = Context.Session.GetString("LastName") ?? "";
+    var initials = Context.Session.GetString("UserInitials") ?? "?";
+}
+
+<div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;overflow:hidden;width:220px;flex-shrink:0;">
+
+    @* Profile card *@
+    <div style="background:linear-gradient(135deg,#4B3BC7,#26215C);padding:16px;text-align:center;">
+        <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:500;margin:0 auto 8px;border:1.5px solid rgba(255,255,255,0.3);">
+            @initials
+        </div>
+        <div style="font-size:13px;font-weight:500;color:#fff;margin-bottom:2px;">@firstName @lastName</div>
+        <div style="font-size:10px;color:#AFA9EC;display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;">
+            <i class="ti ti-building" aria-hidden="true" style="font-size:11px;"></i>
+            NWU Vaal Campus
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.15);color:#fff;font-size:10px;border-radius:5px;padding:3px 8px;">
+            @if (isSeller)
+            {
+                <i class="ti ti-store" aria-hidden="true"></i>
+                <span>Seller account</span>
+            }
+            else
+            {
+                <i class="ti ti-shopping-cart" aria-hidden="true"></i>
+                <span>Buyer account</span>
+            }
+        </div>
+    </div>
+
+    @* Navigation *@
+    <div style="padding:8px 0;">
+
+        @if (isAdmin)
+        {
+            @* ADMIN NAV *@
+            @NavItem("/admin", "ti-layout-dashboard", "Dashboard", page == "admin-dashboard")
+            @NavItem("/admin/users", "ti-users", "Manage users", page == "admin-users")
+            @NavItem("/admin/listings", "ti-list", "Manage listings", page == "admin-listings")
+            @NavItem("/admin/reports", "ti-flag", "Reports", page == "admin-reports")
+            @NavItem("/admin/stats", "ti-chart-bar", "Statistics", page == "admin-stats")
+            @NavItem("/admin/banner", "ti-photo", "Banner manager", page == "admin-banner")
+            <div style="height:0.5px;background:#e0ddf5;margin:6px 14px;"></div>
+            @NavItem("/auth/logout", "ti-logout", "Log out", false)
+        }
+        else if (isSeller)
+        {
+            @* SELLER NAV *@
+            @NavItem("/seller", "ti-layout-dashboard", "Dashboard", page == "seller-dashboard")
+            @NavItem("/seller/listings", "ti-list", "My listings", page == "seller-listings")
+            @NavItem("/seller/listings/create", "ti-plus", "New listing", page == "seller-create")
+            @NavItem("/seller/offers", "ti-arrows-exchange", "Received offers", page == "seller-offers")
+            @NavItem("/buyer/inbox", "ti-message-circle", "Inbox", page == "seller-inbox")
+            @NavItem("/seller/reviews", "ti-star", "My reviews", page == "seller-reviews")
+            <div style="height:0.5px;background:#e0ddf5;margin:6px 14px;"></div>
+            @NavItem("/buyer/profile", "ti-user", "My account", page == "profile")
+            @NavItem("/buyer/notifications", "ti-bell", "Notifications", page == "notifications")
+            <div style="height:0.5px;background:#e0ddf5;margin:6px 14px;"></div>
+            @NavItem("/seller/switch-to-buyer", "ti-shopping-cart", "Switch to buyer", false)
+            @NavItem("/auth/logout", "ti-logout", "Log out", false)
+        }
+        else
+        {
+            @* BUYER NAV *@
+            @NavItem("/buyer", "ti-layout-dashboard", "Dashboard", page == "buyer-dashboard")
+            @NavItem("/listings/browse", "ti-search", "Browse listings", page == "browse")
+            @NavItem("/buyer/saved", "ti-heart", "Saved listings", page == "saved")
+            @NavItem("/buyer/inbox", "ti-message-circle", "My inbox", page == "inbox")
+            @NavItem("/buyer/offers", "ti-arrows-exchange", "My offers", page == "offers")
+            @NavItem("/buyer/reviews", "ti-star", "My reviews", page == "reviews")
+            <div style="height:0.5px;background:#e0ddf5;margin:6px 14px;"></div>
+            @NavItem("/buyer/profile", "ti-user", "My profile", page == "profile")
+            @NavItem("/buyer/notifications", "ti-bell", "Notifications", page == "notifications")
+            <div style="height:0.5px;background:#e0ddf5;margin:6px 14px;"></div>
+            @NavItem("/auth/logout", "ti-logout", "Log out", false)
+        }
+    </div>
+
+    @* Activate seller button — only shown in buyer mode when no seller profile *@
+    @if (!isSeller && !isAdmin && !hasSellerProfile)
+    {
+        <div style="padding:0 14px 14px;">
+            <a href="/seller/activate" style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:8px;font-size:11px;font-weight:500;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;">
+                <i class="ti ti-store" aria-hidden="true"></i> Activate seller profile
+            </a>
+        </div>
+    }
+
+    @* Mode switch button — only shown if has seller profile *@
+    @if (!isAdmin && hasSellerProfile && !isSeller)
+    {
+        <div style="padding:0 14px 14px;">
+            <a href="/seller/switch-to-seller" style="background:#EEEDFE;color:#4B3BC7;border:0.5px solid #AFA9EC;border-radius:7px;padding:8px;font-size:11px;font-weight:500;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;">
+                <i class="ti ti-store" aria-hidden="true"></i> Switch to seller
+            </a>
+        </div>
+    }
+</div>
+
+@functions {
+    IHtmlContent NavItem(string href, string icon, string label, bool active)
+    {
+        var bg = active ? "background:#EEEDFE;" : "";
+        var color = active ? "color:#4B3BC7;font-weight:500;" : "color:#555;";
+        var border = active ? "border-left:3px solid #4B3BC7;" : "border-left:3px solid transparent;";
+        return new HtmlString($@"
+            <a href=""{href}"" style=""display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12px;{color}{bg}{border}text-decoration:none;"">
+                <i class=""ti {icon}"" aria-hidden=""true"" style=""font-size:15px;""></i> {label}
+            </a>");
+    }
+}

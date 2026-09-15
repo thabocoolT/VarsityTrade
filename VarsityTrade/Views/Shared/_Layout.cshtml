@@ -110,9 +110,18 @@
                 <a href="/seller/switch-to-buyer" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
                     <i class="ti ti-shopping-cart" aria-hidden="true"></i> Switch to buyer
                 </a>
-                <a href="/seller/listings/create" class="vt-sell-btn">
-                    <i class="ti ti-plus" aria-hidden="true"></i> New listing
-                </a>
+                @if (isSeller)
+                {
+                    <a href="/seller/listings/create" class="vt-sell-btn">
+                        <i class="ti ti-plus" aria-hidden="true"></i> New listing
+                    </a>
+                }
+                else
+                {
+                    <a href="/listings/browse" class="vt-sell-btn">
+                        <i class="ti ti-search" aria-hidden="true"></i> Browse
+                    </a>
+                }
             }
             else
             {
@@ -140,7 +149,9 @@
             <div class="vt-nav-links">
                 <a href="/auth/login">Log in</a>
             </div>
-            <a href="/auth/register" class="vt-sell-btn">Register</a>
+            <a href="/auth/register" class="vt-sell-btn">
+                <i class="ti ti-plus" aria-hidden="true"></i> Sell an item
+            </a>
         }
 
     </nav>
@@ -151,13 +162,73 @@
     </main>
 
     <!-- ── FOOTER ───────────────────────────────────────────── -->
-    <footer class="vt-footer">
-        <span class="vt-footer-text">© 2026 Varsity Trade. All rights reserved.</span>
-        <div class="vt-footer-links"> 
-            <a href="#" class="vt-footer-link">About</a>
-            <a href="#" class="vt-footer-link">Terms</a>
-            <a href="#" class="vt-footer-link">Privacy</a>
-            <a href="#" class="vt-footer-link">Contact</a>
+    <footer>
+        @* Full 4-column footer matching wireframe *@
+        <div style="background:#26215C;padding:24px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:20px;">
+            @* Brand column *@
+            <div>
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+                    <div style="background:#4B3BC7;color:#fff;border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;">
+                        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+                    </div>
+                    <span style="font-size:13px;font-weight:500;color:#fff;">Varsity Trade</span>
+                </div>
+                <div style="font-size:11px;color:#AFA9EC;line-height:1.5;margin-bottom:10px;">
+                    A trusted marketplace built<br>for students, by students.
+                </div>
+                <div style="display:flex;gap:8px;">
+                    @foreach (var icon in new[] { "ti-brand-instagram", "ti-brand-x", "ti-brand-tiktok", "ti-brand-youtube" })
+                    {
+                        <div style="width:26px;height:26px;border-radius:50%;background:#3C3489;display:flex;align-items:center;justify-content:center;color:#AFA9EC;font-size:13px;">
+                            <i class="ti @icon" aria-hidden="true"></i>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Marketplace column *@
+            <div>
+                <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Marketplace</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    @foreach (var link in new[] { "Browse items", "Sell an item", "Categories", "How it works", "Safety tips" })
+                    {
+                        <a href="#" style="font-size:11px;color:#AFA9EC;text-decoration:none;">@link</a>
+                    }
+                </div>
+            </div>
+
+            @* Support column *@
+            <div>
+                <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Support</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    @foreach (var link in new[] { "Help centre", "Contact us", "Report an issue", "Terms of use", "Privacy policy" })
+                    {
+                        <a href="#" style="font-size:11px;color:#AFA9EC;text-decoration:none;">@link</a>
+                    }
+                </div>
+            </div>
+
+            @* Company column *@
+            <div>
+                <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Company</div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    @foreach (var link in new[] { "About us", "Blog", "Careers", "Student ambassadors" })
+                    {
+                        <a href="#" style="font-size:11px;color:#AFA9EC;text-decoration:none;">@link</a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* Footer bottom bar *@
+        <div style="background:#1a1448;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:11px;color:#534AB7;">© 2026 Varsity Trade. All rights reserved.</span>
+            <div style="display:flex;gap:14px;">
+                @foreach (var link in new[] { "Terms", "Privacy", "Cookies" })
+                {
+                    <a href="#" style="font-size:11px;color:#534AB7;text-decoration:none;">@link</a>
+                }
+            </div>
         </div>
     </footer>
 

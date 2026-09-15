@@ -1,5 +1,9 @@
-﻿namespace VarsityTrade.Web.Models.Seller
+﻿using Newtonsoft.Json; // Provides JsonProperty for API field mapping
+
+namespace VarsityTrade.Web.Models.Seller
 {
+    
+    
     // View model for the Seller Dashboard page
     public class SellerDashboardViewModel
     {
@@ -22,17 +26,38 @@
     }
 
     // Represents a single listing in the seller dashboard
-    public class SellerListingViewModel
+   
+
+public class SellerListingViewModel
     {
+        [JsonProperty("listingId")]
         public int ListingId { get; set; }
+
+        [JsonProperty("title")]
         public string Title { get; set; } = string.Empty;
+
+        [JsonProperty("price")]
         public decimal Price { get; set; }
+
+        [JsonProperty("status")]
         public string Status { get; set; } = string.Empty;
+
+        [JsonProperty("condition")]
         public string Condition { get; set; } = string.Empty;
+
+        [JsonProperty("categoryName")]
         public string CategoryName { get; set; } = string.Empty;
+
+        [JsonProperty("viewCount")]
         public int ViewCount { get; set; }
+
+        [JsonProperty("isFeatured")]
         public bool IsFeatured { get; set; }
+
+        [JsonProperty("coverImageUrl")]
         public string? CoverImageUrl { get; set; }
+
+        [JsonProperty("createdAt")]
         public DateTime CreatedAt { get; set; }
     }
 
