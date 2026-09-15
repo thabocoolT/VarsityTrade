@@ -34,5 +34,49 @@ namespace VarsityTrade.Web.Controllers
 
             return View();
         }
+        [HttpGet("home/how-it-works")]
+        public IActionResult HowItWorks()
+        {
+            ViewData["Title"] = "How It Works";
+            ViewData["InfoPage"] = "How It Works";
+
+            return View("Info");
+        }
+
+        [HttpGet("home/about")]
+        public IActionResult About()
+        {
+            ViewData["Title"] = "About Varsity Trade";
+            ViewData["InfoPage"] = "About Varsity Trade";
+
+            return View("Info");
+        }
+
+        [HttpGet("home/terms")]
+        public IActionResult Terms()
+        {
+            ViewData["Title"] = "Terms of Service";
+            ViewData["InfoPage"] = "Terms of Service";
+
+            return View("Info");
+        }
+
+        [HttpGet("home/privacy")]
+        public IActionResult Privacy()
+        {
+            ViewData["Title"] = "Privacy Policy";
+            ViewData["InfoPage"] = "Privacy Policy";
+
+            return View("Info");
+        }
+
+        [HttpGet("home/contact")]
+        public IActionResult Contact()
+        {
+            ViewData["Title"] = "Contact";
+            ViewData["InfoPage"] = "Contact";
+
+            return View("Info");
+        }
     }
 }

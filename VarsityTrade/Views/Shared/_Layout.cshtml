@@ -37,10 +37,22 @@
         </a>
 
         <!-- Categories dropdown trigger -->
-        <div class="vt-nav-cat">
-            <i class="ti ti-category" aria-hidden="true" style="font-size:13px"></i>
+        <div class="vt-nav-cat"
+             onclick="window.location.href='/listings/browse'"
+             role="button"
+             tabindex="0"
+             title="Browse all categories">
+
+            <i class="ti ti-category"
+               aria-hidden="true"
+               style="font-size:13px"></i>
+
             All categories
-            <i class="ti ti-chevron-down" aria-hidden="true" style="font-size:12px"></i>
+
+            <i class="ti ti-chevron-down"
+               aria-hidden="true"
+               style="font-size:12px"></i>
+
         </div>
 
         <!-- Search bar -->
@@ -190,10 +202,25 @@
             <div>
                 <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Marketplace</div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
-                    @foreach (var link in new[] { "Browse items", "Sell an item", "Categories", "How it works", "Safety tips" })
-                    {
-                        <a href="#" style="font-size:11px;color:#AFA9EC;text-decoration:none;">@link</a>
-                    }
+                    <a href="/listings/browse" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Browse items
+                    </a>
+
+                    <a href="/seller/activate" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Sell an item
+                    </a>
+
+                    <a href="/listings/browse" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Categories
+                    </a>
+
+                    <a href="/home/how-it-works" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        How it works
+                    </a>
+
+                    <a href="/home/safety" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Safety tips
+                    </a>
                 </div>
             </div>
 
@@ -201,10 +228,25 @@
             <div>
                 <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Support</div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
-                    @foreach (var link in new[] { "Help centre", "Contact us", "Report an issue", "Terms of use", "Privacy policy" })
-                    {
-                        <a href="#" style="font-size:11px;color:#AFA9EC;text-decoration:none;">@link</a>
-                    }
+                    <a href="/home/help" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Help centre
+                    </a>
+
+                    <a href="/home/contact" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Contact us
+                    </a>
+
+                    <a href="/home/report" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Report an issue
+                    </a>
+
+                    <a href="/home/terms" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Terms of use
+                    </a>
+
+                    <a href="/home/privacy" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Privacy policy
+                    </a>
                 </div>
             </div>
 
@@ -212,10 +254,21 @@
             <div>
                 <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Company</div>
                 <div style="display:flex;flex-direction:column;gap:6px;">
-                    @foreach (var link in new[] { "About us", "Blog", "Careers", "Student ambassadors" })
-                    {
-                        <a href="#" style="font-size:11px;color:#AFA9EC;text-decoration:none;">@link</a>
-                    }
+                    <a href="/home/about" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        About us
+                    </a>
+
+                    <a href="/home/blog" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Blog
+                    </a>
+
+                    <a href="/home/careers" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Careers
+                    </a>
+
+                    <a href="/home/ambassadors" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                        Student ambassadors
+                    </a>
                 </div>
             </div>
         </div>
@@ -224,10 +277,17 @@
         <div style="background:#1a1448;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;">
             <span style="font-size:11px;color:#534AB7;">© 2026 Varsity Trade. All rights reserved.</span>
             <div style="display:flex;gap:14px;">
-                @foreach (var link in new[] { "Terms", "Privacy", "Cookies" })
-                {
-                    <a href="#" style="font-size:11px;color:#534AB7;text-decoration:none;">@link</a>
-                }
+                <a href="/home/terms" style="font-size:11px;color:#534AB7;text-decoration:none;">
+                    Terms
+                </a>
+
+                <a href="/home/privacy" style="font-size:11px;color:#534AB7;text-decoration:none;">
+                    Privacy
+                </a>
+
+                <a href="/home/cookies" style="font-size:11px;color:#534AB7;text-decoration:none;">
+                    Cookies
+                </a>
             </div>
         </div>
     </footer>

@@ -1,0 +1,90 @@
+﻿@using VarsityTrade.Web.Models.Seller
+
+@{
+    ViewData["Title"] = "My Reviews";
+    Layout = "_Layout";
+
+    var reviews = ViewBag.Reviews as List<SellerReviewViewModel>
+                  ?? new List<SellerReviewViewModel>();
+}
+
+<div class="vt-body">
+
+    @await Html.PartialAsync("_Sidebar")
+
+    <div class="vt-page">
+
+        <div class="vt-page-header">
+            <div>
+                <h1>My Reviews</h1>
+                <p>Reviews from students who have completed transactions with you.</p>
+            </div>
+        </div>
+
+        @if (!reviews.Any())
+        {
+            <div class="vt-card">
+                <div style="text-align:center;padding:40px;">
+                    <i class="ti ti-star"
+                       style="font-size:40px;opacity:.5;"></i>
+
+                    <h3>No reviews yet</h3>
+
+                    <p>
+                        Reviews will appear here after buyers complete
+                        transactions with you.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="vt-card">
+
+                @foreach (var review in reviews)
+                {
+                    <div style="padding:20px;border-bottom:1px solid #eee;">
+
+                        <div style="display:flex;justify-content:space-between;">
+
+                            <strong>
+                                @review.ReviewerFirstName
+                                @review.ReviewerLastName
+                            </strong>
+
+                            <span>
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= review.Rating)
+                                    {
+                                        <i class="ti ti-star-filled"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="ti ti-star"></i>
+                                    }
+                                }
+                            </span>
+
+                        </div>
+
+                        <p style="margin:10px 0;">
+                            @(string.IsNullOrWhiteSpace(review.Comment)
+                                ? "No comment provided."
+                                : review.Comment)
+                        </p>
+
+                        <small>
+                            @review.ListingTitle ·
+                            @review.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")
+                        </small>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+</div>

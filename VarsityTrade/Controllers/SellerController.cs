@@ -22,8 +22,28 @@ namespace VarsityTrade.Web.Controllers
         // Helper — redirects to login if not authenticated
         private IActionResult? RequireAuth()
         {
-            if (HttpContext.Session.GetString("AccessToken") == null)
+            if(string.IsNullOrWhiteSpace(
+                HttpContext.Session.GetString("AccessToken")))
+            {
                 return RedirectToAction("Login", "Auth");
+            }
+            return null;
+        }
+        private IActionResult? RequireSellerMode()
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var currentMode =
+                HttpContext.Session.GetString("CurrentMode");
+
+            var hasSellerProfile =
+                HttpContext.Session.GetString("HasSellerProfile") == "true";
+
+            if(currentMode != "Seller" || !hasSellerProfile)
+            {
+                return RedirectToAction("SwitchToSeller");
+            }
             return null;
         }
 
@@ -34,7 +54,7 @@ namespace VarsityTrade.Web.Controllers
         [HttpGet("")]
         public async Task<IActionResult> Index()
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             // Load the seller profile
@@ -78,7 +98,7 @@ namespace VarsityTrade.Web.Controllers
         [HttpGet("listings")]
         public async Task<IActionResult> Listings(string filter = "All")
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             var json = await _api.GetAsync<string>("api/listings/my");
@@ -109,7 +129,7 @@ namespace VarsityTrade.Web.Controllers
         [HttpGet("listings/create")]
         public async Task<IActionResult> CreateListing()
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             var model = new CreateListingViewModel
@@ -129,7 +149,7 @@ namespace VarsityTrade.Web.Controllers
         [HttpPost("listings/create")]
         public async Task<IActionResult> CreateListing(CreateListingViewModel model)
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             // Reload dropdowns in case we need to redisplay the form
@@ -184,7 +204,7 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         [HttpGet("offers")]
         public async Task<IActionResult> Offers(string filter = "All")
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             var offers = await _api.GetAsync<List<ReceivedOfferViewModel>>("api/offers/received");
@@ -208,7 +228,7 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         [HttpPost("offers/accept")]
         public async Task<IActionResult> AcceptOffer(int offerId)
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             await _api.PutAsync($"api/offers/{offerId}/accept");
@@ -222,7 +242,7 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         [HttpPost("offers/reject")]
         public async Task<IActionResult> RejectOffer(int offerId)
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             await _api.PutAsync($"api/offers/{offerId}/reject");
@@ -282,18 +302,39 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         // GET /seller/switch-to-seller
         // Switches the current session mode to Seller
         // ─────────────────────────────────────────────────────────────
+        
         [HttpGet("switch-to-seller")]
-        public IActionResult SwitchToSeller()
+        public async Task<IActionResult> SwitchToSeller()
         {
             var auth = RequireAuth();
-            if (auth != null) return auth;
 
-            // Only allow switching if user has a seller profile
-            if (HttpContext.Session.GetString("HasSellerProfile") != "true")
+            if (auth != null)
+                return auth;
+
+            var profile =
+                await _api.GetAsync<dynamic>("api/sellerprofiles/my");
+
+            if (profile == null)
+            {
+                HttpContext.Session.SetString(
+                    "HasSellerProfile",
+                    "false");
+
+                HttpContext.Session.SetString(
+                    "CurrentMode",
+                    "Buyer");
+
                 return RedirectToAction("Activate");
+            }
 
-            // Set mode to Seller — changes sidebar, navbar, and available features
-            HttpContext.Session.SetString("CurrentMode", "Seller");
+            HttpContext.Session.SetString(
+                "HasSellerProfile",
+                "true");
+
+            HttpContext.Session.SetString(
+                "CurrentMode",
+                "Seller");
+
             return RedirectToAction("Index");
         }
 
@@ -301,12 +342,48 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         // GET /seller/switch-to-buyer
         // Switches the current session mode to Buyer
         // ─────────────────────────────────────────────────────────────
+
         [HttpGet("switch-to-buyer")]
         public IActionResult SwitchToBuyer()
         {
-            // Set mode to Buyer — changes sidebar, navbar, and available features
+            var auth = RequireAuth();
+
+            if (auth != null)
+                return auth;
+
             HttpContext.Session.SetString("CurrentMode", "Buyer");
+
             return RedirectToAction("Index", "Home");
+        }
+
+        //----------------------------------------------------------------
+        //GET/seller/reviews
+        //Shows all reviews received by the seller
+        [HttpGet("reviews")]
+        public async Task<IActionResult> Reviews()
+        {
+            var auth = RequireSellerMode();
+            if (auth != null) return auth;
+
+            var profile = await _api.GetAsync<dynamic>("api/sellerprofiles/my");
+
+            if (profile == null)
+                return RedirectToAction("Activate");
+
+            int sellerProfileId=(int)(profile.sellerProfileId ?? 0);
+
+            if(sellerProfileId == 0)
+                return RedirectToAction("Activate");
+
+            var reviews = await _api.GetAsync<List<SellerReviewViewModel>>(
+                $"api/reviews/seller/{sellerProfileId}");
+
+            ViewBag.Reviews = reviews ?? new List<SellerReviewViewModel>();
+            ViewData["SidebarPage"] = "seller-reviews";
+
+            return View();
+
+
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -332,7 +409,7 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         [HttpPost("listings/delete")]
         public async Task<IActionResult> DeleteListing(int listingId)
         {
-            var auth = RequireAuth();
+            var auth = RequireSellerMode();
             if (auth != null) return auth;
 
             await _api.DeleteAsync($"api/listings/{listingId}");

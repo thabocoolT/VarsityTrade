@@ -1,0 +1,98 @@
+﻿@{
+    Layout = "_Layout";
+
+    var infoPage = ViewData["InfoPage"]?.ToString()
+                   ?? "Varsity Trade";
+}
+
+<div class="vt-body">
+
+    <div class="vt-page">
+
+        <div class="vt-page-header">
+            <div>
+                <h1>@infoPage</h1>
+            </div>
+        </div>
+
+        <div class="vt-card">
+
+            @if (infoPage == "How It Works")
+            {
+                <h2>How Varsity Trade Works</h2>
+
+                <p>
+                    Varsity Trade connects students on the same campus
+                    so they can buy, sell and trade items.
+                </p>
+
+                <h3>1. Browse</h3>
+
+                <p>
+                    Browse listings available at your university.
+                </p>
+
+                <h3>2. Contact the seller</h3>
+
+                <p>
+                    Use the messaging system to communicate with the seller.
+                </p>
+
+                <h3>3. Make an offer</h3>
+
+                <p>
+                    Submit an offer when the seller allows negotiation.
+                </p>
+
+                <h3>4. Complete the transaction</h3>
+
+                <p>
+                    Arrange the transaction using the available campus
+                    pickup or delivery options.
+                </p>
+            }
+            else if (infoPage == "About Varsity Trade")
+            {
+                <h2>About Varsity Trade</h2>
+
+                <p>
+                    Varsity Trade is a student-focused marketplace designed
+                    for buying, selling and trading products within university
+                    communities.
+                </p>
+            }
+            else if (infoPage == "Terms of Service")
+            {
+                <h2>Terms of Service</h2>
+
+                <p>
+                    Varsity Trade is intended for legitimate transactions
+                    between students. Users are responsible for the listings
+                    and transactions they create.
+                </p>
+            }
+            else if (infoPage == "Privacy Policy")
+            {
+                <h2>Privacy Policy</h2>
+
+                <p>
+                    Varsity Trade uses account information to provide
+                    authentication, marketplace and communication features.
+                </p>
+            }
+            else if (infoPage == "Contact")
+            {
+                <h2>Contact Varsity Trade</h2>
+
+                <p>
+                    For MVP development and platform support enquiries,
+                    please use the contact channel provided by the
+                    Varsity Trade project team.
+                </p>
+            }
+
+        </div>
+
+    </div>
+
+</div>
