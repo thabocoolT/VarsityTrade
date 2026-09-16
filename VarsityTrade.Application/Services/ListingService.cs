@@ -46,6 +46,25 @@ namespace VarsityTrade.Application.Services
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<ListingResponseDto>>
+    GetAllActiveListingsAsync()
+        {
+            return await _context.Listings
+                .Include(l => l.SellerProfile)
+                    .ThenInclude(sp => sp.User)
+                .Include(l => l.Category)
+                .Include(l => l.Condition)
+                .Include(l => l.ListingStatus)
+                .Include(l => l.University)
+                .Include(l => l.ListingImages)
+                .Where(l =>
+                    l.DeletedAt == null
+                    && l.ListingStatus.Name == "Active")
+                .OrderByDescending(l => l.CreatedAt)
+                .Select(l => MapToResponseDto(l))
+                .ToListAsync();
+        }
+
         // ─────────────────────────────────────────────────────────────
         // GET LISTING BY ID
         // Returns a single listing by its ID for the detail page

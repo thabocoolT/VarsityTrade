@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json; // Provides JsonProperty for API field name mapping
+﻿using Newtonsoft.Json;
 
 namespace VarsityTrade.Web.Models.Listings
 {
-    // Represents a single listing card shown on browse, search, and category pages
-    // JsonProperty attributes map the API's camelCase response to PascalCase C# properties
     public class ListingCardViewModel
     {
         [JsonProperty("listingId")]
@@ -12,8 +10,14 @@ namespace VarsityTrade.Web.Models.Listings
         [JsonProperty("title")]
         public string Title { get; set; } = string.Empty;
 
+        [JsonProperty("description")]
+        public string Description { get; set; } = string.Empty;
+
         [JsonProperty("price")]
         public decimal Price { get; set; }
+
+        [JsonProperty("listingType")]
+        public string ListingType { get; set; } = string.Empty;
 
         [JsonProperty("condition")]
         public string Condition { get; set; } = string.Empty;
@@ -30,7 +34,7 @@ namespace VarsityTrade.Web.Models.Listings
         [JsonProperty("storeName")]
         public string StoreName { get; set; } = string.Empty;
 
-        [JsonProperty("averageRating")]
+        [JsonProperty("sellerRating")]
         public decimal SellerRating { get; set; }
 
         [JsonProperty("coverImageUrl")]

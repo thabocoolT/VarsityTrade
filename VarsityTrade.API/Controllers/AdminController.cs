@@ -310,5 +310,25 @@ namespace VarsityTrade.API.Controllers
             var stats = await _adminService.GetPlatformStatsAsync();
             return Ok(stats);
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/admin/public-stats
+        // Read-only statistics used by the public homepage.
+        // This does NOT expose admin management functionality.
+        // ─────────────────────────────────────────────────────────────
+        [AllowAnonymous]
+        [HttpGet("public-stats")]
+        public async Task<IActionResult> GetPublicStats()
+        {
+            var stats = await _adminService.GetPlatformStatsAsync();
+
+            return Ok(new
+            {
+                activeStudents = stats.ActiveUsers,
+                itemsListed = stats.ActiveListings,
+                tradesDone = stats.CompletedTransactions,
+                verificationRate = stats.VerificationRate
+            });
+        }
     }
 }

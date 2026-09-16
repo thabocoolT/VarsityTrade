@@ -350,47 +350,126 @@ namespace VarsityTrade.Application.Services
 
         public async Task<PlatformStatsResponseDto> GetPlatformStatsAsync()
         {
-            // Calculate the date 7 days ago for new users this week
             var oneWeekAgo = DateTime.UtcNow.AddDays(-7);
 
-            // Run all counts in parallel for performance
-            var totalUsers = await _context.Users.CountAsync(u => u.DeletedAt == null);
-            var activeUsers = await _context.Users.CountAsync(u => u.IsActive && !u.IsBanned && u.DeletedAt == null);
-            var bannedUsers = await _context.Users.CountAsync(u => u.IsBanned && u.DeletedAt == null);
-            var deactivatedUsers = await _context.Users.CountAsync(u => !u.IsActive && !u.IsBanned && u.DeletedAt == null);
-            var newUsersThisWeek = await _context.Users.CountAsync(u => u.CreatedAt >= oneWeekAgo && u.DeletedAt == null);
-            var totalListings = await _context.Listings.CountAsync();
-            var activeListings = await _context.Listings.CountAsync(l => l.DeletedAt == null && l.ListingStatus.Name == "Active");
-            var soldListings = await _context.Listings.CountAsync(l => l.ListingStatus.Name == "Sold");
-            var deletedListings = await _context.Listings.CountAsync(l => l.DeletedAt != null);
-            var totalTransactions = await _context.Transactions.CountAsync();
-            var totalMessages = await _context.Messages.CountAsync();
-            var totalConversations = await _context.Conversations.CountAsync(c => c.DeletedAt == null);
-            var openReports = await _context.Reports.CountAsync(r => r.Status == "Open" || r.Status == "UnderReview");
-            var resolvedReports = await _context.Reports.CountAsync(r => r.Status == "Resolved" || r.Status == "Dismissed");
-            var totalReports = await _context.Reports.CountAsync();
-            var totalSellers = await _context.SellerProfiles.CountAsync();
-            var activeSellers = await _context.SellerProfiles.CountAsync(sp => sp.IsActive);
+            var totalUsers =
+                await _context.Users.CountAsync(
+                    u => u.DeletedAt == null);
+
+            var activeUsers =
+                await _context.Users.CountAsync(
+                    u => u.IsActive
+                      && !u.IsBanned
+                      && u.DeletedAt == null);
+
+            var verifiedUsers =
+                await _context.Users.CountAsync(
+                    u => u.IsActive
+                      && !u.IsBanned
+                      && u.StudentVerified
+                      && u.DeletedAt == null);
+
+            var verificationRate =
+                activeUsers == 0
+                    ? 0
+                    : (int)Math.Round(
+                        verifiedUsers * 100m / activeUsers);
+
+            var bannedUsers =
+                await _context.Users.CountAsync(
+                    u => u.IsBanned
+                      && u.DeletedAt == null);
+
+            var deactivatedUsers =
+                await _context.Users.CountAsync(
+                    u => !u.IsActive
+                      && !u.IsBanned
+                      && u.DeletedAt == null);
+
+            var newUsersThisWeek =
+                await _context.Users.CountAsync(
+                    u => u.CreatedAt >= oneWeekAgo
+                      && u.DeletedAt == null);
+
+            var totalListings =
+                await _context.Listings.CountAsync();
+
+            var activeListings =
+                await _context.Listings.CountAsync(
+                    l => l.DeletedAt == null
+                      && l.ListingStatus.Name == "Active");
+
+            var soldListings =
+                await _context.Listings.CountAsync(
+                    l => l.ListingStatus.Name == "Sold");
+
+            var deletedListings =
+                await _context.Listings.CountAsync(
+                    l => l.DeletedAt != null);
+
+            var totalTransactions =
+                await _context.Transactions.CountAsync();
+
+            var completedTransactions =
+                await _context.Transactions.CountAsync(
+                    t => t.Status == "Completed");
+
+            var totalMessages =
+                await _context.Messages.CountAsync();
+
+            var totalConversations =
+                await _context.Conversations.CountAsync(
+                    c => c.DeletedAt == null);
+
+            var openReports =
+                await _context.Reports.CountAsync(
+                    r => r.Status == "Open"
+                      || r.Status == "UnderReview");
+
+            var resolvedReports =
+                await _context.Reports.CountAsync(
+                    r => r.Status == "Resolved"
+                      || r.Status == "Dismissed");
+
+            var totalReports =
+                await _context.Reports.CountAsync();
+
+            var totalSellers =
+                await _context.SellerProfiles.CountAsync();
+
+            var activeSellers =
+                await _context.SellerProfiles.CountAsync(
+                    sp => sp.IsActive);
 
             return new PlatformStatsResponseDto
             {
                 TotalUsers = totalUsers,
                 ActiveUsers = activeUsers,
+
+                VerifiedUsers = verifiedUsers,
+                VerificationRate = verificationRate,
+
                 BannedUsers = bannedUsers,
                 DeactivatedUsers = deactivatedUsers,
                 NewUsersThisWeek = newUsersThisWeek,
+
                 TotalListings = totalListings,
                 ActiveListings = activeListings,
                 SoldListings = soldListings,
                 DeletedListings = deletedListings,
+
                 TotalTransactions = totalTransactions,
+                CompletedTransactions = completedTransactions,
+
                 TotalMessages = totalMessages,
                 TotalConversations = totalConversations,
+
                 OpenReports = openReports,
                 ResolvedReports = resolvedReports,
                 TotalReports = totalReports,
+
                 TotalSellerProfiles = totalSellers,
-                ActiveSellerProfiles = activeSellers,
+                ActiveSellerProfiles = activeSellers
             };
         }
 

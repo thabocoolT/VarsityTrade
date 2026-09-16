@@ -1,194 +1,353 @@
-﻿using Microsoft.AspNetCore.Authorization; // Provides Authorize attribute
-using Microsoft.AspNetCore.Mvc; // Provides ControllerBase, Route, HttpGet etc
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims; // Provides ClaimTypes for reading user identity
-using VarsityTrade.Core.DTOs.Listings; // Provides Listing DTOs
-using VarsityTrade.Core.Interfaces; // Provides IListingService
-using VarsityTrade.Infrastructure.Data; // Provides VarsityTradeDbContext
-
-
+using System.Security.Claims;
+using VarsityTrade.Core.DTOs.Listings;
+using VarsityTrade.Core.Interfaces;
+using VarsityTrade.Infrastructure.Data;
 
 namespace VarsityTrade.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]//All routes start with/api/listings
+    [Route("api/[controller]")]
     public class ListingsController : ControllerBase
     {
-        //IListingService is injected-controller stays thin
         private readonly IListingService _listingService;
         private readonly VarsityTradeDbContext _context;
 
-        public ListingsController(IListingService listingService, VarsityTradeDbContext context)
+        public ListingsController(
+            IListingService listingService,
+            VarsityTradeDbContext context)
         {
             _listingService = listingService;
             _context = context;
         }
 
-        private async Task<VarsityTrade.Core.Entities.SellerProfile?> GetSellerProfileByUserIdAsync(int userId)
+        private int? GetCurrentUserId()
         {
-            return await _context.SellerProfiles
-                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.IsActive);
+            var claim =
+                User.FindFirst(ClaimTypes.NameIdentifier)
+                ?? User.FindFirst("sub");
+
+            return claim != null &&
+                   int.TryParse(claim.Value, out var userId)
+                ? userId
+                : null;
         }
 
-        //--------------------------------------------------------
-        //GET/api/listings/university/{universityId}
-        //Returns all active listings for a specific university
-        //Requires authentication-only logged in students can browse
-        //-------------------------------------------------
-        /// <summary>Returns all active listings for a specific university — campus locked.</summary>
-        [HttpGet("University/{university}")]
-        [Authorize]//Must be logged in to view listins
-        public async Task<IActionResult> GetListingsByUniversity(int universityId)
+        private int? GetCurrentUniversityId()
         {
-            var listings = await _listingService
-                .GetListingsByUniversityAsync(universityId);
+            var claim =
+                User.FindFirst("universityId");
+
+            return claim != null &&
+                   int.TryParse(claim.Value, out var universityId)
+                ? universityId
+                : null;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/listings/public
+        // Guests can browse all active listings.
+        // ─────────────────────────────────────────────────────────────
+        [AllowAnonymous]
+        [HttpGet("public")]
+        public async Task<IActionResult> GetPublicListings()
+        {
+            var listings =
+                await _listingService
+                    .GetAllActiveListingsAsync();
 
             return Ok(listings);
         }
 
-        //--------------------------------------------------------
-        //GET/api/listings/user/{userId}
-        //Returns all active listings for a specific user
-        /// <summary>Returns a single listing by ID and increments the view count.</summary>
-        [HttpGet("{id}")]
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/listings/university/{universityId}
+        // Authenticated users can only access their own university.
+        // ─────────────────────────────────────────────────────────────
         [Authorize]
-        public async Task<IActionResult>GetListingById(int id)
-            {
-            //Increment view count every time the detail page is opened
-            await _listingService.IncrementViewCountAsync(id);
-            var listing = await _listingService.GetListingByIdAsync(id);
+        [HttpGet("university/{universityId:int}")]
+        public async Task<IActionResult> GetListingsByUniversity(
+            int universityId)
+        {
+            var userUniversityId =
+                GetCurrentUniversityId();
 
-            //Return 404 if the listing does not exist or is deleted
-            if(listing==null)
-                return NotFound(new {message="Listing not found."});
+            if (userUniversityId == null)
+                return Unauthorized();
+
+            if (userUniversityId.Value != universityId)
+                return Forbid();
+
+            var listings =
+                await _listingService
+                    .GetListingsByUniversityAsync(
+                        universityId);
+
+            return Ok(listings);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/listings/{id}
+        // Guests can view active listings.
+        // Authenticated users can view active listings in their
+        // university. Sellers can also view their own listings.
+        // ─────────────────────────────────────────────────────────────
+        [AllowAnonymous]
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetListingById(int id)
+        {
+            var listing =
+                await _listingService
+                    .GetListingByIdAsync(id);
+
+            if (listing == null)
+                return NotFound(
+                    new { message = "Listing not found." });
+
+            var currentUserId =
+                GetCurrentUserId();
+
+            var isAuthenticated =
+                User.Identity?.IsAuthenticated == true;
+
+            var isOwner = false;
+
+            if (currentUserId.HasValue)
+            {
+                isOwner =
+                    await _context.SellerProfiles.AnyAsync(
+                        sp =>
+                            sp.UserId == currentUserId.Value
+                            && sp.SellerProfileId ==
+                               listing.SellerProfileId
+                            && sp.IsActive);
+            }
+
+            if (!isAuthenticated)
+            {
+                if (listing.Status != "Active")
+                    return NotFound(
+                        new { message = "Listing not found." });
+            }
+            else if (!isOwner)
+            {
+                var userUniversityId =
+                    GetCurrentUniversityId();
+
+                if (userUniversityId == null ||
+                    listing.UniversityId !=
+                    userUniversityId.Value)
+                {
+                    return NotFound(
+                        new { message = "Listing not found." });
+                }
+
+                if (listing.Status != "Active")
+                    return NotFound(
+                        new { message = "Listing not found." });
+            }
+
+            // Only increment views after visibility has been confirmed.
+            await _listingService
+                .IncrementViewCountAsync(id);
+
+            // Return the latest view count.
+            listing =
+                await _listingService
+                    .GetListingByIdAsync(id);
 
             return Ok(listing);
         }
-        //--------------------------------------------------------
-        //POST/api/listings
-        //CREATE a new listing-seller only
-        //--------------------------------------------------------
-        /// <summary>Creates a new listing for the logged in seller.</summary>
+
+        // ─────────────────────────────────────────────────────────────
+        // POST /api/listings
+        // ─────────────────────────────────────────────────────────────
+        [Authorize]
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> CreateListing([FromBody] ListingRequestDto request)
+        public async Task<IActionResult> CreateListing(
+            [FromBody] ListingRequestDto request)
         {
-            //Read the seller profile iD from the JWT token
-            //The seller profile ID must be passed as a claim or looked up
-            //For now we read the user ID from the token and look up their profile
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
-                ?? User.FindFirst("sub"); // Fallback for JWT tokens that use "sub" claim
-            if(userIdClaim == null)
-                return Unauthorized(new {message= "User identity found in token." });
+            var userId = GetCurrentUserId();
 
-            var userId = int.Parse(userIdClaim.Value);
+            if (userId == null)
+                return Unauthorized(
+                    new
+                    {
+                        message =
+                            "User identity not found in token."
+                    });
 
+            var result =
+                await _listingService
+                    .CreateListingAsync(
+                        userId.Value,
+                        request);
 
-            //Look up the seller profile ID from the user ID
-            //This is done in the service to keep the controller thin
-            var result = await _listingService.CreateListingAsync(userId, request);
-            if(result==null)
-                return BadRequest(new { message = "Could not create listing. Ensure your seller profile is active." });
-            
-            //Return 201 Created with the new listing ID
-            return CreatedAtAction(nameof(GetListingById), new { id = result.ListingId }, result);
+            if (result == null)
+                return BadRequest(
+                    new
+                    {
+                        message =
+                            "Could not create listing. " +
+                            "Ensure your seller profile is active."
+                    });
 
-            
+            return CreatedAtAction(
+                nameof(GetListingById),
+                new { id = result.ListingId },
+                result);
         }
-        //--------------------------------------------------------
-        //PUT/api/listings/{id}
-        //UPDATE an existing listing-seller only
-        /// <summary>Updates an existing listing — seller must own the listing.</summary>
 
-        [HttpPut("{id}")]
+        // ─────────────────────────────────────────────────────────────
+        // PUT /api/listings/{id}
+        // ─────────────────────────────────────────────────────────────
         [Authorize]
-        public async Task<IActionResult> UpdateListing(int id, [FromBody] ListingRequestDto request)
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> UpdateListing(
+            int id,
+            [FromBody] ListingRequestDto request)
         {
-            //Get the user ID from the JWT token
-            var userIdClaim=User.FindFirst(ClaimTypes.NameIdentifier)
-                ?? User.FindFirst("sub");
-            if(userIdClaim == null)
-                return Unauthorized(new { message = "User identity not found in token." });
+            var userId = GetCurrentUserId();
 
-            var userId = int.Parse(userIdClaim.Value);
-            var result=await _listingService.UpdateListingAsync(userId, id, request);
-            if(result==null)
-                return NotFound(new {message = "Listing not found or you are not authorized to update it." });
+            if (userId == null)
+                return Unauthorized(
+                    new
+                    {
+                        message =
+                            "User identity not found in token."
+                    });
+
+            // IMPORTANT:
+            // Service signature is:
+            // UpdateListingAsync(listingId, userId, request)
+            var result =
+                await _listingService
+                    .UpdateListingAsync(
+                        id,
+                        userId.Value,
+                        request);
+
+            if (result == null)
+                return NotFound(
+                    new
+                    {
+                        message =
+                            "Listing not found or you are not " +
+                            "authorized to update it."
+                    });
 
             return Ok(result);
-        
         }
-        //--------------------------------------------------------
-        //DELETE/api/listings/{id}
-        //Soft delete a listing-seller only
-        //--------------------------------------------------------
-        /// <summary>Soft deletes a listing — seller must own the listing.</summary>
-        [HttpDelete("{id}")]
+
+        // ─────────────────────────────────────────────────────────────
+        // DELETE /api/listings/{id}
+        // ─────────────────────────────────────────────────────────────
         [Authorize]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteListing(int id)
         {
-            //Get the user ID from the JWT token
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)
-                ?? User.FindFirst("sub");
+            var userId = GetCurrentUserId();
 
-            if(userIdClaim == null)
-                return Unauthorized(new { message = "User identity not found in token." });
+            if (userId == null)
+                return Unauthorized(
+                    new
+                    {
+                        message =
+                            "User identity not found in token."
+                    });
 
-            var userId = int.Parse(userIdClaim.Value);
-            var success = await _listingService.DeleteListingAsync(userId, id);
-            if(!success)
-                return NotFound(new { message = "Listing not found or you are not authorized to delete it." });
+            // IMPORTANT:
+            // Service signature is:
+            // DeleteListingAsync(listingId, userId)
+            var success =
+                await _listingService
+                    .DeleteListingAsync(
+                        id,
+                        userId.Value);
 
-            //Return 204 No Content on successful deletion
+            if (!success)
+                return NotFound(
+                    new
+                    {
+                        message =
+                            "Listing not found or you are not " +
+                            "authorized to delete it."
+                    });
+
             return NoContent();
         }
 
-        // Helper to read the current user ID from the JWT token
-        // Same pattern used in all other controllers
-        private int? GetCurrentUserId()
-        {
-            var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
-                ?? User.FindFirst("sub");
-            return claim != null ? int.Parse(claim.Value) : null;
-        }
-        /// <summary>Returns all listings belonging to the logged in seller.</summary>
-        [HttpGet("my")]
+        // ─────────────────────────────────────────────────────────────
+        // GET /api/listings/my
+        // ─────────────────────────────────────────────────────────────
         [Authorize]
+        [HttpGet("my")]
         public async Task<IActionResult> GetMyListings()
         {
             var userId = GetCurrentUserId();
+
             if (userId == null)
                 return Unauthorized();
 
-            var sellerProfile = await GetSellerProfileByUserIdAsync(userId.Value);
+            var sellerProfile =
+                await _context.SellerProfiles
+                    .FirstOrDefaultAsync(
+                        sp =>
+                            sp.UserId == userId.Value
+                            && sp.IsActive);
+
             if (sellerProfile == null)
                 return Ok(new List<object>());
 
-            var listings = await _context.Listings
-                .Include(l => l.ListingStatus)
-                .Include(l => l.Category)
-                .Include(l => l.Condition)
-                .Include(l => l.ListingImages)
-                .Where(l => l.SellerProfileId == sellerProfile.SellerProfileId)
-                .OrderByDescending(l => l.CreatedAt)
-                .Select(l => new
-                {
-                    l.ListingId,
-                    l.Title,
-                    l.Price,
-                    l.ViewCount,
-                    l.IsFeatured,
-                    l.CreatedAt,
-                    l.DeletedAt,
-                    Status = l.ListingStatus != null ? l.ListingStatus.Name : "Unknown",
-                    Condition = l.Condition != null ? l.Condition.Name : "Unknown",
-                    CategoryName = l.Category != null ? l.Category.Name : "Unknown",
-                    CoverImageUrl = l.ListingImages != null
-                        ? l.ListingImages.Where(i => i.IsCoverImage).Select(i => i.ImagePath).FirstOrDefault()
-                          ?? l.ListingImages.Select(i => i.ImagePath).FirstOrDefault()
-                        : null
-                })
-                .ToListAsync();
+            var listings =
+                await _context.Listings
+                    .Include(l => l.ListingStatus)
+                    .Include(l => l.Category)
+                    .Include(l => l.Condition)
+                    .Include(l => l.ListingImages)
+                    .Where(l =>
+                        l.SellerProfileId ==
+                        sellerProfile.SellerProfileId)
+                    .OrderByDescending(l => l.CreatedAt)
+                    .Select(l => new
+                    {
+                        l.ListingId,
+                        l.Title,
+                        l.Price,
+                        l.ViewCount,
+                        l.IsFeatured,
+                        l.CreatedAt,
+                        l.DeletedAt,
+
+                        Status =
+                            l.ListingStatus != null
+                                ? l.ListingStatus.Name
+                                : "Unknown",
+
+                        Condition =
+                            l.Condition != null
+                                ? l.Condition.Name
+                                : "Unknown",
+
+                        CategoryName =
+                            l.Category != null
+                                ? l.Category.Name
+                                : "Unknown",
+
+                        CoverImageUrl =
+                            l.ListingImages != null
+                                ? l.ListingImages
+                                    .Where(i => i.IsCoverImage)
+                                    .Select(i => i.ImagePath)
+                                    .FirstOrDefault()
+                                  ??
+                                  l.ListingImages
+                                    .Select(i => i.ImagePath)
+                                    .FirstOrDefault()
+                                : null
+                    })
+                    .ToListAsync();
 
             return Ok(listings);
         }

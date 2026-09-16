@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc; // Provides Controller and IActionResult
-using VarsityTrade.Web.Models.Listings; // Provides Listing view models
-using VarsityTrade.Web.Services; // Provides ApiService
+﻿using Microsoft.AspNetCore.Mvc;
+using VarsityTrade.Web.Models.Home;
+using VarsityTrade.Web.Models.Listings;
+using VarsityTrade.Web.Services;
 
 namespace VarsityTrade.Web.Controllers
 {
-    // HomeController handles the home page and how it works page
     public class HomeController : Controller
     {
-        // ApiService handles all HTTP calls to the backend API
         private readonly ApiService _api;
 
         public HomeController(ApiService api)
@@ -16,24 +15,62 @@ namespace VarsityTrade.Web.Controllers
         }
 
         // GET /
-        // Home page — shows featured listings and recent activity
         public async Task<IActionResult> Index()
         {
-            // Get the university ID from session
-            var universityIdStr = HttpContext.Session.GetString("UniversityId");
-            var universityId = int.TryParse(universityIdStr, out var uid) ? uid : 1;
+            var isLoggedIn =
+                !string.IsNullOrWhiteSpace(
+                    HttpContext.Session.GetString("AccessToken"));
 
-            // Fetch recent listings for the home page feed
-            var listings = await _api.GetAsync<List<ListingCardViewModel>>(
-                $"api/listings/university/{universityId}");
+            List<ListingCardViewModel> listings;
 
-            // Pass the listings to the view — take only the first 6 for the home page
-            ViewBag.RecentListings = listings?.Take(6).ToList() ?? new List<ListingCardViewModel>();
-            ViewBag.FeaturedListings = listings?.Where(l => l.IsFeatured).Take(3).ToList()
-                ?? new List<ListingCardViewModel>();
+            if (isLoggedIn)
+            {
+                var universityIdStr =
+                    HttpContext.Session.GetString("UniversityId");
+
+                if (int.TryParse(universityIdStr, out var universityId))
+                {
+                    listings =
+                        await _api.GetAsync<List<ListingCardViewModel>>(
+                            $"api/listings/university/{universityId}")
+                        ?? new List<ListingCardViewModel>();
+                }
+                else
+                {
+                    listings = new List<ListingCardViewModel>();
+                }
+            }
+            else
+            {
+                listings =
+                    await _api.GetAsync<List<ListingCardViewModel>>(
+                        "api/listings/public")
+                    ?? new List<ListingCardViewModel>();
+            }
+
+            ViewBag.RecentListings =
+                listings.Take(6).ToList();
+
+            ViewBag.FeaturedListings =
+                listings
+                    .Where(l => l.IsFeatured)
+                    .Take(3)
+                    .ToList();
+
+            // Load real platform statistics
+            var stats =
+                await _api.GetAsync<PublicHomeStatsViewModel>(
+                    "api/admin/public-stats")
+                ?? new PublicHomeStatsViewModel();
+
+            ViewBag.ActiveStudents = stats.ActiveStudents;
+            ViewBag.ItemsListed = stats.ItemsListed;
+            ViewBag.TradesDone = stats.TradesDone;
+            ViewBag.VerificationRate = stats.VerificationRate;
 
             return View();
         }
+
         [HttpGet("home/how-it-works")]
         public IActionResult HowItWorks()
         {

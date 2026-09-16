@@ -117,6 +117,73 @@
                             </div>
                         </div>
                     </div>
+                    @if (ViewBag.IsOwner == true)
+                    {
+                        <div style="background:#EEEDFE;
+                            border:0.5px solid #AFA9EC;
+                            border-radius:8px;
+                            padding:10px;
+                            margin-bottom:10px;">
+
+                            <div style="font-size:11px;
+                                font-weight:500;
+                                color:#3C3489;
+                                margin-bottom:8px;">
+
+                                <i class="ti ti-settings"
+                                   aria-hidden="true"></i>
+
+                                Manage your listing
+
+                            </div>
+
+                            <a href="/seller/listings/edit/@Model.ListingId"
+                               class="vt-btn vt-btn-primary"
+                               style="width:100%;
+                                justify-content:center;
+                                margin-bottom:6px;">
+
+                                <i class="ti ti-edit"
+                                   aria-hidden="true"></i>
+
+                                Edit listing
+
+                            </a>
+
+                            <form asp-controller="Seller"
+                                  asp-action="DeleteListing"
+                                  method="post"
+                                  style="margin:0;">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="listingId"
+                                       value="@Model.ListingId" />
+
+                                <button type="submit"
+                                        style="width:100%;
+                                    background:#FDECEA;
+                                    color:#B91C1C;
+                                    border:none;
+                                    border-radius:6px;
+                                    padding:7px;
+                                    font-size:11px;
+                                    cursor:pointer;"
+                                        onclick="return confirm('Delete this listing?')">
+
+                                    <i class="ti ti-trash"
+                                       aria-hidden="true"></i>
+
+                                    Delete listing
+
+                                </button>
+
+                            </form>
+
+                        </div>
+                    }
+
 
                     @if (Context.Session.GetString("AccessToken") != null)
                     {

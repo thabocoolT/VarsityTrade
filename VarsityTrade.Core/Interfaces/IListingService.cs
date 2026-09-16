@@ -1,30 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using VarsityTrade.Core.DTOs.Listings; // Provides Listing DTOs
+﻿using VarsityTrade.Core.DTOs.Listings;
 
 namespace VarsityTrade.Core.Interfaces
 {
-    // This interface defines the contract for all listing operations
-    // The controller depends on this interface — not the concrete service
     public interface IListingService
     {
-        // Get all active listings for a specific university — the main campus-locked feed
-        Task<IEnumerable<ListingResponseDto>> GetListingsByUniversityAsync(int universityId);
+        Task<IEnumerable<ListingResponseDto>>
+            GetListingsByUniversityAsync(
+                int universityId);
 
-        // Get a single listing by its ID — for the listing detail page
-        Task<ListingResponseDto?> GetListingByIdAsync(int listingId);
+        Task<IEnumerable<ListingResponseDto>>
+            GetAllActiveListingsAsync();
 
-        // Create a new listing — takes userId and looks up the seller profile internally
-        Task<ListingResponseDto?> CreateListingAsync(int userId, ListingRequestDto request);
+        Task<ListingResponseDto?>
+            GetListingByIdAsync(
+                int listingId);
 
-        // Update an existing listing — only the owner can update it
-        Task<ListingResponseDto?> UpdateListingAsync(int listingId, int userId, ListingRequestDto request);
+        Task<ListingResponseDto?>
+            CreateListingAsync(
+                int userId,
+                ListingRequestDto request);
 
-        // Soft delete a listing — sets DeletedAt and status to Deleted
-        Task<bool> DeleteListingAsync(int listingId, int userId);
+        Task<ListingResponseDto?>
+            UpdateListingAsync(
+                int listingId,
+                int userId,
+                ListingRequestDto request);
 
-        // Increment the view count each time a listing detail page is opened
-        Task IncrementViewCountAsync(int listingId);
+        Task<bool>
+            DeleteListingAsync(
+                int listingId,
+                int userId);
+
+        Task
+            IncrementViewCountAsync(
+                int listingId);
     }
 }

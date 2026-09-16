@@ -1,5 +1,74 @@
-﻿<!DOCTYPE html>
+﻿@inject VarsityTrade.Web.Services.ApiService ApiService
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const trigger =
+            document.getElementById("vt-category-trigger");
+
+        const menu =
+            document.getElementById("vt-category-menu");
+
+        const chevron =
+            document.getElementById("vt-category-chevron");
+
+        if (!trigger || !menu) {
+            return;
+        }
+
+        function setMenuState(open) {
+
+            menu.style.display =
+                open ? "block" : "none";
+
+            trigger.setAttribute(
+                "aria-expanded",
+                open ? "true" : "false"
+            );
+
+            if (chevron) {
+                chevron.className =
+                    open
+                        ? "ti ti-chevron-up"
+                        : "ti ti-chevron-down";
+            }
+        }
+
+        trigger.addEventListener("click", function(event) {
+
+            event.stopPropagation();
+
+            const isOpen =
+                menu.style.display === "block";
+
+            setMenuState(!isOpen);
+        });
+
+        trigger.addEventListener("keydown", function(event) {
+
+            if (event.key === "Enter" ||
+                event.key === " ") {
+
+                event.preventDefault();
+
+                const isOpen =
+                    menu.style.display === "block";
+
+                setMenuState(!isOpen);
+            }
+        });
+
+        document.addEventListener("click", function(event) {
+
+            if (!trigger.contains(event.target)) {
+                setMenuState(false);
+            }
+        });
+    });
+</script>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,6 +83,7 @@
     <!-- Page-specific styles injected here -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
+
 <body>
 
     <!-- ── ANNOUNCEMENT BAR ─────────────────────────────────── -->
@@ -24,6 +94,14 @@
 
     <!-- ── NAVBAR ───────────────────────────────────────────── -->
     <nav class="vt-nav">
+
+        @{
+            var navCategories =
+                await ApiService.GetAsync<
+                    List<VarsityTrade.Web.Models.Seller.CategoryOption>>(
+                        "api/categories")
+                ?? new List<VarsityTrade.Web.Models.Seller.CategoryOption>();
+        }
 
         <!-- Logo -->
         <a href="/" class="vt-nav-logo">
@@ -38,10 +116,12 @@
 
         <!-- Categories dropdown trigger -->
         <div class="vt-nav-cat"
-             onclick="window.location.href='/listings/browse'"
+             id="vt-category-trigger"
              role="button"
              tabindex="0"
-             title="Browse all categories">
+             aria-expanded="false"
+             aria-haspopup="true"
+             style="position:relative;">
 
             <i class="ti ti-category"
                aria-hidden="true"
@@ -50,9 +130,51 @@
             All categories
 
             <i class="ti ti-chevron-down"
+               id="vt-category-chevron"
                aria-hidden="true"
                style="font-size:12px"></i>
 
+            <div id="vt-category-menu"
+                 style="display:none;
+                position:absolute;
+                top:calc(100% + 8px);
+                left:0;
+                min-width:210px;
+                max-height:360px;
+                overflow-y:auto;
+                background:#fff;
+                border:0.5px solid #e0ddf5;
+                border-radius:10px;
+                box-shadow:0 8px 24px rgba(38,33,92,0.12);
+                padding:6px;
+                z-index:1000;">
+
+                <a href="/listings/browse"
+                   style="display:block;
+                    padding:8px 10px;
+                    border-radius:6px;
+                    color:#26215C;
+                    text-decoration:none;
+                    font-size:12px;">
+                    All categories
+                </a>
+
+                @foreach (var category in navCategories)
+                {
+                    var encodedCategory =
+                        Uri.EscapeDataString(category.Name);
+
+                    <a href="/listings/browse?category=@encodedCategory"
+                       style="display:block;
+                        padding:8px 10px;
+                        border-radius:6px;
+                        color:#444;
+                        text-decoration:none;
+                        font-size:12px;">
+                        @category.Name
+                    </a>
+                }
+            </div>
         </div>
 
         <!-- Search bar -->
