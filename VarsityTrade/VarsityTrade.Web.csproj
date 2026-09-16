@@ -10,8 +10,6 @@
     <Folder Include="Controllers\Buyer\" />
     <Folder Include="Controllers\Admin\" />
     <Folder Include="Controllers\Seller\" />
-    <Folder Include="Models\Admin\" />
-    <Folder Include="Views\Admin\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,43 @@
+﻿@using Microsoft.AspNetCore.Html
+
+@{
+    var page = ViewData["SidebarPage"]?.ToString() ?? "";
+}
+
+@* Admin sidebar — dark navy icon-only matching wireframe *@
+<div style="background:#26215C;border:0.5px solid #3C3489;border-radius:12px;padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:4px;width:48px;flex-shrink:0;position:sticky;top:86px;">
+
+    <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#AFA9EC;font-size:16px;cursor:pointer;background:rgba(255,255,255,0.1);">
+        <i class="ti ti-menu-2" aria-hidden="true"></i>
+    </div>
+
+    <div style="height:0.5px;background:rgba(255,255,255,0.1);width:24px;margin:4px auto;"></div>
+
+    @AdminIcon("/admin", "ti-layout-dashboard", page == "admin-dashboard", false)
+    @AdminIcon("/admin/users", "ti-users", page == "admin-users", true)
+    @AdminIcon("/admin/listings", "ti-list", page == "admin-listings", false)
+    @AdminIcon("/admin/reports", "ti-flag", page == "admin-reports", true)
+    @AdminIcon("/admin/stats", "ti-chart-bar", page == "admin-stats", false)
+    @AdminIcon("/admin/banner", "ti-photo", page == "admin-banner", false)
+
+    <div style="height:0.5px;background:rgba(255,255,255,0.1);width:24px;margin:4px auto;"></div>
+
+    @AdminIcon("/admin/settings", "ti-settings", false, false)
+    @AdminIcon("/auth/logout", "ti-logout", false, false)
+
+</div>
+
+@functions {
+    IHtmlContent AdminIcon(string href, string icon, bool active, bool hasBadge)
+    {
+        var bg = active ? "background:rgba(255,255,255,0.15);" : "";
+        var color = active ? "color:#fff;" : "color:#AFA9EC;";
+        var badge = hasBadge
+            ? "<div style='position:absolute;top:2px;right:2px;width:8px;height:8px;background:#e74c3c;border-radius:50%;'></div>"
+            : "";
+        return new HtmlString($@"
+            <a href=""{href}"" style=""position:relative;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;{color}{bg}font-size:15px;text-decoration:none;"">
+                <i class=""ti {icon}"" aria-hidden=""true""></i>{badge}
+            </a>");
+    }
+}

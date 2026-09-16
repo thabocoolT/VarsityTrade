@@ -87,10 +87,22 @@
 <body>
 
     <!-- ── ANNOUNCEMENT BAR ─────────────────────────────────── -->
-    <div class="vt-announce">
+    <!-- ── ANNOUNCEMENT BAR ─────────────────────────────────── -->
+@{
+    var isAdminUser = Context.Session.GetString("UserRole") == "Admin";
+}
+<div class="vt-announce" style="@(isAdminUser ? "background:#26215C;" : "background:#4B3BC7;")">
+    @if (isAdminUser)
+    {
+        <i class="ti ti-shield-check" aria-hidden="true"></i>
+        <span>Varsity Trade — Admin Panel · Restricted Access</span>
+    }
+    else
+    {
         <i class="ti ti-speakerphone" aria-hidden="true"></i>
-        Welcome to Varsity Trade — The #1 Marketplace for Students
-    </div>
+        <span>Welcome to Varsity Trade — The #1 Marketplace for Students</span>
+    }
+</div>
 
     <!-- ── NAVBAR ───────────────────────────────────────────── -->
     <nav class="vt-nav">

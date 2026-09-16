@@ -1,0 +1,169 @@
+﻿@model VarsityTrade.Web.Models.Admin.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_Layout";
+    var firstName = Context.Session.GetString("FirstName") ?? "Admin";
+}
+
+<div style="display:flex;gap:12px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_SidebarAdmin")
+
+    <div style="flex:1;min-width:0;">
+
+        @* Welcome bar *@
+        <div style="background:linear-gradient(135deg,#26215C,#3C3489);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="background:rgba(255,255,255,0.15);color:#fff;font-size:10px;border-radius:5px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;margin-bottom:6px;">
+                    <i class="ti ti-shield" aria-hidden="true"></i> Administrator
+                </div>
+                <div style="font-size:15px;font-weight:500;color:#fff;margin-bottom:2px;">Good day, @firstName 👋</div>
+                <div style="font-size:11px;color:#AFA9EC;">Varsity Trade platform overview — all universities</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <a href="/admin/reports" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:6px;padding:7px 12px;font-size:11px;display:flex;align-items:center;gap:5px;text-decoration:none;">
+                    <i class="ti ti-flag" aria-hidden="true"></i> View reports
+                </a>
+                <a href="/admin/banner" style="background:#fff;color:#26215C;border:none;border-radius:6px;padding:7px 14px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:5px;text-decoration:none;">
+                    <i class="ti ti-photo" aria-hidden="true"></i> Manage banner
+                </a>
+            </div>
+        </div>
+
+        @* Stats grid *@
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#EEEDFE;color:#26215C;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-users" aria-hidden="true"></i></div>
+                </div>
+                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.Stats.TotalUsers.ToString("N0")</div>
+                <div style="font-size:11px;color:#888;">Total users</div>
+                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-trending-up" aria-hidden="true"></i> +@Model.Stats.NewUsersThisWeek this week
+                </div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-list" aria-hidden="true"></i></div>
+                </div>
+                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.Stats.TotalListings.ToString("N0")</div>
+                <div style="font-size:11px;color:#888;">Total listings</div>
+                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-trending-up" aria-hidden="true"></i> @Model.Stats.ActiveListings active
+                </div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-flag" aria-hidden="true"></i></div>
+                </div>
+                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.Stats.OpenReports</div>
+                <div style="font-size:11px;color:#888;">Open reports</div>
+                <div style="font-size:10px;color:#B45309;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-clock" aria-hidden="true"></i> Needs attention
+                </div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#FDECEA;color:#B91C1C;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-user-off" aria-hidden="true"></i></div>
+                </div>
+                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.Stats.BannedUsers</div>
+                <div style="font-size:11px;color:#888;">Banned users</div>
+                <div style="font-size:10px;color:#888;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-minus" aria-hidden="true"></i> Platform moderation
+                </div>
+            </div>
+        </div>
+
+        @* Two column: reports + recent users *@
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+
+            @* Open reports *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="font-size:13px;font-weight:500;color:#26215C;">Open reports</div>
+                    <a href="/admin/reports" style="font-size:11px;color:#4B3BC7;text-decoration:none;">View all →</a>
+                </div>
+                @if (Model.OpenReports.Any())
+                {
+                    @foreach (var report in Model.OpenReports)
+                    {
+                        var isUrgent = report.ReportType == "Scam" || report.Status == "Urgent";
+                        var iconStyle = isUrgent ? "background:#FDECEA;color:#B91C1C;" : "background:#FEF3E2;color:#B45309;";
+                        var badgeStyle = isUrgent ? "background:#FDECEA;color:#B91C1C;" : "background:#FEF3E2;color:#B45309;";
+                        var badgeText = isUrgent ? "Urgent" : "Review";
+                        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid #f0eefb;">
+                            <div style="width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;@iconStyle">
+                                <i class="ti ti-flag" aria-hidden="true"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:1px;">@report.ReportType report</div>
+                                <div style="font-size:10px;color:#888;">
+                                    @(report.ListingTitle ?? $"{report.ReportedUserFirstName} {report.ReportedUserLastName}")
+                                    · Reported @((int)(DateTime.UtcNow - report.CreatedAt).TotalHours)h ago
+                                </div>
+                            </div>
+                            <span style="font-size:9px;border-radius:4px;padding:2px 6px;white-space:nowrap;@badgeStyle">@badgeText</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="text-align:center;padding:20px;font-size:12px;color:#888;">
+                        <i class="ti ti-check" aria-hidden="true" style="font-size:24px;color:#27500A;display:block;margin-bottom:6px;"></i>
+                        No open reports — all clear!
+                    </div>
+                }
+            </div>
+
+            @* Recently registered users *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="font-size:13px;font-weight:500;color:#26215C;">Recently registered users</div>
+                    <a href="/admin/users" style="font-size:11px;color:#4B3BC7;text-decoration:none;">View all →</a>
+                </div>
+                @foreach (var user in Model.RecentUsers)
+                {
+                    var initials = $"{user.FirstName[0]}{user.LastName[0]}".ToUpper();
+                    var joinedAgo = (int)(DateTime.UtcNow - user.CreatedAt).TotalHours;
+                    var joinedText = joinedAgo < 1 ? "Just now" : joinedAgo < 24 ? $"{joinedAgo}h ago" : $"{(int)(joinedAgo / 24)}d ago";
+                    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #f0eefb;">
+                        <div style="width:28px;height:28px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;">@initials</div>
+                        <div style="flex:1;">
+                            <div style="font-size:12px;font-weight:500;color:#26215C;">@user.FirstName @user.LastName</div>
+                            <div style="font-size:10px;color:#888;">@user.UniversityShortName · Joined @joinedText</div>
+                        </div>
+                        <span style="font-size:9px;border-radius:4px;padding:2px 6px;background:#EEEDFE;color:#3C3489;">New</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Recent admin activity *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="font-size:13px;font-weight:500;color:#26215C;">Recent admin activity</div>
+            </div>
+            @{
+                var activities = new[] {
+                    ("ti-trash",    "background:#FDECEA;color:#B91C1C;", "Listing removed",     "Removed for violating platform rules"),
+                    ("ti-user-off", "background:#FDECEA;color:#B91C1C;", "User action taken",   "User account moderated for policy violation"),
+                    ("ti-flag",     "background:#EAF3DE;color:#27500A;", "Report resolved",     "Report reviewed and dismissed after investigation"),
+                    ("ti-photo",    "background:#EEEDFE;color:#4B3BC7;", "Hero banner updated", "Platform news slide added or updated"),
+                };
+            }
+            @foreach (var (icon, iconStyle, title, sub) in activities)
+            {
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:0.5px solid #f0eefb;">
+                    <div style="width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;@iconStyle">
+                        <i class="ti @icon" aria-hidden="true"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:1px;">@title</div>
+                        <div style="font-size:11px;color:#888;">@sub</div>
+                    </div>
+                    <div style="font-size:10px;color:#aaa;white-space:nowrap;">Recent</div>
+                </div>
+            }
+        </div>
+
+    </div>
+</div>

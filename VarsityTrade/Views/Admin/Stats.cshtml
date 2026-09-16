@@ -1,0 +1,96 @@
+﻿@model VarsityTrade.Web.Models.Admin.PlatformStatsViewModel
+@{
+    ViewData["Title"] = "Platform Statistics";
+    Layout = "_Layout";
+}
+
+<div style="display:flex;gap:12px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_SidebarAdmin")
+
+    <div style="flex:1;min-width:0;">
+
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+                <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                    <i class="ti ti-chart-bar" aria-hidden="true" style="color:#4B3BC7;"></i> Platform statistics
+                </div>
+                <div style="font-size:11px;color:#888;">Cross-university platform overview</div>
+            </div>
+        </div>
+
+        @* Stats grid *@
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            @{
+                var stats = new[] {
+                    ("ti-users",        "background:#EEEDFE;color:#26215C;", Model.TotalUsers.ToString("N0"),        "Total users",         $"+{Model.NewUsersThisWeek} this week",  "#27500A"),
+                    ("ti-list",         "background:#EAF3DE;color:#27500A;", Model.TotalListings.ToString("N0"),     "Total listings",      $"{Model.ActiveListings} active",         "#27500A"),
+                    ("ti-check",        "background:#EBF5FF;color:#1E6FBF;", Model.TotalTransactions.ToString("N0"), "Completed trades",    "All time",                               "#888"),
+                    ("ti-message-circle","background:#FEF3E2;color:#B45309;", Model.TotalMessages.ToString("N0"),    "Messages sent",       $"{Model.TotalConversations} threads",    "#888"),
+                };
+            }
+            @foreach (var (icon, iconStyle, num, label, trend, trendColor) in stats)
+            {
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
+                    <div style="margin-bottom:6px;"><div style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;@iconStyle"><i class="ti @icon" aria-hidden="true"></i></div></div>
+                    <div style="font-size:20px;font-weight:500;color:#26215C;">@num</div>
+                    <div style="font-size:11px;color:#888;">@label</div>
+                    <div style="font-size:10px;color:@trendColor;margin-top:2px;">@trend</div>
+                </div>
+            }
+        </div>
+
+        @* Three column summary *@
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            @* Users breakdown *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">User activity</div>
+                @foreach (var (label, val, style) in new[] {
+                    ("Active users",     Model.ActiveUsers.ToString(),      "color:#27500A;"),
+                    ("Deactivated",      Model.DeactivatedUsers.ToString(), "color:#B45309;"),
+                    ("Banned users",     Model.BannedUsers.ToString(),      "color:#B91C1C;"),
+                    ("Seller profiles",  Model.TotalSellerProfiles.ToString(), "color:#4B3BC7;"),
+                })
+                {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f5f4f9;font-size:12px;">
+                        <span style="color:#888;">@label</span>
+                        <span style="font-weight:500;@style">@val</span>
+                    </div>
+                }
+            </div>
+
+            @* Listing breakdown *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">Listing activity</div>
+                @foreach (var (label, val, style) in new[] {
+                    ("Active listings",  Model.ActiveListings.ToString(),   "color:#27500A;"),
+                    ("Sold listings",    Model.SoldListings.ToString(),     "color:#888;"),
+                    ("Removed listings", Model.DeletedListings.ToString(),  "color:#B91C1C;"),
+                    ("Transactions",     Model.TotalTransactions.ToString(),"color:#4B3BC7;"),
+                })
+                {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f5f4f9;font-size:12px;">
+                        <span style="color:#888;">@label</span>
+                        <span style="font-weight:500;@style">@val</span>
+                    </div>
+                }
+            </div>
+
+            @* Moderation breakdown *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">Moderation</div>
+                @foreach (var (label, val, style) in new[] {
+                    ("Open reports",     Model.OpenReports.ToString(),     "color:#B45309;"),
+                    ("Resolved reports", Model.ResolvedReports.ToString(), "color:#27500A;"),
+                    ("Total reports",    Model.TotalReports.ToString(),    "color:#888;"),
+                    ("Banned users",     Model.BannedUsers.ToString(),     "color:#B91C1C;"),
+                })
+                {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f5f4f9;font-size:12px;">
+                        <span style="color:#888;">@label</span>
+                        <span style="font-weight:500;@style">@val</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
