@@ -1,4 +1,4 @@
-﻿namespace VarsityTrade.Web.Models.Listings
+namespace VarsityTrade.Web.Models.Listings
 {
     public class BrowseViewModel
     {
@@ -17,6 +17,10 @@
         public decimal? MinPrice { get; set; }
 
         public decimal? MaxPrice { get; set; }
+
+        public decimal? SelectedMinRating { get; set; }
+
+        public string? SelectedSort { get; set; }
 
         public List<string> Categories { get; set; }
             = new();
