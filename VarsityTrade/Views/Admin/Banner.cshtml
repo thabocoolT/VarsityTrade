@@ -1,129 +1,262 @@
 ﻿@{
     ViewData["Title"] = "Hero Banner Manager";
+    ViewData["SidebarPage"] = "admin-banner";
     Layout = "_Layout";
     var slides = ViewBag.Slides as List<VarsityTrade.Web.Models.Admin.HeroBannerSlideViewModel> ?? new();
     var visibleCount = slides.Count(s => s.IsVisible);
+    var firstVisible = slides.FirstOrDefault(s => s.IsVisible);
 }
 
 <div style="display:flex;gap:12px;padding:16px 24px;align-items:start;">
     @await Html.PartialAsync("_SidebarAdmin")
 
-    <div style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 240px;gap:12px;align-items:start;">
+    <div style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start;">
 
         <div>
+            @* Page header *@
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                 <div>
                     <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
-                        <i class="ti ti-photo" aria-hidden="true" style="color:#4B3BC7;"></i> Hero banner manager
+                        <i class="ti ti-photo" aria-hidden="true" style="color:#26215C;"></i> Hero Banner Manager
                     </div>
-                    <div style="font-size:11px;color:#888;">Manage slides shown on the home page hero banner</div>
+                    <div style="font-size:11px;color:#888;">Control what appears on the home page auto-swiping hero banner</div>
                 </div>
-                <button style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                <button onclick="document.getElementById('add-slide-form').style.display=document.getElementById('add-slide-form').style.display=='none'?'block':'none'"
+                        style="background:#26215C;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer;">
                     <i class="ti ti-plus" aria-hidden="true"></i> Add new slide
                 </button>
             </div>
 
-            @if (slides.Any())
-            {
-                <div style="display:flex;flex-direction:column;gap:8px;">
+            @* Auto-rotate speed card *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div>
+                    <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:3px;">
+                        <i class="ti ti-clock" aria-hidden="true"></i> Auto-rotate speed
+                    </div>
+                    <div style="font-size:11px;color:#888;">How many seconds each slide displays before switching to the next</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <input type="number" value="5" style="border:0.5px solid #ddd;border-radius:6px;padding:6px 10px;font-size:12px;width:60px;text-align:center;color:#26215C;" />
+                    <span style="font-size:12px;color:#888;">seconds</span>
+                    <button style="background:#26215C;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:11px;cursor:pointer;">Save</button>
+                </div>
+            </div>
+
+            @* Add new slide form — hidden by default *@
+            <div id="add-slide-form" style="display:none;background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:14px;">
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-plus" aria-hidden="true" style="color:#4B3BC7;"></i> Add new slide
+                </div>
+                <form asp-controller="Admin" asp-action="CreateSlide" method="post">
+                    @Html.AntiForgeryToken()
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;">Slide type</label>
+                            <select name="slideType" style="width:100%;border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#444;background:#fff;">
+                                <option value="PlatformNews">Platform news</option>
+                                <option value="FeaturedListing">Featured listing</option>
+                                <option value="RecentReview">Recent review</option>
+                                <option value="RecentPurchase">Recent purchase</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;">Sort order</label>
+                            <input type="number" name="sortOrder" value="@(slides.Any() ? slides.Max(s => s.SortOrder) + 1 : 1)"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#26215C;" />
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;">Title <span style="color:#B91C1C;">*</span></label>
+                        <input type="text" name="title" required placeholder="e.g. Welcome to the new semester!"
+                               style="width:100%;border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#26215C;" />
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;">Subtitle</label>
+                        <input type="text" name="subtitle" placeholder="Optional subtitle"
+                               style="width:100%;border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#26215C;" />
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                        <div>
+                            <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;">Button text</label>
+                            <input type="text" name="buttonText" placeholder="e.g. Browse now"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#26215C;" />
+                        </div>
+                        <div>
+                            <label style="font-size:11px;color:#888;display:block;margin-bottom:4px;">Button URL</label>
+                            <input type="text" name="buttonUrl" placeholder="/listings/browse"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#26215C;" />
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+                        <input type="checkbox" name="isVisible" value="true" checked style="width:14px;height:14px;" />
+                        <label style="font-size:12px;color:#444;">Make visible immediately</label>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="submit" style="background:#26215C;color:#fff;border:none;border-radius:7px;padding:9px 18px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                            <i class="ti ti-plus" aria-hidden="true"></i> Add slide
+                        </button>
+                        <button type="button" onclick="document.getElementById('add-slide-form').style.display='none'"
+                                style="background:#fff;color:#888;border:0.5px solid #ddd;border-radius:7px;padding:9px 14px;font-size:12px;cursor:pointer;">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            @* Slides list *@
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                @if (slides.Any())
+                {
                     @foreach (var slide in slides.OrderBy(s => s.SortOrder))
                     {
-                        var typeStyle = slide.SlideType switch {
-                            "FeaturedListing"  => "background:#EEEDFE;color:#4B3BC7;",
-                            "RecentReview"     => "background:#EAF3DE;color:#27500A;",
-                            "RecentPurchase"   => "background:#EBF5FF;color:#1E6FBF;",
-                            "PlatformNews"     => "background:#FEF3E2;color:#B45309;",
-                            _                  => "background:#f5f4f9;color:#888;"
+                        var typeStyle = slide.SlideType switch
+                        {
+                            "FeaturedListing" => ("background:#EEEDFE;color:#4B3BC7;", "ti-star"),
+                            "RecentReview" => ("background:#EAF3DE;color:#27500A;", "ti-star"),
+                            "RecentPurchase" => ("background:#EBF5FF;color:#1E6FBF;", "ti-shopping-bag"),
+                            "PlatformNews" => ("background:#FEF3E2;color:#B45309;", "ti-speakerphone"),
+                            _ => ("background:#f5f4f9;color:#888;", "ti-photo")
                         };
-                        var typeIcon = slide.SlideType switch {
-                            "FeaturedListing" => "ti-star",
-                            "RecentReview"    => "ti-message-circle",
-                            "RecentPurchase"  => "ti-check",
-                            "PlatformNews"    => "ti-speakerphone",
-                            _                 => "ti-photo"
+                        var slideLabel = slide.SlideType switch
+                        {
+                            "FeaturedListing" => "Featured listing",
+                            "RecentReview" => "Recent review",
+                            "RecentPurchase" => "Recent purchase",
+                            "PlatformNews" => "Platform news",
+                            _ => slide.SlideType
                         };
-                        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;@(!slide.IsVisible ? "opacity:0.6;border-style:dashed;" : "")padding:0;overflow:hidden;">
-                            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:0.5px solid #f0eefb;">
-                                <div style="color:#ccc;font-size:14px;cursor:grab;flex-shrink:0;">
-                                    <i class="ti ti-grip-vertical" aria-hidden="true"></i>
+                        <div style="background:#fff;border:0.5px solid #e0ddf5;@(!slide.IsVisible ? "opacity:0.65;border-style:dashed;" : "")border-radius:12px;overflow:hidden;">
+                            @* Slide header *@
+                            <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid #f0eefb;">
+                                <i class="ti ti-grip-vertical" aria-hidden="true" style="color:#ccc;font-size:16px;cursor:grab;"></i>
+                                <div style="width:22px;height:22px;border-radius:50%;background:#26215C;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;">@slide.SortOrder</div>
+                                <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;@typeStyle.Item1">
+                                    <i class="ti @typeStyle.Item2" aria-hidden="true"></i>
                                 </div>
-                                <div style="font-size:11px;color:#888;flex-shrink:0;">Slide @slide.SortOrder</div>
-                                <div style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;@typeStyle">
-                                    <i class="ti @typeIcon" aria-hidden="true"></i>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-size:12px;font-weight:500;color:#26215C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@slideLabel — @slide.Title</div>
+                                    <div style="font-size:10px;color:#888;">Published by Admin · @slide.CreatedAt.ToString("dd MMM yyyy")</div>
                                 </div>
-                                <div style="flex:1;">
-                                    <div style="font-size:12px;font-weight:500;color:#26215C;">@slide.Title</div>
-                                    @if (!string.IsNullOrEmpty(slide.Subtitle))
-                                    {
-                                        <div style="font-size:10px;color:#888;">@slide.Subtitle</div>
-                                    }
-                                </div>
-                                <span style="font-size:10px;border-radius:5px;padding:3px 8px;@(slide.IsVisible ? "background:#EAF3DE;color:#27500A;" : "background:#f5f4f9;color:#888;")">
+                                <span style="font-size:10px;border-radius:5px;padding:3px 8px;white-space:nowrap;@(slide.IsVisible ? "background:#EAF3DE;color:#27500A;" : "background:#f5f4f9;color:#888;")">
                                     @(slide.IsVisible ? "Visible" : "Hidden")
                                 </span>
-                                <div style="display:flex;gap:4px;">
-                                    <button style="background:#EEEDFE;color:#4B3BC7;border:none;border-radius:5px;padding:5px 8px;font-size:10px;cursor:pointer;">
-                                        <i class="ti ti-edit" aria-hidden="true"></i>
+                                <div style="display:flex;gap:6px;">
+                                    <button style="background:#EEEDFE;color:#4B3BC7;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:3px;">
+                                        <i class="ti ti-edit" aria-hidden="true"></i> Edit
                                     </button>
                                     <form asp-controller="Admin" asp-action="ToggleSlide" method="post" style="margin:0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="slideId" value="@slide.HeroBannerSlideId" />
-                                        <button type="submit" style="background:#FEF3E2;color:#B45309;border:none;border-radius:5px;padding:5px 8px;font-size:10px;cursor:pointer;">
+                                        <button type="submit" style="border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:3px;@(slide.IsVisible ? "background:#EAF3DE;color:#27500A;" : "background:#f5f4f9;color:#888;")">
+                                            <i class="ti @(slide.IsVisible ? "ti-eye" : "ti-eye-off")" aria-hidden="true"></i>
                                             @(slide.IsVisible ? "Hide" : "Show")
                                         </button>
                                     </form>
                                     <form asp-controller="Admin" asp-action="DeleteSlide" method="post" style="margin:0;">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="slideId" value="@slide.HeroBannerSlideId" />
-                                        <button type="submit" style="background:#FDECEA;color:#B91C1C;border:none;border-radius:5px;padding:5px 8px;font-size:10px;cursor:pointer;"
+                                        <button type="submit" style="background:#FDECEA;color:#B91C1C;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;"
                                                 onclick="return confirm('Delete this slide?')">
                                             <i class="ti ti-trash" aria-hidden="true"></i>
                                         </button>
                                     </form>
                                 </div>
                             </div>
+                            @* Slide body *@
+                            <div style="padding:12px 14px;display:grid;grid-template-columns:80px 1fr;gap:12px;align-items:start;">
+                                <div style="background:@typeStyle.Item1;border-radius:8px;height:56px;display:flex;align-items:center;justify-content:center;font-size:24px;">
+                                    <i class="ti @typeStyle.Item2" aria-hidden="true"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size:10px;color:#888;margin-bottom:3px;">Slide headline</div>
+                                    <div style="font-size:12px;color:#26215C;margin-bottom:4px;font-weight:500;">@slide.Title</div>
+                                    @if (!string.IsNullOrEmpty(slide.Subtitle))
+                                    {
+                                        <div style="font-size:11px;color:#888;">@slide.Subtitle</div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(slide.ButtonText))
+                                    {
+                                        <div style="margin-top:6px;"><span style="background:#EEEDFE;color:#4B3BC7;font-size:10px;border-radius:4px;padding:2px 8px;">@slide.ButtonText →</span></div>
+                                    }
+                                </div>
+                            </div>
                         </div>
                     }
-                </div>
-            }
-            else
-            {
-                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
-                    <i class="ti ti-photo" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
-                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No slides yet</div>
-                    <p style="font-size:12px;color:#888;">Add your first hero banner slide to get started.</p>
-                </div>
-            }
+                }
+                else
+                {
+                    <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
+                        <i class="ti ti-photo" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
+                        <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No slides yet</div>
+                        <p style="font-size:12px;color:#888;">Click "Add new slide" above to create your first banner slide.</p>
+                    </div>
+                }
+            </div>
         </div>
 
-        @* Right sidebar — summary *@
-        <div style="display:flex;flex-direction:column;gap:10px;">
+        @* Right sidebar *@
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+            @* Live banner preview *@
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">Banner summary</div>
-                @foreach (var (label, val) in new[] {
-                    ("Total slides",   slides.Count.ToString()),
-                    ("Visible slides", visibleCount.ToString()),
-                    ("Hidden slides",  (slides.Count - visibleCount).ToString()),
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-eye" aria-hidden="true"></i> Live banner preview
+                </div>
+                <div style="background:linear-gradient(135deg,#4B3BC7,#26215C);border-radius:10px;padding:12px;margin-bottom:8px;">
+                    <div style="background:rgba(255,255,255,0.15);color:#fff;font-size:9px;border-radius:4px;padding:2px 6px;display:inline-block;margin-bottom:6px;">
+                        <i class="ti ti-star" aria-hidden="true"></i> @(firstVisible?.SlideType ?? "Platform news")
+                    </div>
+                    <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:4px;">@(firstVisible?.Title ?? "No visible slides")</div>
+                    @if (!string.IsNullOrEmpty(firstVisible?.Subtitle))
+                    {
+                        <div style="font-size:10px;color:#AFA9EC;margin-bottom:8px;">@firstVisible.Subtitle</div>
+                    }
+                    <div style="display:flex;gap:4px;justify-content:center;margin-top:8px;">
+                        @for (int i = 0; i < Math.Min(slides.Count(s => s.IsVisible), 4); i++)
+                        {
+                            <div style="@(i == 0 ? "width:12px;border-radius:3px;background:#fff;" : "width:5px;border-radius:50%;background:rgba(255,255,255,0.3);")height:5px;"></div>
+                        }
+                    </div>
+                </div>
+                <div style="font-size:10px;color:#888;text-align:center;">
+                    @visibleCount of @slides.Count slides visible · Rotates every 5 seconds
+                </div>
+            </div>
+
+            @* Banner summary *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-chart-bar" aria-hidden="true"></i> Banner summary
+                </div>
+                @foreach (var (lbl, val, clr) in new[] {
+                    ("Total slides",      slides.Count.ToString(),                          "#26215C"),
+                    ("Visible slides",    visibleCount.ToString(),                          "#27500A"),
+                    ("Hidden slides",     (slides.Count-visibleCount).ToString(),           "#888"),
+                    ("Auto-rotate speed", "5 seconds",                                      "#26215C"),
+                    ("Last updated",      slides.Any() ? slides.Max(s=>s.CreatedAt).ToString("dd MMM yyyy") : "Never", "#888"),
                 })
                 {
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #f5f4f9;font-size:12px;">
-                        <span style="color:#888;">@label</span>
-                        <span style="font-weight:500;color:#26215C;">@val</span>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
+                        <span style="color:#888;">@lbl</span>
+                        <span style="font-weight:500;color:@clr;">@val</span>
                     </div>
                 }
             </div>
 
+            @* Slide types legend *@
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">Slide types</div>
-                @foreach (var (icon, label, style) in new[] {
-                    ("ti-star",        "Featured listing",  "background:#EEEDFE;color:#4B3BC7;"),
-                    ("ti-message-circle","Recent review",   "background:#EAF3DE;color:#27500A;"),
-                    ("ti-check",       "Recent purchase",   "background:#EBF5FF;color:#1E6FBF;"),
-                    ("ti-speakerphone","Platform news",     "background:#FEF3E2;color:#B45309;"),
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-layout" aria-hidden="true"></i> Slide types
+                </div>
+                @foreach (var (iconStyle, icon, label) in new[] {
+                    ("background:#EEEDFE;color:#4B3BC7;", "ti-star",        "Featured listing"),
+                    ("background:#EAF3DE;color:#27500A;", "ti-star",        "Recent review"),
+                    ("background:#EBF5FF;color:#1E6FBF;", "ti-shopping-bag","Recent purchase"),
+                    ("background:#FEF3E2;color:#B45309;", "ti-speakerphone","Platform news"),
                 })
                 {
-                    <div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11px;color:#555;">
-                        <div style="width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;@style">
+                    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;background:#f5f4f9;border-radius:7px;padding:6px 8px;margin-bottom:5px;font-size:11px;color:#555;">
+                        <div style="width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;@iconStyle">
                             <i class="ti @icon" aria-hidden="true"></i>
                         </div>
                         @label
@@ -131,6 +264,5 @@
                 }
             </div>
         </div>
-
     </div>
 </div>

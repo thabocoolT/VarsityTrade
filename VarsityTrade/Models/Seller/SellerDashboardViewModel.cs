@@ -23,6 +23,20 @@ namespace VarsityTrade.Web.Models.Seller
 
         // Pending offers preview
         public List<ReceivedOfferViewModel> PendingOffers { get; set; } = new();
+
+        public class SellerReviewViewModel
+        {
+            public string ReviewId { get; set; } = string.Empty;
+            public double Rating { get; set; }
+            public string? Comment { get; set; } = string.Empty;
+            public DateTime CreatedAt { get; set; }
+
+            public string ReviewerFirstName { get; set; } = string.Empty;
+            public string ReviewerLastName { get; set; } = string.Empty;
+
+            public string StoreName { get; set; } = string.Empty;
+            public string ListingTitle { get; set; } = string.Empty;
+        }
     }
 
     // Represents a single listing in the seller dashboard
@@ -125,17 +139,5 @@ public class SellerListingViewModel
         public string Name { get; set; } = string.Empty;
     }
 
-    public class SellerReviewViewModel
-    {
-        public string ReviewId { get; set; } = string.Empty;
-        public double Rating { get; set; }
-        public string? Comment { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-
-        public string ReviewerFirstName { get; set; } = string.Empty;
-        public string ReviewerLastName { get; set; } = string.Empty;
-
-        public string StoreName { get; set; } = string.Empty;
-        public string ListingTitle { get; set; } = string.Empty;
-    }
+   
 }

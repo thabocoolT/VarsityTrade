@@ -383,10 +383,10 @@ public async Task<IActionResult> MarkAsSold(int listingId)
             if(sellerProfileId == 0)
                 return RedirectToAction("Activate");
 
-            var reviews = await _api.GetAsync<List<SellerReviewViewModel>>(
+            var reviews = await _api.GetAsync<List<SellerDashboardViewModel.SellerReviewViewModel>>(
                 $"api/reviews/seller/{sellerProfileId}");
 
-            ViewBag.Reviews = reviews ?? new List<SellerReviewViewModel>();
+            ViewBag.Reviews = reviews ?? new List<SellerDashboardViewModel.SellerReviewViewModel>();
             ViewData["SidebarPage"] = "seller-reviews";
 
             return View();

@@ -219,5 +219,20 @@ namespace VarsityTrade.Web.Controllers.Auth
                 HttpContext.Session.SetString("CurrentMode", "Buyer");
             }
         }
+
+        [HttpGet("forgot-password")]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost("forgot-password")]
+        public IActionResult ForgotPassword(string email)
+        {
+            // Deferred to QA phase — email service not yet implemented
+            // Show success message for now
+            TempData["Message"] = "If that email is registered, a reset link has been sent.";
+            return RedirectToAction("Login");
+        }
     }
 }

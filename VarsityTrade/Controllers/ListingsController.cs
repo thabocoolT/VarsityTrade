@@ -4,6 +4,7 @@ using VarsityTrade.Web.Services;
 
 namespace VarsityTrade.Web.Controllers
 {
+    // Handles public and authenticated listing pages.
     [Route("listings")]
     public class ListingsController : Controller
     {
@@ -14,128 +15,56 @@ namespace VarsityTrade.Web.Controllers
             _api = api;
         }
 
+        // ─────────────────────────────────────────────────────────────
         // GET /listings/browse
+        // ─────────────────────────────────────────────────────────────
         [HttpGet("browse")]
         public async Task<IActionResult> Browse(
             string? q,
             string? category,
             string? condition)
         {
-            var isLoggedIn =
-                !string.IsNullOrWhiteSpace(
-                    HttpContext.Session.GetString("AccessToken"));
+            var accessToken = HttpContext.Session.GetString("AccessToken");
+            var isLoggedIn = !string.IsNullOrWhiteSpace(accessToken);
 
-            List<ListingCardViewModel> listings;
-
-            string universityName;
+            List<ListingCardViewModel> listings = new();
+            string universityName = "All Universities";
 
             if (isLoggedIn)
             {
+                // Logged-in users are restricted to their university.
                 var universityIdStr =
                     HttpContext.Session.GetString("UniversityId");
 
-                if (!int.TryParse(
-                    universityIdStr,
-                    out var universityId))
+                if (!int.TryParse(universityIdStr, out var universityId))
                 {
-                    return RedirectToAction(
-                        "Login",
-                        "Auth");
+                    return View(new BrowseViewModel
+                    {
+                        Listings = new(),
+                        UniversityName = "Your University",
+                        SearchQuery = q,
+                        SelectedCategory = category,
+                        SelectedCondition = condition
+                    });
                 }
 
-                listings =
-                    await _api.GetAsync<
-                        List<ListingCardViewModel>>(
-                            $"api/listings/university/{universityId}")
-                    ?? new List<ListingCardViewModel>();
-
                 universityName =
-                    await GetUniversityNameAsync(
-                        universityId);
+                    await GetUniversityNameAsync(universityId);
+
+                listings =
+                    await _api.GetAsync<List<ListingCardViewModel>>(
+                        $"api/listings/university/{universityId}")
+                    ?? new List<ListingCardViewModel>();
             }
             else
             {
-                listings =
-                    await _api.GetAsync<
-                        List<ListingCardViewModel>>(
-                            "api/listings/public")
-                    ?? new List<ListingCardViewModel>();
-
-                universityName =
-                    "All South African Universities";
+                // Guests are currently unable to retrieve the listing
+                // collection from the API because the API's university
+                // endpoint requires authentication.
+                //
+                // Therefore do not fake a university for guests.
+                listings = new List<ListingCardViewModel>();
             }
-
-            // Search real listing fields.
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                var searchTerm =
-                    q.Trim();
-
-                listings =
-                    listings
-                        .Where(l =>
-                            l.Title.Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase)
-                            ||
-                            l.Description.Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase)
-                            ||
-                            l.CategoryName.Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase)
-                            ||
-                            l.Condition.Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase)
-                            ||
-                            l.StoreName.Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase)
-                            ||
-                            l.ListingType.Contains(
-                                searchTerm,
-                                StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-            }
-
-            if (!string.IsNullOrWhiteSpace(category))
-            {
-                listings =
-                    listings
-                        .Where(l =>
-                            l.CategoryName.Equals(
-                                category,
-                                StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-            }
-
-            if (!string.IsNullOrWhiteSpace(condition))
-            {
-                listings =
-                    listings
-                        .Where(l =>
-                            l.Condition.Equals(
-                                condition,
-                                StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-            }
-
-            // Load real categories for the browse filter.
-            var categoryData =
-                await _api.GetAsync<
-                    List<VarsityTrade.Web.Models.Seller.CategoryOption>>(
-                        "api/categories");
-
-            var categories =
-                categoryData?
-                    .Select(c => c.Name)
-                    .Where(n => !string.IsNullOrWhiteSpace(n))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(n => n)
-                    .ToList()
-                ?? new List<string>();
 
             var model = new BrowseViewModel
             {
@@ -143,16 +72,69 @@ namespace VarsityTrade.Web.Controllers
                 UniversityName = universityName,
                 SearchQuery = q,
                 SelectedCategory = category,
-                SelectedCondition = condition,
-                Categories = categories
+                SelectedCondition = condition
             };
+
+            // ─────────────────────────────────────────────────────────
+            // Search
+            // ─────────────────────────────────────────────────────────
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                model.Listings = model.Listings
+                    .Where(l =>
+                        (!string.IsNullOrWhiteSpace(l.Title) &&
+                         l.Title.Contains(
+                             q,
+                             StringComparison.OrdinalIgnoreCase))
+                        ||
+                        (!string.IsNullOrWhiteSpace(l.CategoryName) &&
+                         l.CategoryName.Contains(
+                             q,
+                             StringComparison.OrdinalIgnoreCase))
+                        ||
+                        (!string.IsNullOrWhiteSpace(l.StoreName) &&
+                         l.StoreName.Contains(
+                             q,
+                             StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+
+            // ─────────────────────────────────────────────────────────
+            // Category filter
+            // ─────────────────────────────────────────────────────────
+            if (!string.IsNullOrWhiteSpace(category))
+            {
+                model.Listings = model.Listings
+                    .Where(l =>
+                        string.Equals(
+                            l.CategoryName,
+                            category,
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            // ─────────────────────────────────────────────────────────
+            // Condition filter
+            // ─────────────────────────────────────────────────────────
+            if (!string.IsNullOrWhiteSpace(condition))
+            {
+                model.Listings = model.Listings
+                    .Where(l =>
+                        string.Equals(
+                            l.Condition,
+                            condition,
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             ViewData["SidebarPage"] = "browse";
 
             return View(model);
         }
 
+        // ─────────────────────────────────────────────────────────────
         // GET /listings/{id}
+        // ─────────────────────────────────────────────────────────────
         [HttpGet("{id:int}")]
         public async Task<IActionResult> Detail(int id)
         {
@@ -161,63 +143,170 @@ namespace VarsityTrade.Web.Controllers
                     $"api/listings/{id}");
 
             if (listing == null)
-                return NotFound();
-
-            // Determine whether the logged-in user owns this listing.
-            ViewBag.IsOwner = false;
-
-            if (!string.IsNullOrWhiteSpace(
-                HttpContext.Session.GetString("AccessToken")))
             {
-                var profile =
+                return NotFound();
+            }
+
+            // ---------------------------------------------------------
+            // Determine whether the logged-in user owns this listing.
+            // ---------------------------------------------------------
+            var accessToken =
+                HttpContext.Session.GetString("AccessToken");
+
+            var currentMode =
+                HttpContext.Session.GetString("CurrentMode") ?? "Buyer";
+
+            var isSellerMode =
+                currentMode.Equals(
+                    "Seller",
+                    StringComparison.OrdinalIgnoreCase);
+
+            var isOwner = false;
+
+            if (!string.IsNullOrWhiteSpace(accessToken) && isSellerMode)
+            {
+                var sellerProfile =
                     await _api.GetAsync<dynamic>(
                         "api/sellerprofiles/my");
 
-                if (profile != null)
+                if (sellerProfile != null)
                 {
-                    var sellerProfileId =
-                        (int?)(profile.sellerProfileId ?? 0);
+                    try
+                    {
+                        int sellerProfileId =
+                            (int)sellerProfile.sellerProfileId;
 
-                    ViewBag.IsOwner =
-                        sellerProfileId ==
-                        listing.SellerProfileId;
+                        isOwner =
+                            sellerProfileId == listing.SellerProfileId;
+                    }
+                    catch
+                    {
+                        isOwner = false;
+                    }
                 }
             }
+
+            // ---------------------------------------------------------
+            // Related listings
+            // ---------------------------------------------------------
+            var relatedListings =
+                new List<ListingCardViewModel>();
+
+            var universityIdStr =
+                HttpContext.Session.GetString("UniversityId");
+
+            if (int.TryParse(
+                    universityIdStr,
+                    out var universityId))
+            {
+                var universityListings =
+                    await _api.GetAsync<List<ListingCardViewModel>>(
+                        $"api/listings/university/{universityId}");
+
+                if (universityListings != null)
+                {
+                    relatedListings = universityListings
+                        .Where(l =>
+                            l.ListingId != listing.ListingId &&
+                            (
+                                string.Equals(
+                                    l.CategoryName,
+                                    listing.CategoryName,
+                                    StringComparison.OrdinalIgnoreCase)
+                                ||
+                                l.CategoryName.Contains(
+                                    listing.CategoryName,
+                                    StringComparison.OrdinalIgnoreCase)
+                                ||
+                                listing.CategoryName.Contains(
+                                    l.CategoryName,
+                                    StringComparison.OrdinalIgnoreCase)
+                            ))
+                        .OrderByDescending(l => l.IsFeatured)
+                        .ThenByDescending(l => l.CreatedAt)
+                        .Take(4)
+                        .ToList();
+                }
+            }
+
+            // If fewer than four category matches exist,
+            // fill the remaining slots with other listings.
+            if (relatedListings.Count < 4)
+            {
+                var universityIdForFallback =
+                    int.TryParse(
+                        universityIdStr,
+                        out var fallbackUniversityId)
+                        ? fallbackUniversityId
+                        : 0;
+
+                if (universityIdForFallback > 0)
+                {
+                    var universityListings =
+                        await _api.GetAsync<List<ListingCardViewModel>>(
+                            $"api/listings/university/{universityIdForFallback}");
+
+                    if (universityListings != null)
+                    {
+                        var existingIds =
+                            relatedListings
+                                .Select(l => l.ListingId)
+                                .ToHashSet();
+
+                        var additionalListings =
+                            universityListings
+                                .Where(l =>
+                                    l.ListingId != listing.ListingId &&
+                                    !existingIds.Contains(l.ListingId))
+                                .OrderByDescending(l => l.IsFeatured)
+                                .ThenByDescending(l => l.CreatedAt)
+                                .Take(4 - relatedListings.Count)
+                                .ToList();
+
+                        relatedListings.AddRange(additionalListings);
+                    }
+                }
+            }
+
+            ViewBag.IsOwner = isOwner;
+            ViewBag.RelatedListings = relatedListings;
 
             ViewData["SidebarPage"] = "browse";
 
             return View(listing);
         }
 
+        // ─────────────────────────────────────────────────────────────
         // GET /listings/search
+        // ─────────────────────────────────────────────────────────────
         [HttpGet("search")]
-        public IActionResult Search(string? q)
+        public async Task<IActionResult> Search(string? q)
         {
             return RedirectToAction(
-                "Browse",
-                new
-                {
-                    q
-                });
+                nameof(Browse),
+                new { q });
         }
 
-        private async Task<string>
-            GetUniversityNameAsync(
-                int universityId)
+        // ─────────────────────────────────────────────────────────────
+        // PRIVATE HELPERS
+        // ─────────────────────────────────────────────────────────────
+
+        private async Task<string> GetUniversityNameAsync(int universityId)
         {
             var universities =
                 await _api.GetAsync<List<dynamic>>(
                     "api/universities");
 
-            var university =
-                universities?
-                    .FirstOrDefault(
-                        u =>
-                            (int)u.universityId ==
-                            universityId);
+            if (universities == null)
+            {
+                return "Your University";
+            }
 
-            return university?.name
-                   ?? "Your University";
+            var university =
+                universities.FirstOrDefault(
+                    u => (int)u.universityId == universityId);
+
+            return university?.name ?? "Your University";
         }
     }
 }

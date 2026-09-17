@@ -1,275 +1,575 @@
 ﻿@model VarsityTrade.Web.Models.Listings.BrowseViewModel
+
 @{
     ViewData["Title"] = "Browse Listings";
     Layout = "_Layout";
+
+    var isLoggedIn =
+        Context.Session.GetString("AccessToken") != null;
 }
 
-@* Browse page uses a different layout — full filter sidebar, no icon sidebar *@
 <div style="padding:0 24px;">
 
-    @* University lock banner *@
-    <div style="background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin:12px 0;">
-        <i class="ti ti-building" aria-hidden="true" style="font-size:18px;color:#4B3BC7;"></i>
+    @* University / guest banner *@
+    <div style="background:#EEEDFE;
+                border:0.5px solid #AFA9EC;
+                border-radius:10px;
+                padding:10px 14px;
+                display:flex;
+                align-items:center;
+                gap:10px;
+                margin:12px 0;">
+
+        <i class="ti ti-building"
+           aria-hidden="true"
+           style="font-size:18px;color:#4B3BC7;"></i>
+
         <div style="font-size:12px;color:#3C3489;">
-            @if (Context.Session.GetString("AccessToken") != null)
+
+            @if (isLoggedIn)
             {
-                <span>Showing listings from <b>@Model.UniversityName</b> only — items are restricted to your campus for safety and trust.</span>
+                <span>
+                    Showing listings from
+                    <b>@Model.UniversityName</b>
+                    only.
+                </span>
             }
             else
             {
-                <span>Browse student listings across South African universities. <a href="/auth/register" style="color:#4B3BC7;font-weight:500;">Register free</a> to see listings from your campus only.</span>
+                <span>
+                    Browse student listings across South African
+                    universities.
+                    <a href="/auth/register"
+                       style="color:#4B3BC7;font-weight:500;">
+                        Register free
+                    </a>
+                    to use campus-locked browsing.
+                </span>
             }
+
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start;padding-bottom:24px;">
+    <div style="display:grid;
+                grid-template-columns:220px 1fr;
+                gap:16px;
+                align-items:start;
+                padding-bottom:24px;">
 
-        @* LEFT FILTER SIDEBAR — matches wireframe exactly *@
-        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:16px;position:sticky;top:86px;">
+        @* =========================================================
+           FILTER SIDEBAR
+           ========================================================= *@
 
-            @* Campus section *@
+        <form method="get"
+              action="/listings/browse"
+              style="background:#fff;
+                     border:0.5px solid #e0ddf5;
+                     border-radius:12px;
+                     padding:16px;
+                     display:flex;
+                     flex-direction:column;
+                     gap:16px;
+                     position:sticky;
+                     top:86px;">
+
+            @* Preserve search *@
+            <input type="hidden"
+                   name="q"
+                   value="@Model.SearchQuery" />
+
+            @* CATEGORY *@
             <div>
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-building" aria-hidden="true"></i> Your campus
-                </div>
-                <div style="background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:6px;">
-                    <i class="ti ti-map-pin" aria-hidden="true" style="color:#4B3BC7;font-size:14px;"></i>
-                    <div>
-                        <div style="font-size:11px;color:#3C3489;font-weight:500;">@Model.UniversityName</div>
-                        <div style="font-size:10px;color:#7F77DD;">Campus-locked marketplace</div>
-                    </div>
-                </div>
-            </div>
 
-            @* Category filter *@
-            <div>
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-category" aria-hidden="true"></i>
+                <div style="font-size:12px;
+                            font-weight:500;
+                            color:#26215C;
+                            margin-bottom:10px;
+                            padding-bottom:6px;
+                            border-bottom:0.5px solid #e0ddf5;">
+
+                    <i class="ti ti-category"
+                       aria-hidden="true"></i>
+
                     Category
+
                 </div>
 
-                <form method="get"
-                      action="/listings/browse">
+                <select name="category"
+                        style="width:100%;
+                               border:0.5px solid #ddd;
+                               border-radius:7px;
+                               padding:8px 9px;
+                               font-size:12px;
+                               color:#444;
+                               background:#fff;
+                               cursor:pointer;">
 
-                    <input type="hidden"
-                           name="q"
-                           value="@Model.SearchQuery" />
+                    <option value="">
+                        All categories
+                    </option>
 
-                    <input type="hidden"
-                           name="condition"
-                           value="@Model.SelectedCondition" />
-
-                    <select name="category"
-                            onchange="this.form.submit()"
-                            style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 9px;font-size:12px;color:#444;background:#fff;cursor:pointer;">
-
-                        <option value="">
-                            All categories
-                        </option>
-
-                        @foreach (var category in Model.Categories)
+                    @foreach (var category in Model.Categories)
+                    {
+                        if (string.Equals(
+                            Model.SelectedCategory,
+                            category,
+                            StringComparison.OrdinalIgnoreCase))
                         {
-                            <option value="@category"
-                                    selected="@(string.Equals(
-                                                            Model.SelectedCategory,
-                                                            category,
-                                                            StringComparison.OrdinalIgnoreCase)
-                                                            ? "selected"
-                                                            : null)">
+                            <option value="@category" selected>
                                 @category
                             </option>
                         }
-
-                    </select>
-                </form>
-            </div>
-
-            @* Price range *@
-            <div>
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-currency-rand" aria-hidden="true"></i> Price range
-                </div>
-                <div style="display:flex;gap:6px;align-items:center;">
-                    <input type="number" placeholder="Min" style="border:0.5px solid #ddd;border-radius:6px;padding:6px 8px;font-size:12px;width:80px;" />
-                    <span style="font-size:12px;color:#888;">—</span>
-                    <input type="number" placeholder="Max" style="border:0.5px solid #ddd;border-radius:6px;padding:6px 8px;font-size:12px;width:80px;" />
-                </div>
-            </div>
-
-            @* Condition filter *@
-            <div>
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-tag" aria-hidden="true"></i> Condition
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    @foreach (var cond in new[] { "New", "Like New", "Good", "Fair" })
-                    {
-                        var isChecked = Model.SelectedCondition == cond;
-                        <a href="/listings/browse?q=@Model.SearchQuery&category=@Model.SelectedCategory&condition=@(isChecked ? "" : cond)"
-                           style="display:flex;align-items:center;gap:6px;font-size:12px;color:#444;text-decoration:none;">
-                            <div style="width:14px;height:14px;border:0.5px solid @(isChecked ? "#4B3BC7" : "#aaa");border-radius:3px;background:@(isChecked ? "#4B3BC7" : "#fff");display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                @if (isChecked)
-                                {
-                                    <i class="ti ti-check" aria-hidden="true" style="font-size:9px;color:#fff;"></i>
-                                }
-                            </div>
-                            @cond
-                        </a>
+                        else
+                        {
+                            <option value="@category">
+                                @category
+                            </option>
+                        }
                     }
-                </div>
+
+                </select>
+
             </div>
 
-            @* Seller rating *@
+            @* CONDITION *@
             <div>
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-star" aria-hidden="true"></i> Seller rating
-                </div>
 
-                <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="font-size:12px;
+                            font-weight:500;
+                            color:#26215C;
+                            margin-bottom:10px;
+                            padding-bottom:6px;
+                            border-bottom:0.5px solid #e0ddf5;">
 
-                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#444;">
-                        <div style="width:14px;height:14px;border:0.5px solid #aaa;border-radius:3px;background:#fff;flex-shrink:0;"></div>
-                        <span style="color:#BA7517;">★★★★★</span>
-                        <span style="font-size:10px;color:#888;">5 stars</span>
-                    </div>
+                    <i class="ti ti-tag"
+                       aria-hidden="true"></i>
 
-                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#444;">
-                        <div style="width:14px;height:14px;border:0.5px solid #aaa;border-radius:3px;background:#fff;flex-shrink:0;"></div>
-                        <span style="color:#BA7517;">★★★★</span>
-                        <span style="font-size:10px;color:#888;">4+ stars</span>
-                    </div>
-
-                    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#444;">
-                        <div style="width:14px;height:14px;border:0.5px solid #aaa;border-radius:3px;background:#fff;flex-shrink:0;"></div>
-                        <span style="color:#BA7517;">★★★</span>
-                        <span style="font-size:10px;color:#888;">3+ stars</span>
-                    </div>
+                    Condition
 
                 </div>
+
+                <select name="condition"
+                        style="width:100%;
+                               border:0.5px solid #ddd;
+                               border-radius:7px;
+                               padding:8px 9px;
+                               font-size:12px;
+                               color:#444;
+                               background:#fff;
+                               cursor:pointer;">
+
+                    <option value="">
+                        All conditions
+                    </option>
+
+                    @foreach (var condition in new[]
+                    {
+                        "New",
+                        "Like New",
+                        "Good",
+                        "Fair"
+                    })
+                    {
+                        if (string.Equals(
+                            Model.SelectedCondition,
+                            condition,
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            <option value="@condition" selected>
+                                @condition
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@condition">
+                                @condition
+                            </option>
+                        }
+                    }
+
+                </select>
+
             </div>
 
-            <a href="/listings/browse" style="background:#4B3BC7;color:#fff;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:500;width:100%;cursor:pointer;text-align:center;text-decoration:none;display:block;">
+            @* PRICE *@
+            <div>
+
+                <div style="font-size:12px;
+                            font-weight:500;
+                            color:#26215C;
+                            margin-bottom:10px;
+                            padding-bottom:6px;
+                            border-bottom:0.5px solid #e0ddf5;">
+
+                    <i class="ti ti-currency-rand"
+                       aria-hidden="true"></i>
+
+                    Price range
+
+                </div>
+
+                <div style="display:flex;gap:6px;">
+
+                    <input type="number"
+                           name="minPrice"
+                           value="@Model.MinPrice"
+                           placeholder="Min"
+                           min="0"
+                           step="0.01"
+                           style="width:50%;
+                                  border:0.5px solid #ddd;
+                                  border-radius:6px;
+                                  padding:7px 8px;
+                                  font-size:11px;" />
+
+                    <input type="number"
+                           name="maxPrice"
+                           value="@Model.MaxPrice"
+                           placeholder="Max"
+                           min="0"
+                           step="0.01"
+                           style="width:50%;
+                                  border:0.5px solid #ddd;
+                                  border-radius:6px;
+                                  padding:7px 8px;
+                                  font-size:11px;" />
+
+                </div>
+
+            </div>
+
+            @* SELLER RATING *@
+            <div>
+
+                <div style="font-size:12px;
+                            font-weight:500;
+                            color:#26215C;
+                            margin-bottom:10px;
+                            padding-bottom:6px;
+                            border-bottom:0.5px solid #e0ddf5;">
+
+                    <i class="ti ti-star"
+                       aria-hidden="true"></i>
+
+                    Seller rating
+
+                </div>
+
+                <select name="minRating"
+                        style="width:100%;
+                               border:0.5px solid #ddd;
+                               border-radius:7px;
+                               padding:8px 9px;
+                               font-size:12px;
+                               color:#444;
+                               background:#fff;">
+
+                    <option value="">
+                        Any rating
+                    </option>
+
+                    <option value="5"
+                            selected="@(Model.SelectedMinRating == 5)">
+                        5 stars
+                    </option>
+
+                    <option value="4"
+                            selected="@(Model.SelectedMinRating == 4)">
+                        4+ stars
+                    </option>
+
+                    <option value="3"
+                            selected="@(Model.SelectedMinRating == 3)">
+                        3+ stars
+                    </option>
+
+                </select>
+
+            </div>
+
+            @* SORT *@
+            <div>
+
+                <div style="font-size:12px;
+                            font-weight:500;
+                            color:#26215C;
+                            margin-bottom:10px;
+                            padding-bottom:6px;
+                            border-bottom:0.5px solid #e0ddf5;">
+
+                    <i class="ti ti-arrows-sort"
+                       aria-hidden="true"></i>
+
+                    Sort
+
+                </div>
+
+                <select name="sort"
+                        style="width:100%;
+                               border:0.5px solid #ddd;
+                               border-radius:7px;
+                               padding:8px 9px;
+                               font-size:12px;
+                               color:#444;
+                               background:#fff;">
+
+                    <option value="">
+                        Newest first
+                    </option>
+
+                    <option value="price-low"
+                            selected="@(Model.SelectedSort == "price-low")">
+                        Price: Low to high
+                    </option>
+
+                    <option value="price-high"
+                            selected="@(Model.SelectedSort == "price-high")">
+                        Price: High to low
+                    </option>
+
+                    <option value="rating"
+                            selected="@(Model.SelectedSort == "rating")">
+                        Top rated sellers
+                    </option>
+
+                </select>
+
+            </div>
+
+            @* APPLY *@
+            <button type="submit"
+                    style="background:#4B3BC7;
+                           color:#fff;
+                           border:none;
+                           border-radius:6px;
+                           padding:8px;
+                           font-size:12px;
+                           font-weight:500;
+                           cursor:pointer;">
+
                 Apply filters
-            </a>
-            <a href="/listings/browse" style="background:#fff;color:#888;border:0.5px solid #ddd;border-radius:6px;padding:7px;font-size:12px;width:100%;cursor:pointer;text-align:center;text-decoration:none;display:block;margin-top:-8px;">
+
+            </button>
+
+            @* CLEAR *@
+            <a href="/listings/browse"
+               style="background:#fff;
+                      color:#888;
+                      border:0.5px solid #ddd;
+                      border-radius:6px;
+                      padding:7px;
+                      font-size:12px;
+                      text-align:center;
+                      text-decoration:none;">
+
                 Clear all filters
+
             </a>
 
-        </div>
+        </form>
 
-        @* RIGHT — toolbar + grid *@
+        @* =========================================================
+           RESULTS
+           ========================================================= *@
+
         <div>
 
-            @* Toolbar *@
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="background:#fff;
+                        border:0.5px solid #e0ddf5;
+                        border-radius:10px;
+                        padding:10px 14px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:space-between;
+                        margin-bottom:12px;">
+
                 <div style="font-size:12px;color:#666;">
-                    <b style="color:#26215C;font-weight:500;">@Model.TotalCount listings</b>
-                    @if (!string.IsNullOrEmpty(Model.SearchQuery))
+
+                    <b style="color:#26215C;font-weight:500;">
+                        @Model.TotalCount listings
+                    </b>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
                     {
-                        <span> for "@Model.SearchQuery"</span>
+                        <span>
+                            for "@Model.SearchQuery"
+                        </span>
                     }
                     else
                     {
-                        <span> at @Model.UniversityName</span>
+                        <span>
+                            available
+                        </span>
                     }
+
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <select style="border:0.5px solid #ddd;border-radius:6px;padding:5px 8px;font-size:12px;color:#444;background:#fff;">
-                        <option>Sort: Newest first</option>
-                        <option>Price: Low to high</option>
-                        <option>Price: High to low</option>
-                        <option>Top rated sellers</option>
-                    </select>
-                    <div style="display:flex;gap:4px;">
-                        <div style="width:28px;height:28px;border:0.5px solid #AFA9EC;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:14px;background:#EEEDFE;">
-                            <i class="ti ti-layout-grid" aria-hidden="true"></i>
-                        </div>
-                        <div style="width:28px;height:28px;border:0.5px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#888;font-size:14px;">
-                            <i class="ti ti-list" aria-hidden="true"></i>
-                        </div>
-                    </div>
-                </div>
+
             </div>
 
-            @* Listings grid *@
             @if (Model.Listings.Any())
             {
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
+                <div style="display:grid;
+                            grid-template-columns:repeat(3,minmax(0,1fr));
+                            gap:10px;">
+
                     @foreach (var listing in Model.Listings)
                     {
                         <a href="/listings/@listing.ListingId"
-                           style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;overflow:hidden;cursor:pointer;text-decoration:none;color:inherit;display:block;">
-                            <div style="background:#f0eefb;height:140px;display:flex;align-items:center;justify-content:center;color:#7F77DD;font-size:32px;position:relative;">
-                                @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
+                           style="background:#fff;
+                                  border:0.5px solid #e0ddf5;
+                                  border-radius:10px;
+                                  overflow:hidden;
+                                  cursor:pointer;
+                                  text-decoration:none;
+                                  color:inherit;
+                                  display:block;">
+
+                            <div style="background:#f0eefb;
+                                        height:140px;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        color:#7F77DD;
+                                        font-size:32px;
+                                        position:relative;">
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    listing.CoverImageUrl))
                                 {
-                                    <img src="@listing.CoverImageUrl" alt="@listing.Title"
-                                         style="width:100%;height:100%;object-fit:cover;" />
+                                    <img src="@listing.CoverImageUrl"
+                                         alt="@listing.Title"
+                                         style="width:100%;
+                                                height:100%;
+                                                object-fit:cover;" />
                                 }
                                 else
                                 {
-                                    <i class="ti ti-photo" aria-hidden="true"></i>
+                                    <i class="ti ti-photo"
+                                       aria-hidden="true"></i>
                                 }
+
                                 @if (listing.IsFeatured)
                                 {
-                                    <div style="position:absolute;top:6px;left:6px;background:#4B3BC7;color:#fff;font-size:9px;padding:2px 6px;border-radius:4px;">Featured</div>
+                                    <span style="position:absolute;
+                                                 top:6px;
+                                                 left:6px;
+                                                 background:#4B3BC7;
+                                                 color:#fff;
+                                                 font-size:9px;
+                                                 padding:2px 6px;
+                                                 border-radius:4px;">
+                                        Featured
+                                    </span>
                                 }
-                                @if (listing.Status == "Sold")
-                                {
-                                    <div style="position:absolute;top:6px;left:6px;background:#888;color:#fff;font-size:9px;padding:2px 6px;border-radius:4px;">Sold</div>
-                                }
-                                @if (Context.Session.GetString("AccessToken") != null)
-                                {
-                                    <div style="position:absolute;top:6px;right:6px;color:#bbb;font-size:16px;">
-                                        <i class="ti ti-heart" aria-hidden="true"></i>
-                                    </div>
-                                }
+
                             </div>
+
                             <div style="padding:8px 10px;">
-                                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+
+                                <div style="font-size:12px;
+                                            font-weight:500;
+                                            color:#26215C;
+                                            margin-bottom:2px;
+                                            white-space:nowrap;
+                                            overflow:hidden;
+                                            text-overflow:ellipsis;">
+
                                     @listing.Title
+
                                 </div>
-                                <div style="font-size:13px;font-weight:500;color:#4B3BC7;margin-bottom:3px;">
+
+                                <div style="font-size:13px;
+                                            font-weight:500;
+                                            color:#4B3BC7;
+                                            margin-bottom:3px;">
+
                                     R @listing.Price.ToString("N0")
+
                                 </div>
-                                <div style="font-size:10px;color:#888;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-                                    <span style="font-size:9px;background:#EAF3DE;color:#27500A;border-radius:4px;padding:1px 5px;">@listing.Condition</span>
-                                    <span>· @listing.CategoryName</span>
-                                    <span>· @((DateTime.UtcNow - listing.CreatedAt).TotalDays < 1 ? "Today" : $"{(int)(DateTime.UtcNow - listing.CreatedAt).TotalDays}d ago")</span>
+
+                                <div style="font-size:10px;
+                                            color:#888;
+                                            display:flex;
+                                            align-items:center;
+                                            gap:4px;
+                                            flex-wrap:wrap;">
+
+                                    <span>
+                                        @listing.Condition
+                                    </span>
+
+                                    <span>·</span>
+
+                                    <span>
+                                        @listing.CategoryName
+                                    </span>
+
+                                    <span>·</span>
+
+                                    <span>
+                                        ★ @listing.SellerRating.ToString("F1")
+                                    </span>
+
                                 </div>
+
                             </div>
+
                         </a>
                     }
-                </div>
 
-                @* Pagination *@
-                <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;">
-                    <div style="width:30px;height:30px;border:0.5px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#444;background:#fff;">
-                        <i class="ti ti-chevron-left" aria-hidden="true" style="font-size:13px;"></i>
-                    </div>
-                    <div style="width:30px;height:30px;border:0.5px solid #4B3BC7;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;background:#4B3BC7;color:#fff;">1</div>
-                    <div style="width:30px;height:30px;border:0.5px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#444;background:#fff;">
-                        <i class="ti ti-chevron-right" aria-hidden="true" style="font-size:13px;"></i>
-                    </div>
                 </div>
             }
             else
             {
-                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
-                    <i class="ti ti-search" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
-                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No listings found</div>
+                <div style="background:#fff;
+                            border:0.5px solid #e0ddf5;
+                            border-radius:12px;
+                            text-align:center;
+                            padding:60px 20px;">
+
+                    <i class="ti ti-search"
+                       aria-hidden="true"
+                       style="font-size:40px;
+                              color:#AFA9EC;
+                              display:block;
+                              margin-bottom:12px;"></i>
+
+                    <div style="font-size:14px;
+                                font-weight:500;
+                                margin-bottom:6px;">
+                        No listings found
+                    </div>
+
                     <p style="font-size:12px;color:#888;">
-                        @if (!string.IsNullOrEmpty(Model.SearchQuery))
+                        @if (!string.IsNullOrWhiteSpace(Model.SearchQuery))
                         {
-                            <span>No listings match "@Model.SearchQuery". Try a different search term.</span>
+                            <span>
+                                No listings match
+                                "@Model.SearchQuery".
+                            </span>
                         }
                         else
                         {
-                            <span>No active listings at your university yet. Be the first to sell something!</span>
+                            <span>
+                                No listings match the selected filters.
+                            </span>
                         }
                     </p>
+
+                    <a href="/listings/browse"
+                       style="display:inline-block;
+                              margin-top:10px;
+                              color:#4B3BC7;
+                              font-size:12px;
+                              text-decoration:none;">
+                        Clear filters
+                    </a>
+
                 </div>
             }
 
         </div>
+
     </div>
+
 </div>

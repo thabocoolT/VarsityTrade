@@ -48,5 +48,8 @@ namespace VarsityTrade.Web.Models.Listings
 
         [JsonProperty("createdAt")]
         public DateTime CreatedAt { get; set; }
+
+        [JsonProperty("sellerProfileId")]
+        public int SellerProfileId { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VarsityTrade.Web.Models.Home;
 using VarsityTrade.Web.Models.Listings;
+using VarsityTrade.Web.Models.Seller;
 using VarsityTrade.Web.Services;
 
 namespace VarsityTrade.Web.Controllers
@@ -17,103 +18,91 @@ namespace VarsityTrade.Web.Controllers
         // GET /
         public async Task<IActionResult> Index()
         {
-            var isLoggedIn =
-                !string.IsNullOrWhiteSpace(
-                    HttpContext.Session.GetString("AccessToken"));
+            // Check whether the user is logged in
+            var accessToken = HttpContext.Session.GetString("AccessToken");
+            var universityIdStr = HttpContext.Session.GetString("UniversityId");
 
-            List<ListingCardViewModel> listings;
+            List<ListingCardViewModel> allListings;
 
-            if (isLoggedIn)
+            // ============================================================
+            // LOGGED-IN USER
+            // Only show listings from the user's university
+            // ============================================================
+            if (!string.IsNullOrWhiteSpace(accessToken) &&
+                int.TryParse(universityIdStr, out var universityId))
             {
-                var universityIdStr =
-                    HttpContext.Session.GetString("UniversityId");
+                var listings =
+                    await _api.GetAsync<List<ListingCardViewModel>>(
+                        $"api/listings/university/{universityId}");
 
-                if (int.TryParse(universityIdStr, out var universityId))
-                {
-                    listings =
-                        await _api.GetAsync<List<ListingCardViewModel>>(
-                            $"api/listings/university/{universityId}")
-                        ?? new List<ListingCardViewModel>();
-                }
-                else
-                {
-                    listings = new List<ListingCardViewModel>();
-                }
+                allListings =
+                    listings ?? new List<ListingCardViewModel>();
             }
+            // ============================================================
+            // GUEST USER
+            // Show listings from ALL universities
+            // ============================================================
             else
             {
-                listings =
+                var listings =
                     await _api.GetAsync<List<ListingCardViewModel>>(
-                        "api/listings/public")
-                    ?? new List<ListingCardViewModel>();
+                        "api/listings");
+
+                allListings =
+                    listings ?? new List<ListingCardViewModel>();
             }
 
+            // ============================================================
+            // RECENT LISTINGS
+            // ============================================================
             ViewBag.RecentListings =
-                listings.Take(6).ToList();
+                allListings
+                    .OrderByDescending(l => l.CreatedAt)
+                    .Take(6)
+                    .ToList();
 
+            // ============================================================
+            // FEATURED LISTINGS
+            // ============================================================
             ViewBag.FeaturedListings =
-                listings
+                allListings
                     .Where(l => l.IsFeatured)
+                    .OrderByDescending(l => l.CreatedAt)
                     .Take(3)
                     .ToList();
 
-            // Load real platform statistics
-            var stats =
-                await _api.GetAsync<PublicHomeStatsViewModel>(
-                    "api/admin/public-stats")
-                ?? new PublicHomeStatsViewModel();
+            // ============================================================
+            // LOAD REAL REVIEWS
+            // ============================================================
+            var sellerProfileIds =
+                allListings
+                    .Where(l => l.SellerProfileId > 0)
+                    .Select(l => l.SellerProfileId)
+                    .Distinct()
+                    .ToList();
 
-            ViewBag.ActiveStudents = stats.ActiveStudents;
-            ViewBag.ItemsListed = stats.ItemsListed;
-            ViewBag.TradesDone = stats.TradesDone;
-            ViewBag.VerificationRate = stats.VerificationRate;
+            var homepageReviews =
+                new List<SellerDashboardViewModel.SellerReviewViewModel>();
+
+            foreach (var sellerProfileId in sellerProfileIds)
+            {
+                var sellerReviews =
+                    await _api.GetAsync<List<SellerDashboardViewModel.SellerReviewViewModel>>(
+                        $"api/reviews/seller/{sellerProfileId}");
+
+                if (sellerReviews != null)
+                {
+                    homepageReviews.AddRange(sellerReviews);
+                }
+            }
+
+            ViewBag.Reviews =
+                homepageReviews
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Take(3)
+                    .ToList();
 
             return View();
-        }
-
-        [HttpGet("home/how-it-works")]
-        public IActionResult HowItWorks()
-        {
-            ViewData["Title"] = "How It Works";
-            ViewData["InfoPage"] = "How It Works";
-
-            return View("Info");
-        }
-
-        [HttpGet("home/about")]
-        public IActionResult About()
-        {
-            ViewData["Title"] = "About Varsity Trade";
-            ViewData["InfoPage"] = "About Varsity Trade";
-
-            return View("Info");
-        }
-
-        [HttpGet("home/terms")]
-        public IActionResult Terms()
-        {
-            ViewData["Title"] = "Terms of Service";
-            ViewData["InfoPage"] = "Terms of Service";
-
-            return View("Info");
-        }
-
-        [HttpGet("home/privacy")]
-        public IActionResult Privacy()
-        {
-            ViewData["Title"] = "Privacy Policy";
-            ViewData["InfoPage"] = "Privacy Policy";
-
-            return View("Info");
-        }
-
-        [HttpGet("home/contact")]
-        public IActionResult Contact()
-        {
-            ViewData["Title"] = "Contact";
-            ViewData["InfoPage"] = "Contact";
-
-            return View("Info");
         }
     }
 }

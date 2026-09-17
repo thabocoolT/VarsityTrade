@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace VarsityTrade.Views.Listings
+namespace VarsityTrade.Web.Views.Auth
 {
-    public class DetailModel : PageModel
+    public class ForgotPasswordModel : PageModel
     {
         public void OnGet()
         {
