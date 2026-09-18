@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "My Reviews";
+    ViewData["SidebarPage"] = "reviews";
+    Layout = "_Layout";
+    var reviews = ViewBag.Reviews as List<VarsityTrade.Web.Models.Reviews.ReviewViewModel> ?? new();
+    var activeFilter = ViewBag.ActiveFilter as string ?? "Reviews left";
+}
+
+<div style="display:grid;grid-template-columns:220px 1fr;gap:14px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_SidebarFull")
+
+    <div>
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                    <i class="ti ti-star" aria-hidden="true" style="color:#4B3BC7;"></i> My reviews
+                </div>
+                <div style="font-size:11px;color:#888;">Reviews you have left for sellers after completed trades</div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+            @foreach (var f in new[] { "Reviews left", "Pending reviews" })
+            {
+                <a href="/buyer/reviews?filter=@f"
+                   style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
+                    @f
+                </a>
+            }
+        </div>
+
+        @if (reviews.Any())
+        {
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                @foreach (var review in reviews)
+                {
+                    <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 16px;">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                            <div style="width:40px;height:40px;background:#EEEDFE;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:18px;flex-shrink:0;">
+                                <i class="ti ti-tag" aria-hidden="true"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:2px;">@review.ListingTitle</div>
+                                <div style="font-size:11px;color:#888;">Seller: @review.StoreName</div>
+                            </div>
+                            <div style="margin-left:auto;color:#BA7517;font-size:14px;">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span>@(i <= review.Rating ? "★" : "☆")</span>
+                                }
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(review.Comment))
+                        {
+                            <div style="background:#f5f4f9;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;line-height:1.5;font-style:italic;">
+                                "@review.Comment"
+                            </div>
+                        }
+                        <div style="font-size:10px;color:#aaa;margin-top:8px;">@review.CreatedAt.ToString("dd MMM yyyy")</div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
+                <i class="ti ti-star" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
+                <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No reviews yet</div>
+                <p style="font-size:12px;color:#888;">Complete a trade and leave your first review for the seller.</p>
+            </div>
+        }
+    </div>
+</div>

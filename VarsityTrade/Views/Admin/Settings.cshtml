@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "System Settings";
+    Layout = "_Layout";
+    var settings = ViewBag.Settings as List<VarsityTrade.Web.Models.Admin.SystemSettingsViewModel> ?? new();
+}
+
+<div style="display:flex;gap:12px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_SidebarAdmin")
+
+    <div style="flex:1;min-width:0;">
+
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;margin-bottom:14px;">
+            <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                <i class="ti ti-settings" aria-hidden="true" style="color:#4B3BC7;"></i> System settings
+            </div>
+            <div style="font-size:11px;color:#888;">Manage platform-wide configuration values</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+            @foreach (var setting in settings)
+            {
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:14px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                        <div style="flex:1;">
+                            <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:3px;">@setting.Key</div>
+                            @if (!string.IsNullOrEmpty(setting.Description))
+                            {
+                                <div style="font-size:11px;color:#888;margin-bottom:6px;">@setting.Description</div>
+                            }
+                            <div style="font-size:11px;color:#aaa;">
+                                Last updated: @(setting.UpdatedAt?.ToString("dd MMM yyyy · HH:mm") ?? "Never")
+                            </div>
+                        </div>
+                        <form asp-controller="Admin" asp-action="UpdateSetting" method="post"
+                              style="display:flex;align-items:center;gap:8px;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="key" value="@setting.Key" />
+                            <input type="text" name="value" value="@setting.Value"
+                                   style="border:0.5px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;width:200px;" />
+                            <button type="submit"
+                                    style="background:#4B3BC7;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:11px;font-weight:500;cursor:pointer;">
+                                Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            @if (!settings.Any())
+            {
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:40px;font-size:12px;color:#888;">
+                    No system settings found.
+                </div>
+            }
+        </div>
+    </div>
+</div>

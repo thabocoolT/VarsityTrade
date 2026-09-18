@@ -22,6 +22,8 @@ namespace VarsityTrade.Web.Models.Admin
         [JsonProperty("totalReports")] public int TotalReports { get; set; }
         [JsonProperty("totalSellerProfiles")] public int TotalSellerProfiles { get; set; }
         [JsonProperty("activeSellerProfiles")] public int ActiveSellerProfiles { get; set; }
+        [JsonProperty("completedTransactions")] public decimal CompletedTransactions { get; set; }
+        [JsonProperty("verifiedUsers")] public int VerifiedUsers { get; set; }
     }
 
     // Admin user view model
@@ -99,11 +101,33 @@ namespace VarsityTrade.Web.Models.Admin
         [JsonProperty("listingTitle")] public string? ListingTitle { get; set; }
     }
 
+    public class AdminAuditLogViewModel
+    {
+        public int AuditLogId { get; set; }
+        public int? UserId { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string Entity { get; set; } = string.Empty;
+        public int? EntityId { get; set; }
+        public DateTime Created { get; set; }
+
+        public string? UserName { get; set; }
+    }
+
     // Admin dashboard view model
     public class AdminDashboardViewModel
     {
         public PlatformStatsViewModel Stats { get; set; } = new();
         public List<AdminReportViewModel> OpenReports { get; set; } = new();
         public List<AdminUserViewModel> RecentUsers { get; set; } = new();
+        public List<AdminAuditLogViewModel> RecentActivity { get; set; }
+                = new List<AdminAuditLogViewModel>();
+    }
+
+    public class SystemSettingsViewModel
+    {
+        [JsonProperty("key")] public string Key { get; set; } = string.Empty;
+        [JsonProperty("value")] public string Value { get; set; } = string.Empty;
+        [JsonProperty("description")] public string? Description { get; set; }
+        [JsonProperty("updatedAt")] public DateTime? UpdatedAt { get; set; }
     }
 }

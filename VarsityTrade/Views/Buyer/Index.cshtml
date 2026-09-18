@@ -4,28 +4,57 @@
     ViewData["SidebarPage"] = "buyer-dashboard";
     Layout = "_Layout";
     var firstName = Context.Session.GetString("FirstName") ?? "there";
+    var isLoggedIn = Context.Session.GetString("AccessToken") != null; // ADD THIS LINE
 }
-
 <div class="vt-body">
     @await Html.PartialAsync("_SidebarFull")
 
     <div class="vt-main">
 
-        @* Welcome bar *@
-        <div style="background:linear-gradient(135deg,#4B3BC7,#26215C);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div>
-                <div style="font-size:14px;font-weight:500;color:#fff;margin-bottom:2px;">Good day, @firstName 👋</div>
-                <div style="font-size:11px;color:#AFA9EC;">You are browsing listings at NWU Vaal Campus</div>
-            </div>
-            <div style="display:flex;gap:8px;">
-                <a href="/listings/browse" style="background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:6px;padding:7px 12px;font-size:11px;display:flex;align-items:center;gap:5px;text-decoration:none;">
-                    <i class="ti ti-search" aria-hidden="true"></i> Browse
-                </a>
-                <a href="/seller/activate" style="background:#fff;color:#4B3BC7;border:none;border-radius:6px;padding:7px 12px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:5px;text-decoration:none;">
-                    <i class="ti ti-plus" aria-hidden="true"></i> Sell an item
-                </a>
-            </div>
+        @* ── HERO — matches uploaded homepage image exactly ────────── *@
+<div style="position:relative;overflow:hidden;background:#1a1448;min-height:240px;display:flex;align-items:stretch;">
+    @* Background image placeholder — will show real image when connected *@
+    <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(26,20,72,0.92) 0%,rgba(75,59,199,0.7) 50%,rgba(26,20,72,0.4) 100%);z-index:1;"></div>
+    @* NWU campus students image placeholder *@
+    <div style="position:absolute;right:0;top:0;bottom:0;width:55%;background:linear-gradient(to left,rgba(26,20,72,0.1),rgba(26,20,72,0.6)),url('/images/hero-campus.jpg') center/cover no-repeat;z-index:0;"></div>
+
+    <div style="position:relative;z-index:2;padding:32px 40px;max-width:560px;">
+        <div style="font-size:28px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:10px;">
+            Your Campus.<br>
+            Your <span style="color:#AFA9EC;">Marketplace.</span>
         </div>
+        <div style="font-size:13px;color:#AFA9EC;margin-bottom:16px;line-height:1.6;">
+            Buy and sell with fellow @(isLoggedIn ? "NWU" : "") students.<br>Safe. Simple. Convenient.
+        </div>
+
+        @* Search bar in hero *@
+        <div style="display:flex;gap:0;background:#fff;border-radius:8px;overflow:hidden;max-width:420px;margin-bottom:16px;">
+            <input type="text" placeholder="Search for products, categories, or sellers..."
+                   style="flex:1;border:none;outline:none;padding:11px 14px;font-size:12px;color:#26215C;" />
+            <button style="background:#4B3BC7;color:#fff;border:none;padding:0 18px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;">Search</button>
+        </div>
+
+        @* Trust badges *@
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+            @foreach (var (icon, label) in new[] {
+                ("ti-shield-check", "Verified Students"),
+                ("ti-lock",         "Secure Transactions"),
+                ("ti-map-pin",      "Campus Pickup"),
+                ("ti-users",        "Support Local"),
+            })
+            {
+                <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#AFA9EC;">
+                    <i class="ti @icon" aria-hidden="true" style="font-size:13px;"></i> @label
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Right corner badge *@
+    <div style="position:absolute;top:16px;right:16px;z-index:2;background:rgba(255,255,255,0.1);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:8px 12px;font-size:11px;color:#fff;text-align:center;">
+        Real students.<br>Real deals.<br><b>Right here.</b>
+    </div>
+</div>
 
         @* Stats row — 4 columns *@
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">

@@ -1,4 +1,5 @@
-﻿@model VarsityTrade.Web.Models.Admin.PlatformStatsViewModel
+﻿```cshtml
+@model VarsityTrade.Web.Models.Admin.PlatformStatsViewModel
 @{
     ViewData["Title"] = "Platform Statistics";
     ViewData["SidebarPage"] = "admin-stats";
@@ -18,10 +19,12 @@
                 </div>
                 <div style="font-size:11px;color:#888;">Overview of platform health and activity across all universities</div>
             </div>
+
             <div style="display:flex;gap:4px;">
                 @foreach (var p in new[] { "Today", "This week", "This month", "All time" })
                 {
                     var isActive = p == "This month";
+
                     <div style="font-size:11px;border:0.5px solid @(isActive ? "#26215C" : "#ddd");border-radius:6px;padding:5px 10px;color:@(isActive ? "#fff" : "#666");background:@(isActive ? "#26215C" : "#fff");cursor:pointer;">
                         @p
                     </div>
@@ -31,66 +34,170 @@
 
         @* Stats grid *@
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
-                <div style="margin-bottom:6px;"><div style="width:30px;height:30px;border-radius:8px;background:#EEEDFE;color:#26215C;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-users" aria-hidden="true"></i></div></div>
-                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.TotalUsers.ToString("N0")</div>
-                <div style="font-size:11px;color:#888;">Total users</div>
-                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;"><i class="ti ti-trending-up" aria-hidden="true"></i> +@Model.NewUsersThisWeek this month</div>
+                <div style="margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#EEEDFE;color:#26215C;display:flex;align-items:center;justify-content:center;font-size:14px;">
+                        <i class="ti ti-users" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <div style="font-size:20px;font-weight:500;color:#26215C;">
+                    @Model.TotalUsers.ToString("N0")
+                </div>
+
+                <div style="font-size:11px;color:#888;">
+                    Total users
+                </div>
+
+                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-trending-up" aria-hidden="true"></i>
+                    +@Model.NewUsersThisWeek this week
+                </div>
             </div>
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
-                <div style="margin-bottom:6px;"><div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-list" aria-hidden="true"></i></div></div>
-                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.TotalListings.ToString("N0")</div>
-                <div style="font-size:11px;color:#888;">Total listings</div>
-                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;"><i class="ti ti-trending-up" aria-hidden="true"></i> @Model.ActiveListings active</div>
+                <div style="margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;">
+                        <i class="ti ti-list" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <div style="font-size:20px;font-weight:500;color:#26215C;">
+                    @Model.TotalListings.ToString("N0")
+                </div>
+
+                <div style="font-size:11px;color:#888;">
+                    Total listings
+                </div>
+
+                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-trending-up" aria-hidden="true"></i>
+                    @Model.ActiveListings active
+                </div>
             </div>
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
-                <div style="margin-bottom:6px;"><div style="width:30px;height:30px;border-radius:8px;background:#EBF5FF;color:#1E6FBF;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-arrows-exchange" aria-hidden="true"></i></div></div>
-                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.TotalTransactions.ToString("N0")</div>
-                <div style="font-size:11px;color:#888;">Completed trades</div>
-                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;"><i class="ti ti-trending-up" aria-hidden="true"></i> All time</div>
+                <div style="margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#EBF5FF;color:#1E6FBF;display:flex;align-items:center;justify-content:center;font-size:14px;">
+                        <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <div style="font-size:20px;font-weight:500;color:#26215C;">
+                    @Model.TotalTransactions.ToString("N0")
+                </div>
+
+                <div style="font-size:11px;color:#888;">
+                    Completed trades
+                </div>
+
+                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-trending-up" aria-hidden="true"></i>
+                    All time
+                </div>
             </div>
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:12px 14px;">
-                <div style="margin-bottom:6px;"><div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;"><i class="ti ti-message-circle" aria-hidden="true"></i></div></div>
-                <div style="font-size:20px;font-weight:500;color:#26215C;">@Model.TotalMessages.ToString("N0")</div>
-                <div style="font-size:11px;color:#888;">Messages sent</div>
-                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;"><i class="ti ti-trending-up" aria-hidden="true"></i> @Model.TotalConversations threads</div>
+                <div style="margin-bottom:6px;">
+                    <div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;">
+                        <i class="ti ti-message-circle" aria-hidden="true"></i>
+                    </div>
+                </div>
+
+                <div style="font-size:20px;font-weight:500;color:#26215C;">
+                    @Model.TotalMessages.ToString("N0")
+                </div>
+
+                <div style="font-size:11px;color:#888;">
+                    Messages sent
+                </div>
+
+                <div style="font-size:10px;color:#27500A;display:flex;align-items:center;gap:2px;margin-top:2px;">
+                    <i class="ti ti-trending-up" aria-hidden="true"></i>
+                    @Model.TotalConversations threads
+                </div>
             </div>
+
         </div>
 
         @* Two column charts *@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-            @* Registration bar chart *@
+
+            @* Aggregate platform statistics *@
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                     <div>
-                        <div style="font-size:13px;font-weight:500;color:#26215C;">New user registrations</div>
-                        <div style="font-size:10px;color:#888;">Monthly — last 7 months</div>
+                        <div style="font-size:13px;font-weight:500;color:#26215C;">
+                            Platform overview
+                        </div>
+
+                        <div style="font-size:10px;color:#888;">
+                            Current aggregate statistics
+                        </div>
                     </div>
                 </div>
-                <div style="display:flex;align-items:flex-end;gap:6px;height:80px;padding-top:8px;">
-                    @{
-                        var months = new[] { ("Jun", "312", "36"), ("Jul", "428", "48"), ("Aug", "614", "62"), ("Sep", "580", "58"), ("Oct", "720", "72"), ("Nov", "510", "51"), ("Dec", "482", "48") };
-                    }
-                    @foreach (var (month, val, h) in months)
-                    {
-                        var isLast = month == "Dec";
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-                            <div style="font-size:9px;color:#555;font-weight:500;">@val</div>
-                            <div style="border-radius:3px 3px 0 0;width:100%;height:@(h)px;background:@(isLast ? "#4B3BC7" : "#EEEDFE");"></div>
-                            <div style="font-size:9px;color:#aaa;">@month</div>
+
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+
+                    <div style="background:#f5f4f9;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;color:#888;">
+                            Active users
                         </div>
-                    }
+
+                        <div style="font-size:20px;font-weight:500;color:#26215C;">
+                            @Model.ActiveUsers.ToString("N0")
+                        </div>
+                    </div>
+
+                    <div style="background:#f5f4f9;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;color:#888;">
+                            Verified users
+                        </div>
+
+                        <div style="font-size:20px;font-weight:500;color:#26215C;">
+                            @Model.VerifiedUsers.ToString("N0")
+                        </div>
+                    </div>
+
+                    <div style="background:#f5f4f9;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;color:#888;">
+                            Active listings
+                        </div>
+
+                        <div style="font-size:20px;font-weight:500;color:#26215C;">
+                            @Model.ActiveListings.ToString("N0")
+                        </div>
+                    </div>
+
+                    <div style="background:#f5f4f9;border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;color:#888;">
+                            Completed transactions
+                        </div>
+
+                        <div style="font-size:20px;font-weight:500;color:#26215C;">
+                            @Model.CompletedTransactions.ToString("N0")
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             @* Donut chart — category distribution *@
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
                 <div style="margin-bottom:12px;">
-                    <div style="font-size:13px;font-weight:500;color:#26215C;">Listings by category</div>
-                    <div style="font-size:10px;color:#888;">Distribution across all universities</div>
+                    <div style="font-size:13px;font-weight:500;color:#26215C;">
+                        Listings by category
+                    </div>
+
+                    <div style="font-size:10px;color:#888;">
+                        Distribution across all universities
+                    </div>
                 </div>
+
                 <div style="display:flex;align-items:center;gap:16px;">
                     <div style="width:80px;height:80px;border-radius:50%;background:conic-gradient(#4B3BC7 0% 35%,#27500A 35% 58%,#B45309 58% 74%,#1E6FBF 74% 84%,#B91C1C 84% 91%,#AFA9EC 91% 100%);flex-shrink:0;"></div>
+
                     <div style="display:flex;flex-direction:column;gap:5px;flex:1;">
                         @foreach (var (dot, label) in new[] {
                             ("#4B3BC7","Electronics (35%)"),
@@ -109,14 +216,22 @@
                     </div>
                 </div>
             </div>
+
         </div>
 
         @* University bar chart *@
         <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:14px;">
+
             <div style="margin-bottom:12px;">
-                <div style="font-size:13px;font-weight:500;color:#26215C;">Users per university</div>
-                <div style="font-size:10px;color:#888;">Top universities by registered students</div>
+                <div style="font-size:13px;font-weight:500;color:#26215C;">
+                    Users per university
+                </div>
+
+                <div style="font-size:10px;color:#888;">
+                    Top universities by registered students
+                </div>
             </div>
+
             @{
                 var unis = new[] {
                     ("University of Pretoria", 88, "2,842 users"),
@@ -128,23 +243,41 @@
                     ("NWU",                     18, "466 users"),
                 };
             }
+
             @foreach (var (name, pct, count) in unis)
             {
                 <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid #f0eefb;">
-                    <div style="font-size:12px;color:#26215C;font-weight:500;width:180px;flex-shrink:0;">@name</div>
+
+                    <div style="font-size:12px;color:#26215C;font-weight:500;width:180px;flex-shrink:0;">
+                        @name
+                    </div>
+
                     <div style="flex:1;height:6px;background:#f0eefb;border-radius:3px;overflow:hidden;">
                         <div style="height:100%;background:#4B3BC7;border-radius:3px;width:@(pct)%;"></div>
                     </div>
-                    <div style="font-size:11px;color:#888;white-space:nowrap;margin-left:8px;">@count</div>
+
+                    <div style="font-size:11px;color:#888;white-space:nowrap;margin-left:8px;">
+                        @count
+                    </div>
+
                 </div>
             }
         </div>
 
         @* Three column summary *@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:10px;">Top listing categories</div>
-                @foreach (var (cat, count) in new[] { ("Electronics", "8,862"), ("Study materials", "5,823"), ("Clothing", "4,051"), ("Furniture", "2,532") })
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:10px;">
+                    Top listing categories
+                </div>
+
+                @foreach (var (cat, count) in new[] {
+                    ("Electronics", "8,862"),
+                    ("Study materials", "5,823"),
+                    ("Clothing", "4,051"),
+                    ("Furniture", "2,532")
+                })
                 {
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
                         <span style="color:#26215C;">@cat</span>
@@ -152,9 +285,18 @@
                     </div>
                 }
             </div>
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:10px;">User activity</div>
-                @foreach (var (lbl, val, clr) in new[] { ("Active buyers", Model.ActiveUsers.ToString(), "#27500A"), ("Active sellers", Model.ActiveSellerProfiles.ToString(), "#27500A"), ("New this month", Model.NewUsersThisWeek.ToString(), "#4B3BC7"), ("Banned users", Model.BannedUsers.ToString(), "#B91C1C") })
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:10px;">
+                    User activity
+                </div>
+
+                @foreach (var (lbl, val, clr) in new[] {
+                    ("Active buyers", Model.ActiveUsers.ToString(), "#27500A"),
+                    ("Active sellers", Model.ActiveSellerProfiles.ToString(), "#27500A"),
+                    ("New this month", Model.NewUsersThisWeek.ToString(), "#4B3BC7"),
+                    ("Banned users", Model.BannedUsers.ToString(), "#B91C1C")
+                })
                 {
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
                         <span style="color:#26215C;">@lbl</span>
@@ -162,9 +304,18 @@
                     </div>
                 }
             </div>
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:10px;">Moderation summary</div>
-                @foreach (var (lbl, val, clr) in new[] { ("Open reports", Model.OpenReports.ToString(), "#B91C1C"), ("Resolved reports", Model.ResolvedReports.ToString(), "#27500A"), ("Listings removed", Model.DeletedListings.ToString(), "#B91C1C"), ("Avg resolution", "4.2h", "#26215C") })
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:10px;">
+                    Moderation summary
+                </div>
+
+                @foreach (var (lbl, val, clr) in new[] {
+                    ("Open reports", Model.OpenReports.ToString(), "#B91C1C"),
+                    ("Resolved reports", Model.ResolvedReports.ToString(), "#27500A"),
+                    ("Listings removed", Model.DeletedListings.ToString(), "#B91C1C"),
+                    ("Avg resolution", "4.2h", "#26215C")
+                })
                 {
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
                         <span style="color:#26215C;">@lbl</span>
@@ -172,6 +323,9 @@
                     </div>
                 }
             </div>
+
         </div>
+
     </div>
 </div>
+```

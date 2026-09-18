@@ -311,6 +311,18 @@ namespace VarsityTrade.API.Controllers
             return Ok(stats);
         }
 
+        [HttpGet("activity")]
+        public async Task<IActionResult> GetRecentActivity()
+        {
+            if (!IsAdmin())
+                return Forbid();
+
+            var activity =
+                await _adminService.GetRecentAuditLogsAsync();
+
+            return Ok(activity);
+        }
+
         // ─────────────────────────────────────────────────────────────
         // GET /api/admin/public-stats
         // Read-only statistics used by the public homepage.

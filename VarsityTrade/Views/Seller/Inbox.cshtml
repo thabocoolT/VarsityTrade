@@ -1,0 +1,84 @@
+﻿@model VarsityTrade.Web.Models.Buyer.InboxViewModel
+@{
+    ViewData["Title"] = "Seller Inbox";
+    ViewData["SidebarPage"] = "seller-inbox";
+    Layout = "_Layout";
+    var currentUserId = int.TryParse(Context.Session.GetString("UserId"), out var uid) ? uid : 0;
+}
+
+<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start;">
+
+        @* Left — conversation list *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;overflow:hidden;">
+            <div style="padding:12px 14px;border-bottom:0.5px solid #e0ddf5;">
+                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:8px;">
+                    Inbox
+                    @if (Model.UnreadCount > 0)
+                    {
+                        <span style="background:#e74c3c;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;">@Model.UnreadCount</span>
+                    }
+                </div>
+                <div style="display:flex;align-items:center;border:0.5px solid #ddd;border-radius:6px;overflow:hidden;background:#f5f4f9;">
+                    <i class="ti ti-search" aria-hidden="true" style="padding:0 8px;color:#aaa;font-size:14px;"></i>
+                    <input type="text" placeholder="Search conversations..." style="flex:1;border:none;outline:none;padding:6px 10px;font-size:11px;background:transparent;color:#26215C;" />
+                </div>
+            </div>
+            <div style="display:flex;border-bottom:0.5px solid #e0ddf5;">
+                @foreach (var tab in new[] { "All", "Unread", "Sent" })
+                {
+                    var isActive = tab == "All";
+                    <div style="flex:1;padding:8px;font-size:11px;text-align:center;cursor:pointer;@(isActive ? "color:#4B3BC7;border-bottom:2px solid #4B3BC7;font-weight:500;" : "color:#888;border-bottom:2px solid transparent;")">@tab</div>
+                }
+            </div>
+            @if (Model.Conversations.Any())
+            {
+                @foreach (var conv in Model.Conversations)
+                {
+                    var buyerInitial = conv.BuyerFirstName.Length > 0 ? conv.BuyerFirstName[0].ToString().ToUpper() : "?";
+                    var isUnread = conv.UnreadCount > 0;
+                    var timeAgo = conv.LastMessageAt.HasValue
+                        ? (DateTime.UtcNow - conv.LastMessageAt.Value).TotalHours < 24
+                            ? conv.LastMessageAt.Value.ToString("HH:mm")
+                            : conv.LastMessageAt.Value.ToString("dd MMM")
+                        : conv.CreatedAt.ToString("dd MMM");
+
+                    <a href="/buyer/inbox/@conv.ConversationId"
+                       style="display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-bottom:0.5px solid #f0eefb;cursor:pointer;text-decoration:none;@(isUnread ? "background:#f5f4ff;" : "")">
+                        <div style="width:36px;height:36px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;">@buyerInitial</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+                                <span style="font-size:12px;color:#555;@(isUnread ? "font-weight:600;color:#26215C;" : "")">@conv.BuyerFirstName @conv.BuyerLastName</span>
+                                <span style="font-size:10px;color:#aaa;white-space:nowrap;">@timeAgo</span>
+                            </div>
+                            <div style="font-size:10px;color:#4B3BC7;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@conv.ListingTitle</div>
+                            <div style="font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@(conv.LastMessageContent ?? "Started conversation")</div>
+                        </div>
+                        @if (isUnread)
+                        {
+                            <div style="width:8px;height:8px;border-radius:50%;background:#4B3BC7;flex-shrink:0;margin-top:6px;"></div>
+                        }
+                    </a>
+                }
+            }
+            else
+            {
+                <div style="padding:32px;text-align:center;font-size:12px;color:#888;">
+                    <i class="ti ti-message-circle" aria-hidden="true" style="font-size:32px;color:#AFA9EC;display:block;margin-bottom:8px;"></i>
+                    No messages yet
+                </div>
+            }
+        </div>
+
+        @* Right — select a conversation prompt *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:400px;">
+            <div style="text-align:center;padding:40px;">
+                <i class="ti ti-message-circle" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
+                <div style="font-size:14px;font-weight:500;color:#26215C;margin-bottom:6px;">Select a conversation</div>
+                <p style="font-size:12px;color:#888;">Click on a conversation from the list to view the messages.</p>
+            </div>
+        </div>
+    </div>
+</div>

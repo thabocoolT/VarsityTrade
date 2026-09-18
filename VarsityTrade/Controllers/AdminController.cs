@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using VarsityTrade.Web.Models.Admin;
 using VarsityTrade.Web.Services;
+using VarsityTrade.Core.DTOs.Admin;
+
 
 namespace VarsityTrade.Web.Controllers
 {
@@ -40,12 +42,24 @@ namespace VarsityTrade.Web.Controllers
             var users = await _api.GetAsync<List<AdminUserViewModel>>("api/admin/users")
                           ?? new List<AdminUserViewModel>();
 
+            var activity = await _api.GetAsync<List<AdminAuditLogViewModel>>(
+                        "api/admin/activity")
+                        ?? new List<AdminAuditLogViewModel>();
+
             var model = new AdminDashboardViewModel
             {
                 Stats = stats,
-                OpenReports = reports.Where(r => r.Status == "Open" || r.Status == "UnderReview")
-                                     .Take(4).ToList(),
-                RecentUsers = users.OrderByDescending(u => u.CreatedAt).Take(4).ToList(),
+                OpenReports = reports
+                    .Where(r => r.Status == "Open" || r.Status == "UnderReview")
+                    .Take(4)
+                    .ToList(),
+
+                RecentUsers = users
+                    .OrderByDescending(u => u.CreatedAt)
+                    .Take(4)
+                    .ToList(),
+
+                RecentActivity = activity
             };
 
             ViewData["SidebarPage"] = "admin-dashboard";
@@ -56,7 +70,7 @@ namespace VarsityTrade.Web.Controllers
         // GET /admin/users — Manage Users
         // ─────────────────────────────────────────────────────────────
         [HttpGet("users")]
-        public async Task<IActionResult> Users(string filter = "All")
+        public async Task<IActionResult> Users(string filter = "All",string? search = null, string? university = null, string? role = null)
         {
             var auth = RequireAdmin();
             if (auth != null) return auth;
@@ -72,6 +86,30 @@ namespace VarsityTrade.Web.Controllers
                 "New" => users.Where(u => u.CreatedAt >= DateTime.UtcNow.AddDays(-7)).ToList(),
                 _ => users
             };
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                filtered = filtered
+                    .Where(u =>
+                        $"{u.FirstName} {u.LastName}"
+                            .Contains(search, StringComparison.OrdinalIgnoreCase)
+                        ||
+                        (!string.IsNullOrWhiteSpace(u.Email) &&
+                         u.Email.Contains(
+                             search,
+                             StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(university))
+            {
+                filtered = filtered
+                    .Where(u =>
+                        string.Equals(
+                            u.UniversityShortName,
+                            university,
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
 
             ViewBag.Users = filtered;
             ViewBag.ActiveFilter = filter;
@@ -120,6 +158,18 @@ namespace VarsityTrade.Web.Controllers
             return RedirectToAction("Users");
         }
 
+        [HttpPost("listings/featured")]
+        public async Task<IActionResult> ToggleFeatured(int listingId)
+        {
+            var auth = RequireAdmin();
+            if (auth != null) return auth;
+
+            await _api.PutAsync(
+                $"api/admin/listings/{listingId}/featured");
+
+            return RedirectToAction("Listings");
+        }
+
         // ─────────────────────────────────────────────────────────────
         // GET /admin/listings — Manage Listings
         // ─────────────────────────────────────────────────────────────
@@ -136,7 +186,7 @@ namespace VarsityTrade.Web.Controllers
             {
                 "Active" => listings.Where(l => l.Status == "Active").ToList(),
                 "Sold" => listings.Where(l => l.Status == "Sold").ToList(),
-                "Flagged" => listings.Where(l => l.DeletedAt != null).ToList(),
+                "Flagged" => new List<AdminListingViewModel>(),
                 _ => listings
             };
 
@@ -184,8 +234,10 @@ namespace VarsityTrade.Web.Controllers
             };
 
             ViewBag.Reports = filtered;
+            ViewBag.AllReports = reports;
             ViewBag.ActiveFilter = filter;
-            ViewBag.OpenCount = reports.Count(r => r.Status == "Open");
+            ViewBag.OpenCount = reports.Count(r =>
+                r.Status == "Open" || r.Status == "UnderReview");
             ViewBag.TotalCount = reports.Count;
             ViewData["SidebarPage"] = "admin-reports";
             return View();
@@ -267,5 +319,61 @@ namespace VarsityTrade.Web.Controllers
             await _api.DeleteAsync($"api/admin/banner/{slideId}");
             return RedirectToAction("Banner");
         }
-    }
-}
+
+        [HttpPost("banner/create")]
+        public async Task<IActionResult> CreateSlide(HeroBannerSlideRequestDto request)
+
+        {
+            var auth = RequireAdmin();
+            if (auth != null) return auth;
+
+            await _api.PostAsync<object>(
+                "api/admin/banner",
+                request);
+
+            return RedirectToAction("Banner");
+        }
+
+        [HttpPost("banner/edit")]
+        public async Task<IActionResult> EditSlide(
+        int slideId,
+        HeroBannerSlideRequestDto request)
+        {
+            var auth = RequireAdmin();
+            if (auth != null) return auth;
+
+            await _api.PutAsync<object>(
+                $"api/admin/banner/{slideId}",
+                request);
+
+            return RedirectToAction("Banner");
+        }
+        //Admin settings
+        [HttpGet("settings")]
+        public async Task<IActionResult> Settings()
+        {
+            var auth = RequireAdmin();
+            if (auth != null) return auth;
+
+            var settings =
+                await _api.GetAsync<List<SystemSettingsViewModel>>(
+                    "api/admin/settings")
+                ?? new List<SystemSettingsViewModel>();
+
+            ViewData["SidebarPage"] = "admin-settings";
+
+            return View(settings);
+        }
+        // ─────────────────────────────────────────────────────────────
+        // POST /admin/settings/update — Update a system setting
+        // ─────────────────────────────────────────────────────────────
+        [HttpPost("settings/update")]
+        public async Task<IActionResult> UpdateSetting(string key, string value)
+        {
+            var auth = RequireAdmin();
+            if (auth != null) return auth;
+
+            await _api.PutAsync<object>($"api/admin/settings/{key}", value);
+            return RedirectToAction("Settings");
+        }
+}}

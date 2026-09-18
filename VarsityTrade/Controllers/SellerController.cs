@@ -77,7 +77,12 @@ namespace VarsityTrade.Web.Controllers
                 AverageRating = (decimal)(profile?.averageRating ?? 0),
                 TotalSales = (int)(profile?.totalSales ?? 0),
                 IsActive = (bool)(profile?.isActive ?? true),
-                ActiveListingsCount = listings?.Count ?? 0,
+                ActiveListingsCount =
+                listings?.Count(l =>
+                    string.Equals(
+                        l.Status,
+                        "Active",
+                        StringComparison.OrdinalIgnoreCase)) ?? 0,
                 PendingOffersCount = offers?.Count(o => o.Status == "Pending") ?? 0,
                 UnreadMessagesCount = conversations?.Sum(c => (int)(c?.unreadCount ?? 0)) ?? 0,
                 RecentListings = listings?.Take(4).ToList() ?? new(),
@@ -155,12 +160,11 @@ namespace VarsityTrade.Web.Controllers
         // Submits a new listing to the API
         // ─────────────────────────────────────────────────────────────
         [HttpPost("listings/create")]
-        public async Task<IActionResult> CreateListing(CreateListingViewModel model)
+        public async Task<IActionResult> CreateListing(CreateListingViewModel model, string? imageUrls)
         {
-            var auth = RequireSellerMode();
+            var auth = RequireAuth();
             if (auth != null) return auth;
 
-            // Reload dropdowns in case we need to redisplay the form
             model.Categories = await GetCategoriesAsync();
             model.Conditions = await GetConditionsAsync();
 
@@ -191,10 +195,10 @@ namespace VarsityTrade.Web.Controllers
         }
 
         // ─────────────────────────────────────────────────────────────
-// POST /seller/listings/mark-sold
-// Marks a listing as sold
-// ─────────────────────────────────────────────────────────────
-[HttpPost("listings/mark-sold")]
+        // POST /seller/listings/mark-sold
+        // Marks a listing as sold
+        // ─────────────────────────────────────────────────────────────
+        [HttpPost("listings/mark-sold")]
 public async Task<IActionResult> MarkAsSold(int listingId)
 {
     var auth = RequireAuth();
@@ -368,30 +372,34 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         //GET/seller/reviews
         //Shows all reviews received by the seller
         [HttpGet("reviews")]
-        public async Task<IActionResult> Reviews()
+        public async Task<IActionResult> Reviews(string filter = "All")
         {
-            var auth = RequireSellerMode();
+            var auth = RequireAuth();
             if (auth != null) return auth;
 
+            // Get seller profile ID from session or API
             var profile = await _api.GetAsync<dynamic>("api/sellerprofiles/my");
+            int sellerProfileId = 0;
+            if (profile != null)
+                sellerProfileId = (int)(profile.sellerProfileId ?? 0);
 
-            if (profile == null)
-                return RedirectToAction("Activate");
+            var reviews = sellerProfileId > 0
+                ? await _api.GetAsync<List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>>(
+                    $"api/reviews/seller/{sellerProfileId}") ?? new()
+                : new List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>();
 
-            int sellerProfileId=(int)(profile.sellerProfileId ?? 0);
+            var filtered = filter switch
+            {
+                "5 stars" => reviews.Where(r => r.Rating == 5).ToList(),
+                "4 stars" => reviews.Where(r => r.Rating == 4).ToList(),
+                "1-3 stars" => reviews.Where(r => r.Rating <= 3).ToList(),
+                _ => reviews
+            };
 
-            if(sellerProfileId == 0)
-                return RedirectToAction("Activate");
-
-            var reviews = await _api.GetAsync<List<SellerDashboardViewModel.SellerReviewViewModel>>(
-                $"api/reviews/seller/{sellerProfileId}");
-
-            ViewBag.Reviews = reviews ?? new List<SellerDashboardViewModel.SellerReviewViewModel>();
+            ViewBag.Reviews = filtered;
+            ViewBag.ActiveFilter = filter;
             ViewData["SidebarPage"] = "seller-reviews";
-
             return View();
-
-
         }
         // ─────────────────────────────────────────────────────────────
         // GET /seller/listings/edit/{id}

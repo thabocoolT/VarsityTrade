@@ -24,6 +24,7 @@
         public DateTime? LastMessageAt { get; set; }
         public string? LastMessageContent { get; set; }
         public int UnreadCount { get; set; }
+        public double SellerRating { get; set; }
     }
 
     // Represents a single message in a conversation thread

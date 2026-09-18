@@ -1,4 +1,5 @@
 ﻿using VarsityTrade.Core.DTOs.Admin; // Provides Admin DTOs
+using VarsityTrade.Core.Entities;
 
 namespace VarsityTrade.Core.Interfaces
 {
@@ -21,6 +22,8 @@ namespace VarsityTrade.Core.Interfaces
         Task<ReportResponseDto?> GetReportByIdAsync(int reportId);
         Task<bool> ResolveReportAsync(int reportId, int adminUserId, ResolveReportDto request);
 
+        Task<IEnumerable<AuditLog>> GetRecentAuditLogsAsync(int count = 10);
+
         // ── HERO BANNER ───────────────────────────────────────────────
         Task<IEnumerable<HeroBannerSlideResponseDto>> GetAllSlidesAsync();
         Task<HeroBannerSlideResponseDto?> CreateSlideAsync(HeroBannerSlideRequestDto request);
@@ -34,5 +37,8 @@ namespace VarsityTrade.Core.Interfaces
 
         // ── PLATFORM STATS ────────────────────────────────────────────
         Task<PlatformStatsResponseDto> GetPlatformStatsAsync();
+
+        // ── AUDIT LOGS ─────────────────────────────────────────────────
+        
     }
 }

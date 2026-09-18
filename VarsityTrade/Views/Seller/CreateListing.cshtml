@@ -1,106 +1,284 @@
 ﻿@model VarsityTrade.Web.Models.Seller.CreateListingViewModel
 @{
     ViewData["Title"] = "Create Listing";
+    ViewData["SidebarPage"] = "seller-create";
     Layout = "_Layout";
 }
 
-<div class="vt-body">
-    
+<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
     @await Html.PartialAsync("_SidebarFull")
-    <div class="vt-main">
-        <div class="vt-card-title" style="margin-bottom:14px;">
-            <i class="ti ti-plus" aria-hidden="true"></i> Create new listing
-        </div>
 
-        <div class="vt-card">
-            <form asp-action="CreateListing" asp-controller="Seller" method="post">
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start;">
+        <div>
+            @* Page header *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div>
+                    <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                        <i class="ti ti-plus" aria-hidden="true" style="color:#4B3BC7;"></i> Create new listing
+                    </div>
+                    <div style="font-size:11px;color:#888;">Fill in the details below to list your item for students at your campus</div>
+                </div>
+                <a href="/seller/listings" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:7px;padding:8px 14px;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:5px;">
+                    <i class="ti ti-arrow-left" aria-hidden="true"></i> Back to listings
+                </a>
+            </div>
+
+            <form asp-action="CreateListing" asp-controller="Seller" method="post" id="createListingForm">
                 @Html.AntiForgeryToken()
+                <input type="hidden" name="imageUrls" id="imageUrlsInput" />
 
-                <div asp-validation-summary="ModelOnly" class="vt-form-error" style="margin-bottom:12px;"></div>
+                <div asp-validation-summary="ModelOnly" style="background:#FDECEA;border:0.5px solid #F5A8A8;border-radius:7px;padding:8px 10px;font-size:11px;color:#B91C1C;margin-bottom:12px;"></div>
 
-                <div class="vt-form-group">
-                    <label class="vt-form-label">Title</label>
-                    <input asp-for="Title" class="vt-form-input" placeholder="e.g. HP Pavilion Laptop 2022" />
-                    <span asp-validation-for="Title" class="vt-form-error"></span>
-                </div>
-
-                <div class="vt-form-group">
-                    <label class="vt-form-label">Description</label>
-                    <textarea asp-for="Description" class="vt-form-input" rows="4"
-                              placeholder="Describe your item in detail — condition, age, any defects..."></textarea>
-                    <span asp-validation-for="Description" class="vt-form-error"></span>
-                </div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="vt-form-group">
-                        <label class="vt-form-label">Price (R)</label>
-                        <input asp-for="Price" class="vt-form-input" type="number" min="0" step="0.01" placeholder="0.00" />
-                        <span asp-validation-for="Price" class="vt-form-error"></span>
+                @* Image upload *@
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
+                    <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
+                        <i class="ti ti-photo" aria-hidden="true"></i> Listing photos
                     </div>
-                    <div class="vt-form-group">
-                        <label class="vt-form-label">Quantity</label>
-                        <input asp-for="Quantity" class="vt-form-input" type="number" min="1" placeholder="1" />
-                    </div>
-                </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="vt-form-group">
-                        <label class="vt-form-label">Category</label>
-                        <select asp-for="CategoryId" class="vt-form-select">
-                            <option value="">Select category...</option>
-                            @foreach (var cat in Model.Categories)
-                            {
-                                <option value="@cat.CategoryId">@cat.Name</option>
-                            }
-                        </select>
-                        <span asp-validation-for="CategoryId" class="vt-form-error"></span>
+                    @* Upload zone *@
+                    <div id="uploadZone"
+                         style="border:2px dashed #AFA9EC;border-radius:10px;padding:24px;text-align:center;cursor:pointer;background:#f5f4f9;margin-bottom:12px;"
+                         onclick="document.getElementById('imageFileInput').click()">
+                        <i class="ti ti-cloud-upload" aria-hidden="true" style="font-size:28px;color:#4B3BC7;display:block;margin-bottom:6px;"></i>
+                        <div style="font-size:12px;color:#555;font-weight:500;margin-bottom:3px;">Drag and drop photos here or click to browse</div>
+                        <div style="font-size:11px;color:#888;">Upload up to 6 photos · JPG, PNG, WEBP · Max 5MB each</div>
+                        <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,.webp" multiple
+                               style="display:none;" onchange="handleImageUpload(this)" />
                     </div>
-                    <div class="vt-form-group">
-                        <label class="vt-form-label">Condition</label>
-                        <select asp-for="ConditionId" class="vt-form-select">
-                            <option value="">Select condition...</option>
-                            @foreach (var cond in Model.Conditions)
-                            {
-                                <option value="@cond.ConditionId">@cond.Name</option>
-                            }
-                        </select>
-                        <span asp-validation-for="ConditionId" class="vt-form-error"></span>
+
+                    @* Image previews *@
+                    <div id="imagePreviewGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;"></div>
+                    <div id="uploadProgress" style="display:none;font-size:11px;color:#4B3BC7;margin-top:6px;">
+                        <i class="ti ti-loader" aria-hidden="true"></i> Uploading...
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="vt-form-group">
-                        <label class="vt-form-label">Listing type</label>
-                        <select asp-for="ListingType" class="vt-form-select">
-                            <option value="Sale">Sale</option>
-                            <option value="Trade">Trade</option>
-                            <option value="Sale or Trade">Sale or Trade</option>
-                        </select>
+                @* Item details *@
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
+                    <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
+                        <i class="ti ti-file-description" aria-hidden="true"></i> Item details
                     </div>
-                    <div class="vt-form-group" style="display:flex;align-items:center;gap:8px;padding-top:22px;">
-                        <input asp-for="IsNegotiable" type="checkbox" style="width:16px;height:16px;" />
-                        <label asp-for="IsNegotiable" class="vt-form-label" style="margin-bottom:0;">Price is negotiable</label>
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:11px;color:#555;margin-bottom:4px;">Title <span style="color:#e74c3c;">*</span></div>
+                        <input asp-for="Title" type="text" placeholder="e.g. HP Pavilion 15 Laptop — 2022 Model"
+                               style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        <span asp-validation-for="Title" style="font-size:10px;color:#e74c3c;"></span>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:11px;color:#555;margin-bottom:4px;">Description <span style="color:#e74c3c;">*</span></div>
+                        <textarea asp-for="Description" rows="5"
+                                  placeholder="Describe your item — include the condition, age, any defects, accessories included..."
+                                  style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;resize:none;"></textarea>
+                        <span asp-validation-for="Description" style="font-size:10px;color:#e74c3c;"></span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Category <span style="color:#e74c3c;">*</span></div>
+                            <select asp-for="CategoryId" style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                                <option value="">Select category...</option>
+                                @foreach (var cat in Model.Categories)
+                                {
+                                    <option value="@cat.CategoryId">@cat.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoryId" style="font-size:10px;color:#e74c3c;"></span>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Condition <span style="color:#e74c3c;">*</span></div>
+                            <select asp-for="ConditionId" style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                                <option value="">Select condition...</option>
+                                @foreach (var cond in Model.Conditions)
+                                {
+                                    <option value="@cond.ConditionId">@cond.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="ConditionId" style="font-size:10px;color:#e74c3c;"></span>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Price (R) <span style="color:#e74c3c;">*</span></div>
+                            <input asp-for="Price" type="number" min="0" step="0.01" placeholder="0.00"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                            <span asp-validation-for="Price" style="font-size:10px;color:#e74c3c;"></span>
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Quantity</div>
+                            <input asp-for="Quantity" type="number" min="1" value="1"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Listing type</div>
+                            <select asp-for="ListingType" style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                                <option value="Sale">Sale</option>
+                                <option value="Trade">Trade</option>
+                                <option value="Sale or Trade">Sale or Trade</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display:flex;gap:16px;margin-bottom:16px;">
-                    <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
-                        <input asp-for="CampusPickup" type="checkbox" style="width:16px;height:16px;" />
-                        Campus pickup available
-                    </label>
-                    <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
-                        <input asp-for="DeliveryAvailable" type="checkbox" style="width:16px;height:16px;" />
-                        Delivery available
-                    </label>
+                @* Pickup & options *@
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
+                    <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
+                        <i class="ti ti-map-pin" aria-hidden="true"></i> Pickup & options
+                    </div>
+                    @foreach (var (field, label, sub) in new[] {
+                        ("IsNegotiable",     "Price is negotiable",       "Buyers can make offers below your asking price"),
+                        ("CampusPickup",     "Campus pickup available",   "Buyers can collect from your campus location"),
+                        ("DeliveryAvailable","Delivery available",        "You can deliver to nearby residences"),
+                    })
+                    {
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f0eefb;">
+                            <div>
+                                <div style="font-size:12px;color:#26215C;font-weight:500;">@label</div>
+                                <div style="font-size:10px;color:#888;margin-top:1px;">@sub</div>
+                            </div>
+                            <input type="checkbox" name="@field" value="true"
+                                   @(field == "CampusPickup" ? "checked" : "")
+                                   style="width:16px;height:16px;" />
+                        </div>
+                    }
                 </div>
 
                 <div style="display:flex;gap:10px;">
-                    <button type="submit" class="vt-btn vt-btn-primary">
+                    <button type="submit" style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:10px 24px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
                         <i class="ti ti-check" aria-hidden="true"></i> Publish listing
                     </button>
-                    <a href="/seller/listings" class="vt-btn vt-btn-outline">Cancel</a>
+                    <a href="/seller/listings" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:7px;padding:10px 16px;font-size:12px;cursor:pointer;text-decoration:none;display:flex;align-items:center;">Cancel</a>
                 </div>
             </form>
         </div>
+
+        @* Right sidebar — tips *@
+        <div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:5px;">
+                    <i class="ti ti-bulb" aria-hidden="true" style="color:#B45309;"></i> Listing tips
+                </div>
+                @foreach (var tip in new[] {
+                    ("ti-camera",     "Take clear photos in good lighting from multiple angles"),
+                    ("ti-pencil",     "Use a descriptive title with brand, model and year"),
+                    ("ti-currency-dollar","Be competitive — check similar listings for pricing ideas"),
+                    ("ti-tag",        "Choose the most specific category to reach the right buyers"),
+                    ("ti-clock",      "Listings expire after 90 days — keep them updated"),
+                })
+                {
+                    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:11px;color:#555;line-height:1.4;">
+                        <i class="ti @tip.Item1" aria-hidden="true" style="color:#4B3BC7;font-size:13px;flex-shrink:0;margin-top:1px;"></i>
+                        @tip.Item2
+                    </div>
+                }
+            </div>
+
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:5px;">
+                    <i class="ti ti-eye" aria-hidden="true"></i> Live preview
+                </div>
+                <div id="livePreview" style="background:#f5f4f9;border-radius:8px;overflow:hidden;">
+                    <div id="previewImg" style="background:#EEEDFE;height:80px;display:flex;align-items:center;justify-content:center;color:#7F77DD;font-size:28px;">
+                        <i class="ti ti-photo" aria-hidden="true"></i>
+                    </div>
+                    <div style="padding:8px 10px;">
+                        <div id="previewTitle" style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:2px;">Your listing title</div>
+                        <div id="previewPrice" style="font-size:13px;font-weight:500;color:#4B3BC7;margin-bottom:3px;">R 0</div>
+                        <div id="previewMeta" style="font-size:10px;color:#888;">Condition · Category</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    var uploadedUrls = [];
+
+    // Live preview updates
+    document.querySelector('[name="Title"]')?.addEventListener('input', function() {
+        document.getElementById('previewTitle').textContent = this.value || 'Your listing title';
+    });
+    document.querySelector('[name="Price"]')?.addEventListener('input', function() {
+        document.getElementById('previewPrice').textContent = 'R ' + (parseFloat(this.value) || 0).toLocaleString();
+    });
+
+    async function handleImageUpload(input) {
+        if (uploadedUrls.length >= 6) {
+            alert('Maximum 6 images allowed.');
+            return;
+        }
+
+        const files = Array.from(input.files).slice(0, 6 - uploadedUrls.length);
+        document.getElementById('uploadProgress').style.display = 'block';
+
+        for (const file of files) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`${file.name} is too large. Maximum 5MB per image.`);
+                continue;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const resp = await fetch('/api/listings/upload-image', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer @Context.Session.GetString("AccessToken")'
+                    },
+                    body: formData
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    uploadedUrls.push(data.url);
+                    addImagePreview(data.url, uploadedUrls.length - 1);
+                    if (uploadedUrls.length === 1) {
+                        document.getElementById('previewImg').innerHTML = `<img src="${data.url}" style="width:100%;height:100%;object-fit:cover;">`;
+                    }
+                }
+            } catch (e) {
+                console.error('Upload error', e);
+            }
+        }
+
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('imageUrlsInput').value = uploadedUrls.join(',');
+    }
+
+    function addImagePreview(url, index) {
+        const grid = document.getElementById('imagePreviewGrid');
+        const div = document.createElement('div');
+        div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+        div.innerHTML = `
+            <img src="${url}" style="width:100%;height:100%;object-fit:cover;">
+            ${index === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(75,59,199,0.8);color:#fff;font-size:9px;text-align:center;padding:2px;">Cover</div>' : ''}
+            <button type="button" onclick="removeImage(${index}, this.parentElement)" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+        `;
+        grid.appendChild(div);
+    }
+
+    function removeImage(index, el) {
+        uploadedUrls.splice(index, 1);
+        el.remove();
+        document.getElementById('imageUrlsInput').value = uploadedUrls.join(',');
+    }
+
+    // Drag and drop
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = '#4B3BC7'; });
+    zone.addEventListener('dragleave', () => { zone.style.borderColor = '#AFA9EC'; });
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.style.borderColor = '#AFA9EC';
+        const input = document.getElementById('imageFileInput');
+        input.files = e.dataTransfer.files;
+        handleImageUpload(input);
+    });
+
+    // On submit collect image URLs
+    document.getElementById('createListingForm').addEventListener('submit', function() {
+        document.getElementById('imageUrlsInput').value = uploadedUrls.join(',');
+    });
+</script>
+}

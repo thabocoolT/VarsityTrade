@@ -58,12 +58,11 @@ namespace VarsityTrade.Web.Controllers
             }
             else
             {
-                // Guests are currently unable to retrieve the listing
-                // collection from the API because the API's university
-                // endpoint requires authentication.
-                //
-                // Therefore do not fake a university for guests.
-                listings = new List<ListingCardViewModel>();
+                // Guests can browse listings from all universities.
+                listings =
+                    await _api.GetAsync<List<ListingCardViewModel>>(
+                        "api/listings/public")
+                    ?? new List<ListingCardViewModel>();
             }
 
             var model = new BrowseViewModel
@@ -274,6 +273,21 @@ namespace VarsityTrade.Web.Controllers
             ViewData["SidebarPage"] = "browse";
 
             return View(listing);
+        }
+
+        [HttpGet("/seller/{id:int}")]
+        public async Task<IActionResult> SellerProfile(int id)
+        {
+            var profile = await _api.GetAsync<dynamic>($"api/sellerprofiles/{id}");
+            if (profile == null) return NotFound();
+
+            var reviews = await _api.GetAsync<List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>>(
+                $"api/reviews/seller/{id}") ?? new();
+
+            ViewBag.Profile = profile;
+            ViewBag.Reviews = reviews;
+            ViewBag.AvgRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0.0;
+            return View();
         }
 
         // ─────────────────────────────────────────────────────────────

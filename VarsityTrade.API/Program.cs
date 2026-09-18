@@ -215,4 +215,28 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+// ─────────────────────────────────────────────────────────────
+// SEED DATABASE ON STARTUP
+// ─────────────────────────────────────────────────────────────
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider
+                          .GetRequiredService<VarsityTradeDbContext>();
+    var userManager = scope.ServiceProvider
+                          .GetRequiredService<UserManager<User>>();
+
+    // Apply any pending migrations automatically
+    await context.Database.MigrateAsync();
+
+    // Seed universities, categories, conditions, statuses, settings
+    var seeder = new VarsityTradeSeeder(context, userManager);
+    await seeder.SeedAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Database seeding failed. App will continue.");
+}
+
 app.Run();

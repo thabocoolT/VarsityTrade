@@ -1,90 +1,118 @@
-﻿@using VarsityTrade.Web.Models.Seller
-
-@{
-    ViewData["Title"] = "My Reviews";
+﻿@{
+    ViewData["Title"] = "My Reviews Received";
+    ViewData["SidebarPage"] = "seller-reviews";
     Layout = "_Layout";
-
-    var reviews = ViewBag.Reviews as List<SellerDashboardViewModel.SellerReviewViewModel>
-                  ?? new List<SellerDashboardViewModel.SellerReviewViewModel>();
+    var reviews = ViewBag.Reviews as List<VarsityTrade.Web.Models.Reviews.ReviewViewModel> ?? new();
+    var activeFilter = ViewBag.ActiveFilter as string ?? "All";
+    var avgRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0.0;
+    var fiveStars = reviews.Count(r => r.Rating == 5);
+    var fourStars = reviews.Count(r => r.Rating == 4);
+    var threePlus = reviews.Count(r => r.Rating <= 3);
 }
 
-<div class="vt-body">
+<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_SidebarFull")
 
-    @await Html.PartialAsync("_Sidebar")
-
-    <div class="vt-page">
-
-        <div class="vt-page-header">
-            <div>
-                <h1>My Reviews</h1>
-                <p>Reviews from students who have completed transactions with you.</p>
-            </div>
-        </div>
-
-        @if (!reviews.Any())
-        {
-            <div class="vt-card">
-                <div style="text-align:center;padding:40px;">
-                    <i class="ti ti-star"
-                       style="font-size:40px;opacity:.5;"></i>
-
-                    <h3>No reviews yet</h3>
-
-                    <p>
-                        Reviews will appear here after buyers complete
-                        transactions with you.
-                    </p>
+    <div style="display:grid;grid-template-columns:1fr 240px;gap:14px;align-items:start;">
+        <div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div>
+                    <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                        <i class="ti ti-star" aria-hidden="true" style="color:#4B3BC7;"></i> My reviews received
+                    </div>
+                    <div style="font-size:11px;color:#888;">Reviews left by buyers after completed trades</div>
                 </div>
             </div>
-        }
-        else
-        {
-            <div class="vt-card">
 
-                @foreach (var review in reviews)
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+                @foreach (var f in new[] { "All", "5 stars", "4 stars", "1-3 stars" })
                 {
-                    <div style="padding:20px;border-bottom:1px solid #eee;">
+                    <a href="/seller/reviews?filter=@f"
+                       style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
+                        @f
+                    </a>
+                }
+            </div>
 
-                        <div style="display:flex;justify-content:space-between;">
-
-                            <strong>
-                                @review.ReviewerFirstName
-                                @review.ReviewerLastName
-                            </strong>
-
-                            <span>
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    if (i <= review.Rating)
+            @if (reviews.Any())
+            {
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    @foreach (var review in reviews)
+                    {
+                        var initials = review.StoreName.Length > 0 ? review.StoreName[0].ToString().ToUpper() : "B";
+                        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 16px;">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                                <div style="width:36px;height:36px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;">B</div>
+                                <div style="flex:1;">
+                                    <div style="font-size:13px;font-weight:500;color:#26215C;">Buyer</div>
+                                    <div style="font-size:11px;color:#888;">Re: @review.ListingTitle · @review.CreatedAt.ToString("dd MMM yyyy")</div>
+                                </div>
+                                <div style="color:#BA7517;font-size:14px;">
+                                    @for (int i = 1; i <= 5; i++)
                                     {
-                                        <i class="ti ti-star-filled"></i>
+                                        <span>@(i <= review.Rating ? "★" : "☆")</span>
                                     }
-                                    else
-                                    {
-                                        <i class="ti ti-star"></i>
-                                    }
-                                }
-                            </span>
-
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(review.Comment))
+                            {
+                                <div style="background:#f5f4f9;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;line-height:1.5;font-style:italic;">"@review.Comment"</div>
+                            }
                         </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
+                    <i class="ti ti-star" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
+                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No reviews yet</div>
+                    <p style="font-size:12px;color:#888;">Reviews from buyers will appear here after completed trades.</p>
+                </div>
+            }
+        </div>
 
-                        <p style="margin:10px 0;">
-                            @(string.IsNullOrWhiteSpace(review.Comment)
-                                ? "No comment provided."
-                                : review.Comment)
-                        </p>
-
-                        <small>
-                            @review.ListingTitle ·
-                            @review.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")
-                        </small>
-
+        @* Right sidebar — rating breakdown *@
+        <div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;text-align:center;">
+                <div style="font-size:32px;font-weight:500;color:#26215C;">@avgRating.ToString("F1")</div>
+                <div style="color:#BA7517;font-size:16px;margin:4px 0;">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <span>@(i <= Math.Round(avgRating) ? "★" : "☆")</span>
+                    }
+                </div>
+                <div style="font-size:11px;color:#888;">Based on @reviews.Count review@(reviews.Count != 1 ? "s" : "")</div>
+            </div>
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;">Rating breakdown</div>
+                @foreach (var (stars, count) in new[] { (5, fiveStars), (4, fourStars), (3, threePlus) })
+                {
+                    var pct = reviews.Any() ? (count * 100 / reviews.Count) : 0;
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                        <span style="font-size:11px;color:#888;width:40px;">@stars ★</span>
+                        <div style="flex:1;height:5px;background:#f0eefb;border-radius:2px;">
+                            <div style="height:100%;background:#BA7517;border-radius:2px;width:@(pct)%;"></div>
+                        </div>
+                        <span style="font-size:11px;color:#888;width:20px;text-align:right;">@count</span>
                     </div>
                 }
-
             </div>
-        }
-
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;">Review stats</div>
+                @foreach (var (lbl, val) in new[] {
+                    ("Total reviews", reviews.Count.ToString()),
+                    ("Average rating", avgRating.ToString("F1")),
+                    ("5-star reviews", fiveStars.ToString()),
+                    ("Response rate", "—"),
+                })
+                {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
+                        <span style="color:#888;">@lbl</span>
+                        <span style="font-weight:500;color:#26215C;">@val</span>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
-
 </div>

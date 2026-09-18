@@ -37,6 +37,17 @@ namespace VarsityTrade.Application.Services
             return users.Select(u => MapUserToDto(u));
         }
 
+        public async Task<IEnumerable<AuditLog>> GetRecentAuditLogsAsync(
+            int count = 10)
+        {
+            return await _context.AuditLogs
+                .Include(a => a.User)
+                .OrderByDescending(a => a.Created)
+                .Take(count)
+                .ToListAsync();
+        }
+
+
         public async Task<AdminUserResponseDto?> GetUserByIdAsync(int userId)
         {
             var user = await _context.Users
@@ -472,6 +483,8 @@ namespace VarsityTrade.Application.Services
                 ActiveSellerProfiles = activeSellers
             };
         }
+
+
 
         // ══════════════════════════════════════════════════════════════
         // PRIVATE HELPERS

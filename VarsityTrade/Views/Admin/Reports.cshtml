@@ -1,11 +1,29 @@
-﻿@{
+﻿```cshtml
+@{
     ViewData["Title"] = "Reports Queue";
     ViewData["SidebarPage"] = "admin-reports";
     Layout = "_Layout";
-    var reports      = ViewBag.Reports      as List<VarsityTrade.Web.Models.Admin.AdminReportViewModel> ?? new();
+
+    var reports = ViewBag.Reports as List<VarsityTrade.Web.Models.Admin.AdminReportViewModel> ?? new();
     var activeFilter = ViewBag.ActiveFilter as string ?? "All";
-    var openCount    = (int)(ViewBag.OpenCount ?? 0);
-    var totalCount   = (int)(ViewBag.TotalCount ?? 0);
+    var openCount = (int)(ViewBag.OpenCount ?? 0);
+    var totalCount = (int)(ViewBag.TotalCount ?? 0);
+
+    var allReports =
+        ViewBag.AllReports as List<VarsityTrade.Web.Models.Admin.AdminReportViewModel>
+        ?? new List<VarsityTrade.Web.Models.Admin.AdminReportViewModel>();
+
+    var resolvedReports = allReports
+        .Where(r =>
+            (r.Status == "Resolved" || r.Status == "Dismissed") &&
+            r.ResolvedAt.HasValue)
+        .ToList();
+
+    var averageResolutionHours =
+        resolvedReports.Any()
+            ? resolvedReports.Average(r =>
+                (r.ResolvedAt!.Value - r.CreatedAt).TotalHours)
+            : 0;
 }
 
 <div style="display:flex;gap:12px;padding:16px 24px;align-items:start;">
@@ -24,35 +42,74 @@
                         <span style="background:#e74c3c;color:#fff;font-size:10px;border-radius:5px;padding:2px 7px;">@openCount</span>
                     }
                 </div>
-                <div style="font-size:11px;color:#888;">Review and resolve all reports submitted by students across all universities</div>
+
+                <div style="font-size:11px;color:#888;">
+                    Review and resolve all reports submitted by students across all universities
+                </div>
             </div>
 
             @* Stats row *@
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-                    <div style="width:30px;height:30px;border-radius:8px;background:#FDECEA;color:#B91C1C;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
-                    <div><div style="font-size:18px;font-weight:500;color:#26215C;">@reports.Count(r => r.ReportType == "Scam")</div><div style="font-size:10px;color:#888;">Urgent</div></div>
+                    <div style="width:30px;height:30px;border-radius:8px;background:#FDECEA;color:#B91C1C;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:18px;font-weight:500;color:#26215C;">
+                            @reports.Count(r => r.ReportType == "Scam")
+                        </div>
+                        <div style="font-size:10px;color:#888;">Urgent</div>
+                    </div>
                 </div>
+
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-                    <div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-clock" aria-hidden="true"></i></div>
-                    <div><div style="font-size:18px;font-weight:500;color:#26215C;">@reports.Count(r => r.Status == "UnderReview" || r.Status == "Open")</div><div style="font-size:10px;color:#888;">Under review</div></div>
+                    <div style="width:30px;height:30px;border-radius:8px;background:#FEF3E2;color:#B45309;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                        <i class="ti ti-clock" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:18px;font-weight:500;color:#26215C;">
+                            @reports.Count(r => r.Status == "UnderReview" || r.Status == "Open")
+                        </div>
+                        <div style="font-size:10px;color:#888;">Under review</div>
+                    </div>
                 </div>
+
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-                    <div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-check" aria-hidden="true"></i></div>
-                    <div><div style="font-size:18px;font-weight:500;color:#26215C;">@reports.Count(r => r.Status == "Resolved")</div><div style="font-size:10px;color:#888;">Resolved</div></div>
+                    <div style="width:30px;height:30px;border-radius:8px;background:#EAF3DE;color:#27500A;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                        <i class="ti ti-check" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:18px;font-weight:500;color:#26215C;">
+                            @reports.Count(r => r.Status == "Resolved")
+                        </div>
+                        <div style="font-size:10px;color:#888;">Resolved</div>
+                    </div>
                 </div>
+
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-                    <div style="width:30px;height:30px;border-radius:8px;background:#f5f4f9;color:#888;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;"><i class="ti ti-flag" aria-hidden="true"></i></div>
-                    <div><div style="font-size:18px;font-weight:500;color:#26215C;">@totalCount</div><div style="font-size:10px;color:#888;">Total all time</div></div>
+                    <div style="width:30px;height:30px;border-radius:8px;background:#f5f4f9;color:#888;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+                        <i class="ti ti-flag" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:18px;font-weight:500;color:#26215C;">
+                            @totalCount
+                        </div>
+                        <div style="font-size:10px;color:#888;">Total all time</div>
+                    </div>
                 </div>
             </div>
 
             @* Filter tabs *@
             <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-                @foreach (var (f, lbl) in new[] { ("All",$"All open ({openCount})"), ("Urgent","Urgent"), ("Review","Under review"), ("Resolved","Resolved") })
+                @foreach (var (f, lbl) in new[] {
+                    ("All", $"All open ({openCount})"),
+                    ("Urgent", "Urgent"),
+                    ("Review", "Under review"),
+                    ("Resolved", "Resolved")
+                })
                 {
                     <a href="/admin/reports?filter=@f"
-                       style="font-size:11px;border:0.5px solid @(activeFilter==f?"#AFA9EC":"#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter==f?"background:#EEEDFE;color:#4B3BC7;font-weight:500;":"color:#666;background:#fff;")">
+                       style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
                         @lbl
                     </a>
                 }
@@ -64,47 +121,76 @@
                 <div style="display:flex;flex-direction:column;gap:10px;">
                     @foreach (var report in reports)
                     {
-                        var isUrgent   = report.ReportType == "Scam";
-                        var iconStyle  = isUrgent ? "background:#FDECEA;color:#B91C1C;" : "background:#FEF3E2;color:#B45309;";
-                        var borderLeft = isUrgent ? "border-left:3px solid #B91C1C;" : "border-left:3px solid #B45309;";
-                        var badgeStyle = isUrgent ? "background:#FDECEA;color:#B91C1C;" : "background:#FEF3E2;color:#B45309;";
-                        var badgeText  = isUrgent ? "🚨 Urgent" : "⚠️ Review";
+                        var isUrgent = report.ReportType == "Scam";
+                        var iconStyle = isUrgent
+                            ? "background:#FDECEA;color:#B91C1C;"
+                            : "background:#FEF3E2;color:#B45309;";
+                        var borderLeft = isUrgent
+                            ? "border-left:3px solid #B91C1C;"
+                            : "border-left:3px solid #B45309;";
+                        var badgeStyle = isUrgent
+                            ? "background:#FDECEA;color:#B91C1C;"
+                            : "background:#FEF3E2;color:#B45309;";
+                        var badgeText = isUrgent ? "🚨 Urgent" : "⚠️ Review";
+
                         <div style="background:#fff;border:0.5px solid #e0ddf5;@borderLeft border-radius:12px;overflow:hidden;">
+
                             @* Header *@
                             <div style="padding:12px 16px;display:flex;align-items:flex-start;gap:12px;border-bottom:0.5px solid #f0eefb;">
                                 <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;@iconStyle">
-                                    <i class="ti @(isUrgent?"ti-alert-triangle":"ti-flag")" aria-hidden="true"></i>
+                                    <i class="ti @(isUrgent ? "ti-alert-triangle" : "ti-flag")" aria-hidden="true"></i>
                                 </div>
+
                                 <div style="flex:1;">
                                     <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:3px;">
-                                        @(report.ListingTitle != null ? $"Scam listing — {report.ListingTitle}" : $"Report against {report.ReportedUserFirstName} {report.ReportedUserLastName}")
+                                        @(report.ListingTitle != null
+                                            ? $"Scam listing — {report.ListingTitle}"
+                                            : $"Report against {report.ReportedUserFirstName} {report.ReportedUserLastName}")
                                     </div>
+
                                     <div style="font-size:11px;color:#888;display:flex;gap:8px;flex-wrap:wrap;">
-                                        <span><i class="ti ti-user" aria-hidden="true" style="font-size:10px;"></i> Reported by @report.ReportedByFirstName @report.ReportedByLastName</span>
+                                        <span>
+                                            <i class="ti ti-user" aria-hidden="true" style="font-size:10px;"></i>
+                                            Reported by @report.ReportedByFirstName @report.ReportedByLastName
+                                        </span>
                                     </div>
                                 </div>
-                                <span style="font-size:10px;border-radius:5px;padding:3px 8px;font-weight:500;white-space:nowrap;@badgeStyle">@badgeText</span>
+
+                                <span style="font-size:10px;border-radius:5px;padding:3px 8px;font-weight:500;white-space:nowrap;@badgeStyle">
+                                    @badgeText
+                                </span>
                             </div>
 
                             @* Body *@
                             <div style="padding:12px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;border-bottom:0.5px solid #f0eefb;">
                                 <div>
                                     <div style="font-size:10px;color:#888;margin-bottom:3px;">Report type</div>
-                                    <div style="font-size:12px;color:#26215C;font-weight:500;">@report.ReportType</div>
+                                    <div style="font-size:12px;color:#26215C;font-weight:500;">
+                                        @report.ReportType
+                                    </div>
                                 </div>
+
                                 <div>
                                     <div style="font-size:10px;color:#888;margin-bottom:3px;">Status</div>
-                                    <div style="font-size:12px;color:#26215C;font-weight:500;">@report.Status</div>
+                                    <div style="font-size:12px;color:#26215C;font-weight:500;">
+                                        @report.Status
+                                    </div>
                                 </div>
+
                                 <div>
                                     <div style="font-size:10px;color:#888;margin-bottom:3px;">Reported</div>
-                                    <div style="font-size:12px;color:#26215C;font-weight:500;">@((int)(DateTime.UtcNow - report.CreatedAt).TotalHours)h ago</div>
+                                    <div style="font-size:12px;color:#26215C;font-weight:500;">
+                                        @((int)(DateTime.UtcNow - report.CreatedAt).TotalHours)h ago
+                                    </div>
                                 </div>
                             </div>
 
                             @* Reporter note *@
                             <div style="padding:10px 16px;background:#f5f4f9;border-bottom:0.5px solid #f0eefb;">
-                                <div style="font-size:11px;font-weight:500;color:#555;margin-bottom:4px;">Reporter's note</div>
+                                <div style="font-size:11px;font-weight:500;color:#555;margin-bottom:4px;">
+                                    Reporter's note
+                                </div>
+
                                 <div style="font-size:11px;color:#888;line-height:1.5;font-style:italic;">
                                     "@report.Description"
                                 </div>
@@ -112,33 +198,58 @@
 
                             @* Footer actions *@
                             <div style="padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-                                <span style="font-size:11px;color:#aaa;"><i class="ti ti-clock" aria-hidden="true"></i> @report.CreatedAt.ToString("dd MMM yyyy · HH:mm")</span>
+                                <span style="font-size:11px;color:#aaa;">
+                                    <i class="ti ti-clock" aria-hidden="true"></i>
+                                    @report.CreatedAt.ToString("dd MMM yyyy · HH:mm")
+                                </span>
+
                                 @if (report.Status != "Resolved" && report.Status != "Dismissed")
                                 {
                                     <div style="display:flex;gap:6px;">
+
                                         @if (report.ListingId.HasValue)
                                         {
-                                            <a href="/listings/@report.ListingId" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:6px;padding:6px 12px;font-size:11px;display:flex;align-items:center;gap:4px;text-decoration:none;">
-                                                <i class="ti ti-eye" aria-hidden="true"></i> View listing
+                                            <a href="/listings/@report.ListingId"
+                                               style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:6px;padding:6px 12px;font-size:11px;display:flex;align-items:center;gap:4px;text-decoration:none;">
+                                                <i class="ti ti-eye" aria-hidden="true"></i>
+                                                View listing
                                             </a>
                                         }
-                                        <form asp-controller="Admin" asp-action="ResolveReport" method="post" style="margin:0;display:flex;gap:6px;">
+
+                                        <form asp-controller="Admin"
+                                              asp-action="ResolveReport"
+                                              method="post"
+                                              style="margin:0;display:flex;gap:6px;">
+
                                             @Html.AntiForgeryToken()
-                                            <input type="hidden" name="reportId" value="@report.ReportId" />
-                                            <button type="submit" name="status" value="Dismissed"
+
+                                            <input type="hidden"
+                                                   name="reportId"
+                                                   value="@report.ReportId" />
+
+                                            <button type="submit"
+                                                    name="status"
+                                                    value="Dismissed"
                                                     style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">
-                                                <i class="ti ti-x" aria-hidden="true"></i> Dismiss
+                                                <i class="ti ti-x" aria-hidden="true"></i>
+                                                Dismiss
                                             </button>
-                                            <button type="submit" name="status" value="Resolved"
+
+                                            <button type="submit"
+                                                    name="status"
+                                                    value="Resolved"
                                                     style="background:#EAF3DE;color:#27500A;border:none;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:4px;">
-                                                <i class="ti ti-check" aria-hidden="true"></i> Mark resolved
+                                                <i class="ti ti-check" aria-hidden="true"></i>
+                                                Mark resolved
                                             </button>
                                         </form>
                                     </div>
                                 }
                                 else
                                 {
-                                    <span style="font-size:10px;background:#EAF3DE;color:#27500A;border-radius:5px;padding:4px 10px;">@report.Status</span>
+                                    <span style="font-size:10px;background:#EAF3DE;color:#27500A;border-radius:5px;padding:4px 10px;">
+                                        @report.Status
+                                    </span>
                                 }
                             </div>
                         </div>
@@ -148,23 +259,41 @@
             else
             {
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
-                    <i class="ti ti-check" aria-hidden="true" style="font-size:40px;color:#27500A;display:block;margin-bottom:12px;"></i>
-                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No open reports</div>
-                    <p style="font-size:12px;color:#888;">All reports have been resolved. The platform is running smoothly.</p>
+                    <i class="ti ti-check"
+                       aria-hidden="true"
+                       style="font-size:40px;color:#27500A;display:block;margin-bottom:12px;"></i>
+
+                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">
+                        No open reports
+                    </div>
+
+                    <p style="font-size:12px;color:#888;">
+                        All reports have been resolved. The platform is running smoothly.
+                    </p>
                 </div>
             }
         </div>
 
         @* Right sidebar *@
         <div style="display:flex;flex-direction:column;gap:12px;">
+
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">Report stats</div>
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    Report stats
+                </div>
+
                 @foreach (var (lbl, val, clr) in new[] {
-                    ("Open reports",    openCount.ToString(),                                          "#B45309"),
-                    ("Urgent",          reports.Count(r=>r.ReportType=="Scam").ToString(),             "#B91C1C"),
-                    ("Resolved",        reports.Count(r=>r.Status=="Resolved").ToString(),             "#27500A"),
-                    ("Total all time",  totalCount.ToString(),                                         "#26215C"),
-                    ("Avg resolution",  "4.2h",                                                        "#888"),
+                    ("Open reports", openCount.ToString(), "#B45309"),
+                    ("Urgent", reports.Count(r => r.ReportType == "Scam").ToString(), "#B91C1C"),
+                    ("Resolved", reports.Count(r => r.Status == "Resolved").ToString(), "#27500A"),
+                    ("Total all time", totalCount.ToString(), "#26215C"),
+                    (
+                        "Avg resolution",
+                        resolvedReports.Any()
+                            ? $"{averageResolutionHours:0.0}h"
+                            : "N/A",
+                        "#888"
+                    )
                 })
                 {
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
@@ -175,29 +304,49 @@
             </div>
 
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">Recently resolved</div>
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    Recently resolved
+                </div>
+
                 @{
-                    var resolved = reports.Where(r => r.Status == "Resolved" || r.Status == "Dismissed").Take(3).ToList();
+                    var resolved = allReports
+                        .Where(r =>
+                            r.Status == "Resolved" ||
+                            r.Status == "Dismissed")
+                        .OrderByDescending(r => r.ResolvedAt)
+                        .Take(3)
+                        .ToList();
                 }
+
                 @if (resolved.Any())
                 {
                     @foreach (var r in resolved)
                     {
                         <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid #f0eefb;">
                             <div style="width:8px;height:8px;border-radius:50%;background:#27500A;flex-shrink:0;margin-top:4px;"></div>
+
                             <div style="flex:1;">
-                                <div style="font-size:11px;color:#555;line-height:1.4;">@r.ReportType report — @(r.Status)</div>
-                                <div style="font-size:10px;color:#aaa;">@r.CreatedAt.ToString("dd MMM")</div>
+                                <div style="font-size:11px;color:#555;line-height:1.4;">
+                                    @r.ReportType report — @(r.Status)
+                                </div>
+
+                                <div style="font-size:10px;color:#aaa;">
+                                    @r.CreatedAt.ToString("dd MMM")
+                                </div>
                             </div>
                         </div>
                     }
                 }
                 else
                 {
-                    <div style="font-size:12px;color:#888;text-align:center;padding:12px 0;">No resolved reports yet.</div>
+                    <div style="font-size:12px;color:#888;text-align:center;padding:12px 0;">
+                        No resolved reports yet.
+                    </div>
                 }
             </div>
+
         </div>
 
     </div>
 </div>
+```

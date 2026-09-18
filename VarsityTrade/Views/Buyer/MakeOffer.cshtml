@@ -1,0 +1,162 @@
+﻿@{
+    ViewData["Title"] = "Make an Offer";
+    ViewData["SidebarPage"] = "offers";
+    Layout = "_Layout";
+    var listing = ViewBag.Listing as VarsityTrade.Web.Models.Listings.ListingDetailViewModel;
+}
+
+<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
+    @await Html.PartialAsync("_Sidebar")
+
+    <div style="max-width:640px;">
+
+        @* Page header *@
+        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
+                    <i class="ti ti-arrows-exchange" aria-hidden="true" style="color:#4B3BC7;"></i> Make an offer
+                </div>
+                <div style="font-size:11px;color:#888;">Submit a cash, trade, or combined offer to the seller</div>
+            </div>
+            <a href="/listings/@listing?.ListingId" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:7px;padding:7px 14px;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:5px;">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i> Back to listing
+            </a>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div style="background:#FDECEA;border:0.5px solid #F5A8A8;border-radius:7px;padding:8px 10px;font-size:11px;color:#B91C1C;margin-bottom:12px;">
+                <i class="ti ti-alert-circle" aria-hidden="true"></i> @TempData["Error"]
+            </div>
+        }
+
+        @* Listing card *@
+        @if (listing != null)
+        {
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                <div style="width:48px;height:48px;background:#EEEDFE;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:22px;flex-shrink:0;">
+                    <i class="ti ti-tag" aria-hidden="true"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:2px;">@listing.Title</div>
+                    <div style="font-size:12px;color:#4B3BC7;font-weight:500;">R @listing.Price.ToString("N0")</div>
+                    <div style="font-size:11px;color:#888;">Seller: @listing.StoreName · @listing.Condition</div>
+                </div>
+            </div>
+        }
+
+        <form asp-action="MakeOffer" asp-controller="Buyer" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="listingId" value="@listing?.ListingId" />
+
+            @* Offer type selector *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
+                    <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Offer type
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;" id="offerTypeGrid">
+                    @foreach (var (val, icon, label, sub) in new[] {
+                        ("Cash",          "ti-cash",          "Cash offer",         "Offer a cash amount"),
+                        ("Trade",         "ti-refresh",       "Trade offer",        "Offer items in exchange"),
+                        ("Cash and Trade","ti-arrows-exchange","Cash + trade",       "Combine cash and items"),
+                    })
+                    {
+                        <label style="cursor:pointer;">
+                            <input type="radio" name="offerType" value="@val" @(val == "Cash" ? "checked" : "")
+                                   style="display:none;" onchange="updateOfferType()" />
+                            <div class="offer-type-card" data-type="@val"
+                                 style="border:1.5px solid @(val == "Cash" ? "#4B3BC7" : "#ddd");border-radius:8px;padding:10px;text-align:center;@(val == "Cash" ? "background:#EEEDFE;" : "")">
+                                <i class="ti @icon" aria-hidden="true" style="font-size:20px;color:@(val == "Cash" ? "#4B3BC7" : "#888");display:block;margin-bottom:4px;"></i>
+                                <div style="font-size:11px;font-weight:500;color:@(val == "Cash" ? "#4B3BC7" : "#555");">@label</div>
+                                <div style="font-size:10px;color:#888;">@sub</div>
+                            </div>
+                        </label>
+                    }
+                </div>
+
+                @* Cash amount *@
+                <div id="cashSection" style="margin-bottom:10px;">
+                    <div style="font-size:11px;color:#555;margin-bottom:4px;">Your cash offer (R) <span style="color:#e74c3c;">*</span></div>
+                    <div style="display:flex;align-items:center;border:0.5px solid #ddd;border-radius:7px;overflow:hidden;">
+                        <span style="background:#f5f4f9;padding:8px 10px;font-size:12px;color:#888;border-right:0.5px solid #ddd;">R</span>
+                        <input type="number" name="offerAmount" min="1" step="0.01"
+                               placeholder="e.g. 3500"
+                               style="flex:1;border:none;outline:none;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;" />
+                    </div>
+                    @if (listing != null)
+                    {
+                        <div style="font-size:10px;color:#888;margin-top:3px;">Seller is asking R @listing.Price.ToString("N0"). @(listing.IsNegotiable ? "Price is negotiable." : "Price may not be negotiable.")</div>
+                    }
+                </div>
+
+                @* Trade items *@
+                <div id="tradeSection" style="display:none;">
+                    <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:8px;">Trade items you are offering</div>
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;">
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Item name</div>
+                            <input type="text" name="tradeItem1" placeholder="e.g. Samsung Galaxy S21"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        </div>
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Value (R)</div>
+                            <input type="number" name="tradeItem1Value" placeholder="0"
+                                   style="width:80px;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;">
+                        <div>
+                            <input type="text" name="tradeItem2" placeholder="Add another item (optional)"
+                                   style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        </div>
+                        <div>
+                            <input type="number" name="tradeItem2Value" placeholder="0"
+                                   style="width:80px;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* Message to seller *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:14px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                    <i class="ti ti-message-circle" aria-hidden="true"></i> Note to seller (optional)
+                </div>
+                <textarea name="note" rows="3" placeholder="Explain your offer or ask a question about the item..."
+                          style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;resize:none;"></textarea>
+            </div>
+
+            @* Safety note *@
+            <div style="background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:10px;padding:10px 14px;font-size:11px;color:#3C3489;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px;">
+                <i class="ti ti-shield-check" aria-hidden="true" style="font-size:14px;flex-shrink:0;margin-top:1px;"></i>
+                <span>Always meet on campus in a public area. Never pay upfront without seeing the item. Report suspicious listings to admins.</span>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:11px 24px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                    <i class="ti ti-send" aria-hidden="true"></i> Submit offer
+                </button>
+                <a href="/listings/@listing?.ListingId" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:7px;padding:11px 16px;font-size:12px;text-decoration:none;display:flex;align-items:center;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateOfferType() {
+            const type     = document.querySelector('input[name="offerType"]:checked')?.value;
+            const cashSec  = document.getElementById('cashSection');
+            const tradeSec = document.getElementById('tradeSection');
+            cashSec.style.display  = (type === 'Cash' || type === 'Cash and Trade') ? 'block' : 'none';
+            tradeSec.style.display = (type === 'Trade' || type === 'Cash and Trade') ? 'block' : 'none';
+
+            // Update card styles
+            document.querySelectorAll('.offer-type-card').forEach(card => {
+                const isActive = card.dataset.type === type;
+                card.style.borderColor  = isActive ? '#4B3BC7' : '#ddd';
+                card.style.background   = isActive ? '#EEEDFE' : '#fff';
+            });
+        }
+    </script>
+}

@@ -87,17 +87,22 @@ namespace VarsityTrade.Web.Controllers
             var auth = RequireAuth();
             if (auth != null) return auth;
 
-            var conversations = await _api.GetAsync<List<ConversationViewModel>>(
-                "api/messaging/conversations");
+            var conversations = await _api.GetAsync<List<ConversationViewModel>>("api/messaging/conversations")
+                                ?? new List<ConversationViewModel>();
 
             var model = new InboxViewModel
             {
-                Conversations = conversations ?? new List<ConversationViewModel>(),
-                UnreadCount = conversations?.Sum(c => c.UnreadCount) ?? 0,
+                Conversations = conversations,
+                UnreadCount = conversations.Sum(c => c.UnreadCount),
             };
 
-            ViewData["SidebarPage"] = "inbox";
-            return View(model);
+            // Use seller inbox view when in seller mode
+            var currentMode = HttpContext.Session.GetString("CurrentMode") ?? "Buyer";
+            ViewData["SidebarPage"] = currentMode == "Seller" ? "seller-inbox" : "inbox";
+
+            return currentMode == "Seller"
+                ? View("~/Views/Seller/Inbox.cshtml", model)
+                : View(model);
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -199,6 +204,41 @@ namespace VarsityTrade.Web.Controllers
             ViewData["SidebarPage"] = "profile";
             return View();
         }
+
+        //-----------------------------------------------------------
+        //Buyer saved listings
+        //-----------------------------------------------------------
+        [HttpGet("saved")]
+        public async Task<IActionResult> Saved(string filter = "All")
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            // Deferred to QA — saved listings API endpoint
+            // For now show empty state
+            ViewBag.SavedListings = new List<VarsityTrade.Web.Models.Listings.ListingCardViewModel>();
+            ViewBag.ActiveFilter = filter;
+            ViewData["SidebarPage"] = "saved";
+            return View();
+        }
+
+        //-------------------------------------------------────────----
+        //Buyer reviews
+        //-------------------------------------------------────────----
+        [HttpGet("reviews")]
+        public async Task<IActionResult> Reviews(string filter = "Reviews left")
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var reviews = await _api.GetAsync<List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>>(
+                "api/reviews/my") ?? new List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>();
+
+            ViewBag.Reviews = reviews;
+            ViewBag.ActiveFilter = filter;
+            ViewData["SidebarPage"] = "reviews";
+            return View();
+        }
         // ─────────────────────────────────────────────────────────────
         // POST /buyer/inbox/send
         // Sends a message in a conversation
@@ -244,6 +284,55 @@ namespace VarsityTrade.Web.Controllers
 
             await _api.PutAsync("api/notifications/read-all");
             return RedirectToAction("Notifications");
+        }
+
+        [HttpGet("offers/make")]
+        public async Task<IActionResult> MakeOffer(int listingId)
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var listing = await _api.GetAsync<VarsityTrade.Web.Models.Listings.ListingDetailViewModel>(
+                $"api/listings/{listingId}");
+
+            if (listing == null)
+                return NotFound();
+
+            ViewBag.Listing = listing;
+            ViewData["SidebarPage"] = "offers";
+            return View();
+        }
+
+        [HttpPost("offers/make")]
+        public async Task<IActionResult> MakeOffer(int listingId, string offerType,
+            decimal? offerAmount, string? tradeItem1, decimal? tradeItem1Value,
+            string? tradeItem2, decimal? tradeItem2Value)
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var offerItems = new List<object>();
+            if (!string.IsNullOrEmpty(tradeItem1))
+                offerItems.Add(new { title = tradeItem1, estimatedValue = tradeItem1Value });
+            if (!string.IsNullOrEmpty(tradeItem2))
+                offerItems.Add(new { title = tradeItem2, estimatedValue = tradeItem2Value });
+
+            var result = await _api.PostAsync<dynamic>("api/offers", new
+            {
+                listingId = listingId,
+                offerType = offerType,
+                offerAmount = offerAmount,
+                offerItems = offerItems,
+            });
+
+            if (result == null)
+            {
+                TempData["Error"] = "Could not submit offer. Please try again.";
+                return RedirectToAction("MakeOffer", new { listingId });
+            }
+
+            TempData["Success"] = "Offer submitted successfully!";
+            return RedirectToAction("Offers");
         }
     }
 

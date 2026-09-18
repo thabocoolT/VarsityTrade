@@ -6,6 +6,7 @@ using VarsityTrade.Core.DTOs.Listings;
 using VarsityTrade.Core.Interfaces;
 using VarsityTrade.Infrastructure.Data;
 
+
 namespace VarsityTrade.API.Controllers
 {
     [ApiController]
@@ -14,14 +15,16 @@ namespace VarsityTrade.API.Controllers
     {
         private readonly IListingService _listingService;
         private readonly VarsityTradeDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public ListingsController(
-            IListingService listingService,
-            VarsityTradeDbContext context)
+        public ListingsController(IListingService listingService, VarsityTradeDbContext context, IWebHostEnvironment environment)
         {
             _listingService = listingService;
             _context = context;
+            _environment = environment;
         }
+
+        
 
         private int? GetCurrentUserId()
         {
@@ -66,7 +69,7 @@ namespace VarsityTrade.API.Controllers
         // Authenticated users can only access their own university.
         // ─────────────────────────────────────────────────────────────
         [Authorize]
-        [HttpGet("university/{universityId:int}")]
+        [HttpGet("university/{universityId}")]
         public async Task<IActionResult> GetListingsByUniversity(
             int universityId)
         {
@@ -350,6 +353,33 @@ namespace VarsityTrade.API.Controllers
                     .ToListAsync();
 
             return Ok(listings);
+        }
+        /// <summary>Uploads an image for a listing and returns the saved URL.</summary>
+        [HttpPost("upload-image")]
+        [Authorize]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No file uploaded." });
+
+            // Allowed extensions
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext))
+                return BadRequest(new { message = "Invalid file type. Only JPG, PNG and WEBP are allowed." });
+
+            // Save to wwwroot/uploads/listings/
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", "listings");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{ext}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream);
+
+            var url = $"/uploads/listings/{fileName}";
+            return Ok(new { url });
         }
     }
 }
