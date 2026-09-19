@@ -19,51 +19,47 @@ namespace VarsityTrade.Web.Controllers
         // GET /listings/browse
         // ─────────────────────────────────────────────────────────────
         [HttpGet("browse")]
-        public async Task<IActionResult> Browse(
-            string? q,
-            string? category,
-            string? condition)
+        public async Task<IActionResult> Browse(string? q, string? category, string? condition)
         {
-            var accessToken = HttpContext.Session.GetString("AccessToken");
-            var isLoggedIn = !string.IsNullOrWhiteSpace(accessToken);
+            var universityIdStr = HttpContext.Session.GetString("UniversityId");
+            var isLoggedIn = HttpContext.Session.GetString("AccessToken") != null;
 
-            List<ListingCardViewModel> listings = new();
-            string universityName = "All Universities";
+            List<ListingCardViewModel> listings;
 
-            if (isLoggedIn)
+            if (isLoggedIn && int.TryParse(universityIdStr, out var uid))
             {
-                // Logged-in users are restricted to their university.
-                var universityIdStr =
-                    HttpContext.Session.GetString("UniversityId");
-
-                if (!int.TryParse(universityIdStr, out var universityId))
-                {
-                    return View(new BrowseViewModel
-                    {
-                        Listings = new(),
-                        UniversityName = "Your University",
-                        SearchQuery = q,
-                        SelectedCategory = category,
-                        SelectedCondition = condition
-                    });
-                }
-
-                universityName =
-                    await GetUniversityNameAsync(universityId);
-
-                listings =
-                    await _api.GetAsync<List<ListingCardViewModel>>(
-                        $"api/listings/university/{universityId}")
-                    ?? new List<ListingCardViewModel>();
+                // Authenticated — campus-locked feed
+                listings = await _api.GetAsync<List<ListingCardViewModel>>(
+                    $"api/listings/university/{uid}") ?? new();
             }
             else
             {
-                // Guests can browse listings from all universities.
-                listings =
-                    await _api.GetAsync<List<ListingCardViewModel>>(
-                        "api/listings/public")
-                    ?? new List<ListingCardViewModel>();
+                // Guest — show all listings from university 1 as default
+                // In production this would show a combined feed across universities
+                listings = await _api.GetAsync<List<ListingCardViewModel>>(
+                    "api/listings/university/1") ?? new();
             }
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(q))
+                listings = listings
+                    .Where(l => l.Title.Contains(q, StringComparison.OrdinalIgnoreCase)
+                             || l.CategoryName.Contains(q, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            if (!string.IsNullOrEmpty(category))
+                listings = listings
+                    .Where(l => l.CategoryName.Equals(category, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            if (!string.IsNullOrEmpty(condition))
+                listings = listings
+                    .Where(l => l.Condition.Equals(condition, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+            var universityName = isLoggedIn
+                ? await GetUniversityNameAsync(int.Parse(universityIdStr ?? "1"))
+                : "South African Universities";
 
             var model = new BrowseViewModel
             {
@@ -71,64 +67,36 @@ namespace VarsityTrade.Web.Controllers
                 UniversityName = universityName,
                 SearchQuery = q,
                 SelectedCategory = category,
-                SelectedCondition = condition
+                SelectedCondition = condition,
             };
 
-            // ─────────────────────────────────────────────────────────
-            // Search
-            // ─────────────────────────────────────────────────────────
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                model.Listings = model.Listings
-                    .Where(l =>
-                        (!string.IsNullOrWhiteSpace(l.Title) &&
-                         l.Title.Contains(
-                             q,
-                             StringComparison.OrdinalIgnoreCase))
-                        ||
-                        (!string.IsNullOrWhiteSpace(l.CategoryName) &&
-                         l.CategoryName.Contains(
-                             q,
-                             StringComparison.OrdinalIgnoreCase))
-                        ||
-                        (!string.IsNullOrWhiteSpace(l.StoreName) &&
-                         l.StoreName.Contains(
-                             q,
-                             StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-            }
-
-            // ─────────────────────────────────────────────────────────
-            // Category filter
-            // ─────────────────────────────────────────────────────────
-            if (!string.IsNullOrWhiteSpace(category))
-            {
-                model.Listings = model.Listings
-                    .Where(l =>
-                        string.Equals(
-                            l.CategoryName,
-                            category,
-                            StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-
-            // ─────────────────────────────────────────────────────────
-            // Condition filter
-            // ─────────────────────────────────────────────────────────
-            if (!string.IsNullOrWhiteSpace(condition))
-            {
-                model.Listings = model.Listings
-                    .Where(l =>
-                        string.Equals(
-                            l.Condition,
-                            condition,
-                            StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-
             ViewData["SidebarPage"] = "browse";
-
             return View(model);
+        }
+
+        // Helper to get raw JSON from API for debugging
+        private async Task<string?> GetRawJsonAsync(string endpoint)
+        {
+            try
+            {
+                var token = HttpContext.Session.GetString("AccessToken");
+                using var client = new HttpClient();
+                if (!string.IsNullOrEmpty(token))
+                    client.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var baseUrl = _api.GetType()
+                    .GetField("_apiBaseUrl",
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.GetValue(_api)?.ToString() ?? "https://localhost:7019";
+
+                var response = await client.GetAsync($"{baseUrl}/{endpoint}");
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────

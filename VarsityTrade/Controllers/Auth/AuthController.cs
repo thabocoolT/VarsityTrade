@@ -190,31 +190,32 @@ namespace VarsityTrade.Web.Controllers.Auth
         {
             try
             {
-                // Set the token in session so ApiService can attach it
+                // IMPORTANT: Set the token in session BEFORE making the API call
+                // ApiService reads the token from session — if not set the call returns 401
                 HttpContext.Session.SetString("AccessToken", accessToken);
 
-                // Use GetWithStatusAsync so we can distinguish 200 vs 404 vs 401
+                // Small delay to ensure session is written before the API call
+                await Task.Delay(50);
+
+                // Check if the user has an active seller profile
                 var (success, _, statusCode) = await _api.GetWithStatusAsync<SellerProfileExistsViewModel>(
                     "api/sellerprofiles/my");
 
-
-
                 if (success && statusCode == 200)
                 {
-                    // User has an active seller profile
                     HttpContext.Session.SetString("HasSellerProfile", "true");
                 }
                 else
                 {
-                    // 404 = no seller profile yet, 401 = token issue
                     HttpContext.Session.SetString("HasSellerProfile", "false");
                 }
 
-                // Always start in Buyer mode on login
+                // Always start in Buyer mode on fresh login
                 HttpContext.Session.SetString("CurrentMode", "Buyer");
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"[CheckSellerProfile] Error: {ex.Message}");
                 HttpContext.Session.SetString("HasSellerProfile", "false");
                 HttpContext.Session.SetString("CurrentMode", "Buyer");
             }

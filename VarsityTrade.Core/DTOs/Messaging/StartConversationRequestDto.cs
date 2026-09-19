@@ -16,8 +16,7 @@ namespace VarsityTrade.Core.DTOs.Messaging
         public int ListingId { get; set; }
 
         //The first message in the conversation-required, cannot send an empty message
-        [Required(ErrorMessage = "Message content is required.")]
         [MaxLength(2000, ErrorMessage = "Message content cannot exceed 2000 characters.")]
-        public string InitialMessage { get; set; } = string.Empty;
+        public string? InitialMessage { get; set; }
     }
 }

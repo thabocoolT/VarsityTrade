@@ -613,15 +613,10 @@
                     {
                         @if (isLoggedIn)
                         {
-                            <a href="/buyer/inbox?listingId=@Model.ListingId"
+                            <a href="/buyer/inbox/start?listingId=@Model.ListingId"
                                class="vt-btn vt-btn-outline"
-                               style="
-                                width:100%;
-                                justify-content:center;
-                                margin-bottom:8px;">
-
-                                <i class="ti ti-message-circle"
-                                   aria-hidden="true"></i>
+                               style="width:100%;justify-content:center;margin-bottom:8px;">
+                                <i class="ti ti-message-circle" aria-hidden="true"></i>
                                 Message seller
                             </a>
 

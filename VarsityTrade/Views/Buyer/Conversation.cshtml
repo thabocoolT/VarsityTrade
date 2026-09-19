@@ -1,193 +1,686 @@
 ﻿@model VarsityTrade.Web.Models.Buyer.ConversationThreadViewModel
+
 @{
     ViewData["Title"] = "Conversation";
     ViewData["SidebarPage"] = "inbox";
     Layout = "_Layout";
-    var currentUserId = Model.CurrentUserId;
-    var storeName     = Model.Conversation.StoreName;
-    var storeInitial  = storeName.Length > 0 ? storeName[0].ToString().ToUpper() : "?";
+
+    var conversation = Model.Conversation;
+
+    var sellerInitial =
+        !string.IsNullOrWhiteSpace(conversation.StoreName)
+            ? conversation.StoreName[0].ToString().ToUpper()
+            : "?";
+
+    var currentUserInitial =
+        !string.IsNullOrWhiteSpace(
+            Context.Session.GetString("UserInitials"))
+                ? Context.Session.GetString("UserInitials")
+                : "?";
 }
 
-<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
+<div class="vt-body">
+
     @await Html.PartialAsync("_Sidebar")
 
-    <div style="display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start;">
+    <div class="vt-thread-layout">
 
-        @* Thread panel *@
-        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">
+        <!-- Conversation thread -->
+        <div class="vt-thread-panel">
 
-            @* Thread header *@
-            <div style="padding:12px 16px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:10px;">
-                <a href="/buyer/inbox" style="color:#4B3BC7;font-size:13px;display:flex;align-items:center;gap:4px;text-decoration:none;margin-right:4px;">
-                    <i class="ti ti-arrow-left" aria-hidden="true"></i> Back
+            <div class="vt-thread-header">
+
+                <a href="/buyer/inbox"
+                   class="vt-thread-back">
+
+                    <i class="ti ti-arrow-left"></i>
+                    Back
+
                 </a>
-                <div style="width:36px;height:36px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;">
-                    @storeInitial
+
+                <div class="vt-thread-avatar">
+                    @sellerInitial
                 </div>
+
                 <div>
-                    <div style="font-size:13px;font-weight:500;color:#26215C;">@storeName</div>
-                    <div style="font-size:11px;color:#888;">
-                        <i class="ti ti-building" aria-hidden="true" style="font-size:10px;"></i>
-                        NWU Vaal Campus · Online
+                    <div class="vt-thread-name">
+                        @conversation.StoreName
+                    </div>
+
+                    <div class="vt-thread-meta">
+                        Seller
                     </div>
                 </div>
-                <div style="margin-left:auto;display:flex;gap:8px;">
-                    <a href="/buyer/offers/make?listingId=@Model.Conversation.ListingId"
-                       style="border:0.5px solid #ddd;border-radius:6px;padding:5px 10px;font-size:11px;color:#555;background:#fff;display:flex;align-items:center;gap:4px;text-decoration:none;">
-                        <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Make offer
+
+                <div class="vt-thread-actions">
+
+                    <a href="/buyer/offers/make?listingId=@conversation.ListingId"
+                       class="vt-thread-action">
+                        <i class="ti ti-arrows-exchange"></i>
+                        Make offer
                     </a>
-                    <div style="border:0.5px solid #ddd;border-radius:6px;padding:5px 10px;font-size:11px;color:#555;background:#fff;display:flex;align-items:center;gap:4px;cursor:pointer;">
-                        <i class="ti ti-flag" aria-hidden="true"></i> Report
-                    </div>
+
+                    <button type="button"
+                            class="vt-thread-action">
+                        <i class="ti ti-flag"></i>
+                        Report
+                    </button>
+
                 </div>
+
             </div>
 
-            @* Listing bar *@
-            <div style="background:#f5f4f9;border-bottom:0.5px solid #e0ddf5;padding:8px 16px;display:flex;align-items:center;gap:10px;">
-                <div style="width:36px;height:36px;background:#EEEDFE;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:16px;flex-shrink:0;">
-                    <i class="ti ti-tag" aria-hidden="true"></i>
+            <!-- Listing bar -->
+            <div class="vt-thread-listing">
+
+                <div class="vt-thread-listing-image">
+
+                    @if (!string.IsNullOrWhiteSpace(
+                        conversation.ListingCoverImage))
+                    {
+                        <img src="@conversation.ListingCoverImage"
+                             alt="@conversation.ListingTitle" />
+                    }
+                    else
+                    {
+                        <i class="ti ti-tag"></i>
+                    }
+
                 </div>
+
                 <div>
-                    <div style="font-size:12px;font-weight:500;color:#26215C;">@Model.Conversation.ListingTitle</div>
-                    <div style="font-size:11px;color:#4B3BC7;">R @Model.Conversation.ListingPrice.ToString("N0")</div>
+
+                    <div class="vt-thread-listing-title">
+                        @conversation.ListingTitle
+                    </div>
+
+                    <div class="vt-thread-listing-price">
+                        R @conversation.ListingPrice.ToString("N0")
+                    </div>
+
                 </div>
-                <a href="/listings/@Model.Conversation.ListingId" style="font-size:11px;color:#4B3BC7;margin-left:auto;white-space:nowrap;text-decoration:none;">View listing →</a>
+
+                <a href="/listings/@conversation.ListingId"
+                   class="vt-thread-listing-link">
+
+                    View listing →
+                </a>
+
             </div>
 
-            @* Messages *@
-            <div style="padding:16px;display:flex;flex-direction:column;gap:12px;min-height:280px;background:#fff;">
+            <!-- Messages -->
+            <div class="vt-thread-messages">
+
                 @if (Model.Messages.Any())
                 {
-                    DateTime? lastDate = null;
-                    @foreach (var msg in Model.Messages)
-                    {
-                        var isMe    = msg.SenderId == currentUserId;
-                        var msgDate = msg.SentAt.Date;
+                    DateTime? currentDate = null;
 
-                        if (lastDate == null || lastDate != msgDate)
+                    @foreach (var message in Model.Messages)
+                    {
+                        var messageDate = message.SentAt.Date;
+
+                        if (currentDate != messageDate)
                         {
-                            var dateLabel = msgDate == DateTime.UtcNow.Date ? "Today"
-                                          : msgDate == DateTime.UtcNow.Date.AddDays(-1) ? "Yesterday"
-                                          : msgDate.ToString("dd MMM yyyy");
-                            <div style="text-align:center;font-size:10px;color:#aaa;margin:4px 0;">@dateLabel</div>
-                            lastDate = msgDate;
+                            currentDate = messageDate;
+
+                            <div class="vt-thread-date">
+                                @message.SentAt.ToString("dd MMM yyyy")
+                            </div>
                         }
 
-                        var senderInitial = $"{msg.SenderFirstName[0]}".ToUpper();
-                        <div style="display:flex;gap:8px;align-items:flex-end;@(isMe?"flex-direction:row-reverse;":"")">
-                            <div style="width:28px;height:28px;border-radius:50%;@(isMe?"background:#4B3BC7;color:#fff;":"background:#ddd;color:#888;")display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;">
-                                @senderInitial
+                        var isMine =
+                            message.SenderId == Model.CurrentUserId;
+
+                        var senderInitial =
+                            !string.IsNullOrWhiteSpace(
+                                message.SenderFirstName)
+                                    ? message.SenderFirstName[0]
+                                        .ToString()
+                                        .ToUpper()
+                                    : "?";
+
+                        <div class="vt-message @(isMine ? "mine" : "")">
+
+                            <div class="vt-message-avatar @(isMine ? "mine" : "")">
+                                @(isMine
+                                    ? currentUserInitial
+                                    : senderInitial)
                             </div>
-                            <div style="display:flex;flex-direction:column;gap:3px;max-width:72%;">
-                                <div style="padding:9px 12px;border-radius:@(isMe?"12px 12px 2px 12px":"12px 12px 12px 2px");font-size:12px;line-height:1.5;@(isMe?"background:#4B3BC7;color:#fff;":"background:#f5f4f9;color:#26215C;")">
-                                    @msg.Content
+
+                            <div class="vt-message-group">
+
+                                <div class="vt-message-bubble">
+                                    @message.Content
                                 </div>
-                                <div style="font-size:10px;color:#aaa;@(isMe?"text-align:right;":"")">
-                                    @msg.SentAt.ToString("HH:mm")
+
+                                <div class="vt-message-time">
+                                    @message.SentAt.ToLocalTime()
+                                        .ToString("HH:mm")
                                 </div>
+
                             </div>
+
                         </div>
                     }
                 }
                 else
                 {
-                    <div style="text-align:center;font-size:12px;color:#888;padding:20px;">No messages yet. Start the conversation!</div>
+                    <div class="vt-thread-no-messages">
+                        <i class="ti ti-message-circle"></i>
+                        <div>Start the conversation</div>
+                        <span>
+                            Send a message to @conversation.StoreName.
+                        </span>
+                    </div>
                 }
+
             </div>
 
-            @* Reply bar *@
-            <div style="border-top:0.5px solid #e0ddf5;padding:10px 16px;display:flex;align-items:center;gap:8px;background:#fff;">
-                <i class="ti ti-paperclip" aria-hidden="true" style="color:#aaa;font-size:18px;cursor:pointer;"></i>
-                <form asp-controller="Buyer" asp-action="SendMessage" method="post" style="flex:1;display:flex;gap:8px;">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="conversationId" value="@Model.Conversation.ConversationId" />
-                    <input type="text" name="content" placeholder="Type a message..."
-                           style="flex:1;border:0.5px solid #ddd;border-radius:20px;padding:8px 14px;font-size:12px;background:#f5f4f9;color:#26215C;outline:none;" required />
-                    <button type="submit" style="background:#4B3BC7;color:#fff;border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0;">
-                        <i class="ti ti-send" aria-hidden="true"></i>
-                    </button>
-                </form>
-            </div>
+            <!-- Reply -->
+            <form method="post"
+                  action="/buyer/inbox/send"
+                  class="vt-reply-bar">
+
+                <input type="hidden"
+                       name="conversationId"
+                       value="@conversation.ConversationId" />
+
+                <input type="text"
+                       name="content"
+                       class="vt-reply-input"
+                       placeholder="Type a message..."
+                       maxlength="2000"
+                       required
+                       autocomplete="off" />
+
+                <button type="submit"
+                        class="vt-reply-btn">
+
+                    <i class="ti ti-send"></i>
+
+                </button>
+
+            </form>
+
         </div>
 
-        @* Right panel *@
-        <div style="display:flex;flex-direction:column;gap:12px;">
+        <!-- Right-side information -->
+        <div class="vt-thread-right">
 
-            @* Seller details card *@
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-user" aria-hidden="true"></i> Seller details
+            <div class="vt-thread-info-card">
+
+                <div class="vt-thread-info-title">
+                    <i class="ti ti-user"></i>
+                    Seller
                 </div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <div style="width:36px;height:36px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;">
-                        @storeInitial
+
+                <div class="vt-thread-seller">
+
+                    <div class="vt-thread-seller-avatar">
+                        @sellerInitial
                     </div>
+
                     <div>
-                        <div style="font-size:12px;font-weight:500;color:#26215C;">@storeName</div>
-                        <div style="font-size:10px;color:#888;"><i class="ti ti-building" aria-hidden="true" style="font-size:10px;"></i> NWU Vaal Campus</div>
+                        <div class="vt-thread-seller-name">
+                            @conversation.StoreName
+                        </div>
+
+                        <div class="vt-thread-seller-meta">
+                            Seller on Varsity Trade
+                        </div>
                     </div>
+
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
-                    <div style="background:#f5f4f9;border-radius:6px;padding:5px;text-align:center;">
-                        <div style="font-size:12px;font-weight:500;color:#26215C;"><span style="color:#BA7517;">★</span>@Model.Conversation.SellerRating.ToString("F1")</div>
-                        <div style="font-size:9px;color:#888;">Rating</div>
-                    </div>
-                    <div style="background:#f5f4f9;border-radius:6px;padding:5px;text-align:center;">
-                        <div style="font-size:12px;font-weight:500;color:#26215C;">—</div>
-                        <div style="font-size:9px;color:#888;">Sales</div>
-                    </div>
-                    <div style="background:#f5f4f9;border-radius:6px;padding:5px;text-align:center;">
-                        <div style="font-size:12px;font-weight:500;color:#26215C;">~1h</div>
-                        <div style="font-size:9px;color:#888;">Response</div>
-                    </div>
-                </div>
-                <a href="/seller/@Model.Conversation.SellerProfileId"
-                   style="width:100%;border:1.5px solid #4B3BC7;border-radius:7px;padding:8px;font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;color:#4B3BC7;background:#fff;">
-                    <i class="ti ti-user" aria-hidden="true"></i> View profile
+
+                <a href="/seller/profile/@conversation.SellerProfileId"
+                   class="vt-thread-profile-btn">
+
+                    <i class="ti ti-user"></i>
+                    View profile
+
                 </a>
+
             </div>
 
-            @* Listing card *@
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
-                    <i class="ti ti-tag" aria-hidden="true"></i> Listing
+            <div class="vt-thread-info-card">
+
+                <div class="vt-thread-info-title">
+                    <i class="ti ti-tag"></i>
+                    Listing
                 </div>
-                <div style="background:#f5f4f9;border-radius:8px;overflow:hidden;margin-bottom:8px;">
-                    <div style="background:#EEEDFE;height:60px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:24px;">
-                        <i class="ti ti-photo" aria-hidden="true"></i>
+
+                <div class="vt-listing-preview">
+
+                    <div class="vt-listing-preview-image">
+
+                        @if (!string.IsNullOrWhiteSpace(
+                            conversation.ListingCoverImage))
+                        {
+                            <img src="@conversation.ListingCoverImage"
+                                 alt="@conversation.ListingTitle" />
+                        }
+                        else
+                        {
+                            <i class="ti ti-tag"></i>
+                        }
+
                     </div>
-                    <div style="padding:7px 9px;">
-                        <div style="font-size:11px;font-weight:500;color:#26215C;margin-bottom:2px;">@Model.Conversation.ListingTitle</div>
-                        <div style="font-size:12px;font-weight:500;color:#4B3BC7;">R @Model.Conversation.ListingPrice.ToString("N0")</div>
+
+                    <div class="vt-listing-preview-title">
+                        @conversation.ListingTitle
                     </div>
+
+                    <div class="vt-listing-preview-price">
+                        R @conversation.ListingPrice.ToString("N0")
+                    </div>
+
                 </div>
-                <a href="/buyer/offers/make?listingId=@Model.Conversation.ListingId"
-                   style="width:100%;background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:8px;font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;margin-bottom:5px;">
-                    <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Make trade offer
+
+                <a href="/buyer/offers/make?listingId=@conversation.ListingId"
+                   class="vt-thread-offer-btn">
+
+                    <i class="ti ti-arrows-exchange"></i>
+                    Make trade offer
+
                 </a>
-                <a href="/listings/@Model.Conversation.ListingId"
-                   style="width:100%;background:#fff;color:#888;border:0.5px solid #ddd;border-radius:7px;padding:8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;">
-                    <i class="ti ti-eye" aria-hidden="true"></i> View full listing
+
+                <a href="/listings/@conversation.ListingId"
+                   class="vt-thread-view-btn">
+
+                    <i class="ti ti-eye"></i>
+                    View full listing
+
                 </a>
+
             </div>
 
-            @* Safety tips *@
-            <div style="background:#EEEDFE;border:0.5px solid #AFA9EC;border-radius:12px;padding:12px;">
-                <div style="font-size:11px;font-weight:500;color:#3C3489;margin-bottom:6px;display:flex;align-items:center;gap:4px;">
-                    <i class="ti ti-shield-check" aria-hidden="true"></i> Safety tips
+            <div class="vt-thread-safety">
+
+                <div class="vt-thread-safety-title">
+                    <i class="ti ti-shield-check"></i>
+                    Safety tips
                 </div>
-                @foreach (var tip in new[] {
-                    "Meet on campus in a public area",
-                    "Inspect the item before paying",
-                    "Never pay upfront or transfer money",
-                    "Report anything suspicious",
-                })
-                {
-                    <div style="font-size:10px;color:#534AB7;display:flex;align-items:flex-start;gap:4px;margin-bottom:4px;line-height:1.4;">
-                        <i class="ti ti-check" aria-hidden="true" style="margin-top:1px;min-width:11px;"></i> @tip
-                    </div>
-                }
+
+                <div>✓ Meet on campus in a public area</div>
+                <div>✓ Inspect the item before paying</div>
+                <div>✓ Never pay upfront or transfer money</div>
+                <div>✓ Report anything suspicious</div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+<style>
+    .vt-thread-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 270px;
+        gap: 14px;
+        min-height: 500px;
+    }
+
+    .vt-thread-panel,
+    .vt-thread-info-card,
+    .vt-thread-safety {
+        background: #fff;
+        border: 0.5px solid var(--vt-border-light);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .vt-thread-panel {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .vt-thread-header {
+        padding: 12px 16px;
+        border-bottom: 0.5px solid var(--vt-border-light);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .vt-thread-back {
+        color: var(--vt-primary);
+        text-decoration: none;
+        font-size: 12px;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        margin-right: 4px;
+    }
+
+    .vt-thread-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--vt-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .vt-thread-name {
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .vt-thread-meta {
+        font-size: 10px;
+        color: #888;
+        margin-top: 2px;
+    }
+
+    .vt-thread-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+    }
+
+    .vt-thread-action {
+        border: 0.5px solid #ddd;
+        background: #fff;
+        color: #555;
+        border-radius: 6px;
+        padding: 6px 9px;
+        font-size: 10px;
+        text-decoration: none;
+    }
+
+    .vt-thread-listing {
+        background: #f5f4f9;
+        border-bottom: 0.5px solid var(--vt-border-light);
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .vt-thread-listing-image {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        background: #eeedfe;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: var(--vt-primary);
+    }
+
+    .vt-thread-listing-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .vt-thread-listing-title {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .vt-thread-listing-price {
+        color: var(--vt-primary);
+        font-size: 10px;
+        margin-top: 2px;
+    }
+
+    .vt-thread-listing-link {
+        margin-left: auto;
+        color: var(--vt-primary);
+        font-size: 10px;
+        text-decoration: none;
+    }
+
+    .vt-thread-messages {
+        flex: 1;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 300px;
+    }
+
+    .vt-thread-date {
+        text-align: center;
+        font-size: 9px;
+        color: #aaa;
+        margin: 4px 0;
+    }
+
+    .vt-message {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    .vt-message.mine {
+        flex-direction: row-reverse;
+    }
+
+    .vt-message-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #ddd;
+        color: #777;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        flex-shrink: 0;
+    }
+
+    .vt-message-avatar.mine {
+        background: var(--vt-primary);
+        color: #fff;
+    }
+
+    .vt-message-group {
+        max-width: 72%;
+    }
+
+    .vt-message-bubble {
+        padding: 9px 12px;
+        border-radius: 12px 12px 12px 2px;
+        background: #f5f4f9;
+        color: var(--vt-text-primary);
+        font-size: 11px;
+        line-height: 1.5;
+    }
+
+    .vt-message.mine .vt-message-bubble {
+        background: var(--vt-primary);
+        color: #fff;
+        border-radius: 12px 12px 2px 12px;
+    }
+
+    .vt-message-time {
+        font-size: 9px;
+        color: #aaa;
+        margin-top: 3px;
+    }
+
+    .vt-message.mine .vt-message-time {
+        text-align: right;
+    }
+
+    .vt-thread-no-messages {
+        margin: auto;
+        text-align: center;
+        color: #888;
+        font-size: 12px;
+    }
+
+    .vt-thread-no-messages i {
+        display: block;
+        font-size: 38px;
+        color: #aaa5e8;
+        margin-bottom: 10px;
+    }
+
+    .vt-thread-no-messages span {
+        display: block;
+        font-size: 10px;
+        margin-top: 5px;
+    }
+
+    .vt-reply-bar {
+        border-top: 0.5px solid var(--vt-border-light);
+        padding: 10px 16px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .vt-reply-input {
+        flex: 1;
+        border: 0.5px solid #ddd;
+        border-radius: 20px;
+        padding: 8px 14px;
+        font-size: 11px;
+        outline: none;
+    }
+
+    .vt-reply-btn {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--vt-primary);
+        color: #fff;
+        cursor: pointer;
+    }
+
+    .vt-thread-right {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .vt-thread-info-card {
+        padding: 14px;
+    }
+
+    .vt-thread-info-title {
+        font-size: 11px;
+        font-weight: 500;
+        padding-bottom: 7px;
+        margin-bottom: 10px;
+        border-bottom: 0.5px solid var(--vt-border-light);
+    }
+
+    .vt-thread-seller {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .vt-thread-seller-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--vt-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+    .vt-thread-seller-name {
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .vt-thread-seller-meta {
+        font-size: 9px;
+        color: #888;
+        margin-top: 2px;
+    }
+
+    .vt-thread-profile-btn,
+    .vt-thread-offer-btn,
+    .vt-thread-view-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+        padding: 8px;
+        border-radius: 7px;
+        font-size: 10px;
+        text-decoration: none;
+        margin-top: 6px;
+    }
+
+    .vt-thread-profile-btn,
+    .vt-thread-view-btn {
+        border: 0.5px solid #ddd;
+        color: var(--vt-primary);
+    }
+
+    .vt-thread-offer-btn {
+        background: var(--vt-primary);
+        color: #fff;
+    }
+
+    .vt-listing-preview {
+        background: #f5f4f9;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .vt-listing-preview-image {
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eeedfe;
+        color: var(--vt-primary);
+        overflow: hidden;
+    }
+
+    .vt-listing-preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .vt-listing-preview-title {
+        padding: 7px 9px 2px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    .vt-listing-preview-price {
+        padding: 0 9px 7px;
+        font-size: 11px;
+        color: var(--vt-primary);
+    }
+
+    .vt-thread-safety {
+        padding: 12px;
+        background: #eeedfe;
+        border-color: #afa9ec;
+        color: #534ab7;
+        font-size: 9px;
+        line-height: 1.5;
+    }
+
+    .vt-thread-safety-title {
+        font-size: 10px;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .vt-thread-safety div:not(.vt-thread-safety-title) {
+        margin-bottom: 4px;
+    }
+</style>

@@ -1,14 +1,25 @@
-﻿using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Text;
+﻿using Newtonsoft.Json; // Provides JSON serialization
+using Newtonsoft.Json.Serialization; // Provides CamelCasePropertyNamesContractResolver
+using System.Net.Http.Headers; // Provides AuthenticationHeaderValue
+using System.Text; // Provides Encoding
 
 namespace VarsityTrade.Web.Services
 {
+    // ApiService is the central HTTP client for all backend API calls
+    // Every controller injects this service and uses it to call the API
     public class ApiService
     {
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly string _apiBaseUrl;
+
+        // Newtonsoft settings — handles camelCase API responses mapped to PascalCase C# properties
+        private static readonly JsonSerializerSettings _jsonSettings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            NullValueHandling = NullValueHandling.Ignore,
+            MissingMemberHandling = MissingMemberHandling.Ignore,
+        };
 
         public ApiService(
             HttpClient httpClient,
@@ -17,240 +28,181 @@ namespace VarsityTrade.Web.Services
         {
             _httpClient = httpClient;
             _httpContextAccessor = httpContextAccessor;
-
-            _apiBaseUrl = (
-                configuration["ApiSettings:BaseUrl"]
-                ?? "https://localhost:7019"
-            ).TrimEnd('/');
+            _apiBaseUrl = configuration["ApiSettings:BaseUrl"] ?? "https://localhost:7019";
         }
 
-        // Creates a request with the current user's JWT.
-        private HttpRequestMessage CreateRequest(
-            HttpMethod method,
-            string endpoint)
+        // ─────────────────────────────────────────────────────────────
+        // SET AUTH HEADER
+        // ─────────────────────────────────────────────────────────────
+        private void SetAuthHeader()
         {
-            var request = new HttpRequestMessage(
-                method,
-                $"{_apiBaseUrl}/{endpoint.TrimStart('/')}");
-
-            var token = _httpContextAccessor
-                .HttpContext?
-                .Session
-                .GetString("AccessToken");
-
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization =
-                    new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            return request;
+            var token = _httpContextAccessor.HttpContext?.Session.GetString("AccessToken");
+            _httpClient.DefaultRequestHeaders.Authorization = !string.IsNullOrEmpty(token)
+                ? new AuthenticationHeaderValue("Bearer", token)
+                : null;
         }
 
         // ─────────────────────────────────────────────────────────────
         // GET
         // ─────────────────────────────────────────────────────────────
-
         public async Task<T?> GetAsync<T>(string endpoint)
         {
-            var result = await GetWithStatusAsync<T>(endpoint);
-
-            return result.Success
-                ? result.Data
-                : default;
+            try
+            {
+                SetAuthHeader();
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/{endpoint}");
+                if (!response.IsSuccessStatusCode) return default;
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<T>(json, _jsonSettings);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ApiService.GetAsync] Error: {ex.Message}");
+                return default;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────
         // GET WITH STATUS
         // ─────────────────────────────────────────────────────────────
-
-        public async Task<(bool Success, T? Data, int StatusCode)>
-            GetWithStatusAsync<T>(string endpoint)
+        public async Task<(bool Success, T? Data, int StatusCode)> GetWithStatusAsync<T>(string endpoint)
         {
-            using var request =
-                CreateRequest(HttpMethod.Get, endpoint);
-
-            using var response =
-                await _httpClient.SendAsync(request);
-
-            var statusCode = (int)response.StatusCode;
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return (false, default, statusCode);
-            }
-
-            var json =
-                await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return (true, default, statusCode);
-            }
-
             try
             {
-                var data =
-                    JsonConvert.DeserializeObject<T>(json);
-
+                SetAuthHeader();
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/{endpoint}");
+                var statusCode = (int)response.StatusCode;
+                if (!response.IsSuccessStatusCode) return (false, default, statusCode);
+                var json = await response.Content.ReadAsStringAsync();
+                var data = JsonConvert.DeserializeObject<T>(json, _jsonSettings);
                 return (true, data, statusCode);
             }
-            catch (JsonException)
+            catch
             {
-                return (false, default, statusCode);
+                return (false, default, 0);
             }
         }
 
         // ─────────────────────────────────────────────────────────────
         // POST
         // ─────────────────────────────────────────────────────────────
-
-        public async Task<T?> PostAsync<T>(
-            string endpoint,
-            object body)
+        public async Task<T?> PostAsync<T>(string endpoint, object body)
         {
-            var result =
-                await PostWithStatusAsync<T>(endpoint, body);
-
-            return result.Success
-                ? result.Data
-                : default;
+            try
+            {
+                SetAuthHeader();
+                var json = JsonConvert.SerializeObject(body);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/{endpoint}", content);
+                if (!response.IsSuccessStatusCode) return default;
+                var responseJson = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<T>(responseJson, _jsonSettings);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ApiService.PostAsync] Error: {ex.Message}");
+                return default;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────
         // POST WITH STATUS
         // ─────────────────────────────────────────────────────────────
-
-        public async Task<(bool Success, T? Data, int StatusCode)>
-            PostWithStatusAsync<T>(
-                string endpoint,
-                object body)
+        public async Task<(bool Success, T? Data, int StatusCode)> PostWithStatusAsync<T>(
+            string endpoint, object body)
         {
-            using var request =
-                CreateRequest(HttpMethod.Post, endpoint);
-
-            var json =
-                JsonConvert.SerializeObject(body);
-
-            request.Content =
-                new StringContent(
-                    json,
-                    Encoding.UTF8,
-                    "application/json");
-
-            using var response =
-                await _httpClient.SendAsync(request);
-
-            var statusCode = (int)response.StatusCode;
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return (false, default, statusCode);
-            }
-
-            var responseJson =
-                await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseJson))
-            {
-                return (true, default, statusCode);
-            }
-
             try
             {
-                var data =
-                    JsonConvert.DeserializeObject<T>(
-                        responseJson);
-
+                SetAuthHeader();
+                var json = JsonConvert.SerializeObject(body);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync($"{_apiBaseUrl}/{endpoint}", content);
+                var statusCode = (int)response.StatusCode;
+                if (!response.IsSuccessStatusCode) return (false, default, statusCode);
+                var responseJson = await response.Content.ReadAsStringAsync();
+                var data = JsonConvert.DeserializeObject<T>(responseJson, _jsonSettings);
                 return (true, data, statusCode);
             }
-            catch (JsonException)
+            catch
             {
-                return (false, default, statusCode);
+                return (false, default, 0);
             }
         }
 
         // ─────────────────────────────────────────────────────────────
         // PUT WITH BODY
         // ─────────────────────────────────────────────────────────────
-
-        public async Task<T?> PutAsync<T>(
-            string endpoint,
-            object body)
+        public async Task<T?> PutAsync<T>(string endpoint, object body)
         {
-            using var request =
-                CreateRequest(HttpMethod.Put, endpoint);
-
-            var json =
-                JsonConvert.SerializeObject(body);
-
-            request.Content =
-                new StringContent(
-                    json,
-                    Encoding.UTF8,
-                    "application/json");
-
-            using var response =
-                await _httpClient.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return default;
-            }
-
-            var responseJson =
-                await response.Content.ReadAsStringAsync();
-
-            if (string.IsNullOrWhiteSpace(responseJson))
-            {
-                return default;
-            }
-
             try
             {
-                return JsonConvert.DeserializeObject<T>(
-                    responseJson);
+                SetAuthHeader();
+                var json = JsonConvert.SerializeObject(body);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync($"{_apiBaseUrl}/{endpoint}", content);
+                if (!response.IsSuccessStatusCode) return default;
+                var responseJson = await response.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<T>(responseJson, _jsonSettings);
             }
-            catch (JsonException)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[ApiService.PutAsync] Error: {ex.Message}");
                 return default;
             }
         }
 
         // ─────────────────────────────────────────────────────────────
-        // PUT WITHOUT BODY
+        // PUT NO BODY
         // ─────────────────────────────────────────────────────────────
-
         public async Task<bool> PutAsync(string endpoint)
         {
-            using var request =
-                CreateRequest(HttpMethod.Put, endpoint);
+            try
+            {
+                SetAuthHeader();
+                var response = await _httpClient.PutAsync(
+                    $"{_apiBaseUrl}/{endpoint}",
+                    new StringContent(string.Empty, Encoding.UTF8, "application/json"));
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
-            request.Content =
-                new StringContent(
-                    string.Empty,
-                    Encoding.UTF8,
-                    "application/json");
-
-            using var response =
-                await _httpClient.SendAsync(request);
-
-            return response.IsSuccessStatusCode;
+        // ─────────────────────────────────────────────────────────────
+        // PUT STRING — for settings endpoint which expects plain string body
+        // ─────────────────────────────────────────────────────────────
+        public async Task<bool> PutStringAsync(string endpoint, string value)
+        {
+            try
+            {
+                SetAuthHeader();
+                var content = new StringContent($"\"{value}\"", Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync($"{_apiBaseUrl}/{endpoint}", content);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────
         // DELETE
         // ─────────────────────────────────────────────────────────────
-
         public async Task<bool> DeleteAsync(string endpoint)
         {
-            using var request =
-                CreateRequest(HttpMethod.Delete, endpoint);
-
-            using var response =
-                await _httpClient.SendAsync(request);
-
-            return response.IsSuccessStatusCode;
+            try
+            {
+                SetAuthHeader();
+                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/{endpoint}");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

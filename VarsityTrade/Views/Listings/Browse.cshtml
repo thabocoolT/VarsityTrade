@@ -77,58 +77,63 @@
                    name="q"
                    value="@Model.SearchQuery" />
 
-            @* CATEGORY *@
+            @* Category filter with subcategories *@
             <div>
-
-                <div style="font-size:12px;
-                            font-weight:500;
-                            color:#26215C;
-                            margin-bottom:10px;
-                            padding-bottom:6px;
-                            border-bottom:0.5px solid #e0ddf5;">
-
-                    <i class="ti ti-category"
-                       aria-hidden="true"></i>
-
-                    Category
-
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;">
+                    <i class="ti ti-category" aria-hidden="true"></i> Category
                 </div>
-
-                <select name="category"
-                        style="width:100%;
-                               border:0.5px solid #ddd;
-                               border-radius:7px;
-                               padding:8px 9px;
-                               font-size:12px;
-                               color:#444;
-                               background:#fff;
-                               cursor:pointer;">
-
-                    <option value="">
-                        All categories
-                    </option>
-
-                    @foreach (var category in Model.Categories)
-                    {
-                        if (string.Equals(
-                            Model.SelectedCategory,
-                            category,
-                            StringComparison.OrdinalIgnoreCase))
-                        {
-                            <option value="@category" selected>
-                                @category
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="@category">
-                                @category
-                            </option>
-                        }
+                <div style="display:flex;flex-direction:column;gap:2px;">
+                    @{
+                        var allCats = ViewBag.Categories as List<dynamic> ?? new List<dynamic>();
+                        var parentCats = new[] {
+                ("ti-layout-grid", "All listings",          "",                       new string[]{}),
+                ("ti-device-laptop","Electronics",          "Electronics",            new[]{"Laptops","Phones & Tablets","Cameras","Gaming","Audio","Other Electronics"}),
+                ("ti-book",        "Study materials",       "Study Materials",        new[]{"Textbooks","Notes & Summaries","Study Guides","Stationery"}),
+                ("ti-sofa",        "Furniture",             "Furniture",              new[]{"Beds & Bedding","Desks & Chairs","Wardrobes","Other Furniture"}),
+                ("ti-hanger",      "Clothing",              "Clothing & Accessories", new[]{"Men's Clothing","Women's Clothing","Shoes","Accessories"}),
+                ("ti-tool-kitchen-2","Household",           "Household & Kitchen",    new[]{"Kitchen Appliances","Cleaning","Decor","Other"}),
+                ("ti-bike",        "Sports & fitness",      "Sports & Fitness",       new[]{"Gym Equipment","Sports Gear","Outdoor","Cycling"}),
+                ("ti-briefcase",   "Services",              "Services",               new[]{"Tutoring","Printing","Delivery","Other Services"}),
+                ("ti-dots",        "Other",                 "Other",                  new string[]{}),
+            };
                     }
+                    @foreach (var (icon, label, val, subs) in parentCats)
+                    {
+                        var isActive = (string.IsNullOrEmpty(val) && string.IsNullOrEmpty(Model.SelectedCategory))
+                                       || val == Model.SelectedCategory
+                                       || (subs.Length > 0 && subs.Contains(Model.SelectedCategory ?? ""));
+                        var hasActiveSub = subs.Any(s => s == Model.SelectedCategory);
 
-                </select>
+                        <div>
+                            @* Parent category row *@
+                            <a href="/listings/browse?q=@Model.SearchQuery&category=@val&condition=@Model.SelectedCondition"
+                               style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;font-size:12px;text-decoration:none;@(isActive ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#444;")">
+                                <span style="display:flex;align-items:center;gap:6px;">
+                                    <i class="ti @icon" aria-hidden="true" style="font-size:13px;"></i> @label
+                                </span>
+                                @if (subs.Length > 0)
+                                {
+                                    <i class="ti ti-chevron-@(isActive ? "down" : "right")" aria-hidden="true" style="font-size:11px;color:#aaa;"></i>
+                                }
+                            </a>
 
+                            @* Subcategories — shown when parent is active *@
+                            @if (subs.Length > 0 && isActive)
+                            {
+                                <div style="margin-left:16px;margin-top:2px;display:flex;flex-direction:column;gap:2px;">
+                                    @foreach (var sub in subs)
+                                    {
+                                        var isSubActive = Model.SelectedCategory == sub;
+                                        <a href="/listings/browse?q=@Model.SearchQuery&category=@sub&condition=@Model.SelectedCondition"
+                                           style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:5px;font-size:11px;text-decoration:none;@(isSubActive ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;")">
+                                            <i class="ti ti-point" aria-hidden="true" style="font-size:10px;"></i> @sub
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
             </div>
 
             @* CONDITION *@

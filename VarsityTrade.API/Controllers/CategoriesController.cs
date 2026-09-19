@@ -15,15 +15,20 @@ namespace VarsityTrade.API.Controllers
             _context = context;
         }
 
-        /// <summary>Returns all categories for the listing form dropdown.</summary>
+        /// <summary>Returns all categories including subcategories.</summary>
         [HttpGet]
         public async Task<IActionResult> GetCategories()
         {
-            // Return parent categories only for the main dropdown
             var categories = await _context.Categories
-                .Where(c => c.ParentCategoryId == null) // Parent categories only
-                .OrderBy(c => c.Name)
-                .Select(c => new { c.CategoryId, c.Name, c.IconName })
+                .OrderBy(c => c.ParentCategoryId)
+                .ThenBy(c => c.Name)
+                .Select(c => new
+                {
+                    c.CategoryId,
+                    c.Name,
+                    c.IconName,
+                    c.ParentCategoryId
+                })
                 .ToListAsync();
 
             return Ok(categories);

@@ -70,6 +70,7 @@ namespace VarsityTrade.API.Controllers
         // ─────────────────────────────────────────────────────────────
         [Authorize]
         [HttpGet("university/{universityId}")]
+        [AllowAnonymous] // Guests can browse listings without logging in
         public async Task<IActionResult> GetListingsByUniversity(
             int universityId)
         {
@@ -381,5 +382,7 @@ namespace VarsityTrade.API.Controllers
             var url = $"/uploads/listings/{fileName}";
             return Ok(new { url });
         }
+
+
     }
 }

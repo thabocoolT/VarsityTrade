@@ -161,24 +161,8 @@ namespace VarsityTrade.Application.Services
                     && c.DeletedAt == null);
 
             //If conversation already exists just send the new message into it
-            if(existing !=null)
+            if (existing != null)
             {
-                var newMsg = new Message
-                {
-                    ConversationId = existing.ConversationId,
-                    SenderId       =buyerId,
-                    Content        =request.InitialMessage,
-                    MessageType    ="Text",
-                    IsRead         =false,
-                    SentAt         =DateTime.UtcNow,
-                };
-                await _context.Messages.AddAsync(newMsg);
-
-                //Update the LastMessageAt timestamp on the conversation
-                existing.LastMessageAt= DateTime.UtcNow;
-                _context.Conversations.Update(existing);
-                await _context.SaveChangesAsync();
-
                 return MapToConversationDto(existing, buyerId);
             }
             // Create a new conversation
@@ -193,21 +177,30 @@ namespace VarsityTrade.Application.Services
             await _context.Conversations.AddAsync(conversation);
             await _context.SaveChangesAsync(); //Save to get conevrsation ID
 
-            //Create the first message in the conversation
-            var initialMessage = new Message
+            // Only create the first message if the caller supplied one.
+            if (!string.IsNullOrWhiteSpace(request.InitialMessage))
             {
-                ConversationId = conversation.ConversationId,
-                SenderId = buyerId,
-                Content = request.InitialMessage,
-                MessageType="Text",
-                IsRead=false,
-                SentAt=DateTime.UtcNow,
-            };
-            await _context.Messages.AddAsync(initialMessage);
-            await _context.SaveChangesAsync();
+                var initialMessage = new Message
+                {
+                    ConversationId = conversation.ConversationId,
+                    SenderId = buyerId,
+                    Content = request.InitialMessage,
+                    MessageType = "Text",
+                    IsRead = false,
+                    SentAt = DateTime.UtcNow,
+                };
+
+                await _context.Messages.AddAsync(initialMessage);
+
+                conversation.LastMessageAt = initialMessage.SentAt;
+
+                await _context.SaveChangesAsync();
+            }
 
             // Reload with all related data for the response
-            return await GetConversationByIdAsync(conversation.ConversationId, buyerId);
+            return await GetConversationByIdAsync(
+                conversation.ConversationId,
+                buyerId);
         }
         //-------------------------------------------------------------------------
         //SEND message

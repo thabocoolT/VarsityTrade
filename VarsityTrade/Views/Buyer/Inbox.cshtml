@@ -1,101 +1,319 @@
-﻿@{
-    ViewData["Title"] = "My Profile";
+﻿@model VarsityTrade.Web.Models.Buyer.InboxViewModel
+
+@{
+    ViewData["Title"] = "Inbox";
+    ViewData["SidebarPage"] = "inbox";
     Layout = "_Layout";
-    var hasSellerProfile = Context.Session.GetString("HasSellerProfile") == "true";
-    var currentMode = Context.Session.GetString("CurrentMode") ?? "Buyer";
-    var isSeller = currentMode == "Seller";
 }
 
 <div class="vt-body">
+
     @await Html.PartialAsync("_Sidebar")
 
-    <div>
-        @* Profile banner *@
-        <div class="vt-card" style="background:linear-gradient(135deg,#4B3BC7,#26215C);margin-bottom:14px;">
-            <div style="display:flex;align-items:center;gap:16px;">
-                <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:500;border:2px solid rgba(255,255,255,0.4);">
-                    @(Context.Session.GetString("UserInitials") ?? "?")
-                </div>
-                <div>
-                    <div style="font-size:18px;font-weight:500;color:#fff;">
-                        @Context.Session.GetString("FirstName") @Context.Session.GetString("LastName")
-                    </div>
-                    <div style="font-size:12px;color:#AFA9EC;margin-top:2px;">
-                        @Context.Session.GetString("UserEmail")
-                    </div>
-                    <div style="display:flex;gap:6px;margin-top:6px;">
-                        <span class="vt-badge" style="background:rgba(255,255,255,0.15);color:#fff;">
-                            @Context.Session.GetString("UserRole")
-                        </span>
-                        @if (hasSellerProfile)
-                        {
-                            <span class="vt-badge" style="background:rgba(255,255,255,0.15);color:#fff;">
-                                <i class="ti ti-store" aria-hidden="true"></i> Seller
-                            </span>
-                        }
-                    </div>
-                </div>
+    <div class="vt-inbox-layout">
+
+        <!-- LEFT: Conversation list -->
+        <div class="vt-inbox-list">
+
+            <div class="vt-inbox-title">
+                Inbox
             </div>
+
+            <div class="vt-inbox-search">
+                <i class="ti ti-search"></i>
+                <input type="text"
+                       placeholder="Search conversations..."
+                       id="conversationSearch" />
+            </div>
+
+            <div class="vt-inbox-tabs">
+                <button class="active" type="button">All</button>
+                <button type="button">Unread</button>
+                <button type="button">Sent</button>
+            </div>
+
+            <div id="conversationList">
+
+                @if (Model.Conversations.Any())
+                {
+                    @foreach (var conversation in Model.Conversations)
+                    {
+                        <a class="vt-inbox-conversation"
+                           href="/buyer/inbox/@conversation.ConversationId">
+
+                            <div class="vt-inbox-avatar">
+                                @(
+                                    !string.IsNullOrWhiteSpace(conversation.StoreName)
+                                        ? conversation.StoreName[0].ToString().ToUpper()
+                                        : "?"
+                                )
+                            </div>
+
+                            <div class="vt-inbox-conversation-body">
+
+                                <div class="vt-inbox-conversation-top">
+                                    <span>
+                                        @conversation.StoreName
+                                    </span>
+
+                                    <small>
+                                        @(conversation.LastMessageAt?.ToString("dd MMM")
+                                            ?? conversation.CreatedAt.ToString("dd MMM"))
+                                    </small>
+                                </div>
+
+                                <div class="vt-inbox-listing">
+                                    @conversation.ListingTitle
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    conversation.LastMessageContent))
+                                {
+                                    <div class="vt-inbox-preview">
+                                        @conversation.LastMessageContent
+                                    </div>
+                                }
+
+                            </div>
+
+                            @if (conversation.UnreadCount > 0)
+                            {
+                                <span class="vt-inbox-unread">
+                                    @conversation.UnreadCount
+                                </span>
+                            }
+
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="vt-inbox-empty-list">
+                        <i class="ti ti-message-circle"></i>
+                        <div>No messages yet</div>
+                    </div>
+                }
+
+            </div>
+
         </div>
 
-        @* Mode switch card — only shown if user has seller profile *@
-        @if (hasSellerProfile)
-        {
-            <div class="vt-card" style="margin-bottom:14px;">
-                <div class="vt-card-title">
-                    <i class="ti ti-switch-horizontal" aria-hidden="true"></i> Switch mode
-                </div>
-                <p style="font-size:12px;color:var(--vt-text-muted);margin-bottom:12px;">
-                    You have both a buyer and seller account. Switch between modes to access different features.
-                </p>
-                <div style="display:flex;gap:10px;">
-                    @if (isSeller)
-                    {
-                        <a href="/seller/switch-to-buyer" class="vt-btn vt-btn-primary">
-                            <i class="ti ti-shopping-cart" aria-hidden="true"></i> Switch to Buyer mode
-                        </a>
-                        <span class="vt-badge vt-badge-success" style="align-self:center;">
-                            Currently in Seller mode
-                        </span>
-                    }
-                    else
-                    {
-                        <a href="/seller/switch-to-seller" class="vt-btn vt-btn-primary">
-                            <i class="ti ti-store" aria-hidden="true"></i> Switch to Seller mode
-                        </a>
-                        <span class="vt-badge vt-badge-primary" style="align-self:center;">
-                            Currently in Buyer mode
-                        </span>
-                    }
-                </div>
+        <!-- RIGHT: Empty conversation state -->
+        <div class="vt-inbox-empty-thread">
+
+            <i class="ti ti-message-circle"></i>
+
+            <div class="vt-inbox-empty-title">
+                Select a conversation
             </div>
+
+            <div class="vt-inbox-empty-text">
+                Click on a conversation from the list to view the messages.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    .vt-inbox-layout {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 14px;
+        min-height: 500px;
+    }
+
+    .vt-inbox-list,
+    .vt-inbox-empty-thread {
+        background: #fff;
+        border: 0.5px solid var(--vt-border-light);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .vt-inbox-title {
+        padding: 18px 18px 10px;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--vt-text-primary);
+    }
+
+    .vt-inbox-search {
+        margin: 0 18px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f5f4f9;
+        border: 0.5px solid #ddd;
+        border-radius: 7px;
+        padding: 7px 10px;
+    }
+
+        .vt-inbox-search i {
+            color: #aaa;
+            font-size: 16px;
         }
 
-        @* Account actions *@
-        <div class="vt-card">
-            <div class="vt-card-title">
-                <i class="ti ti-settings" aria-hidden="true"></i> Account
-            </div>
+        .vt-inbox-search input {
+            width: 100%;
+            border: 0;
+            outline: none;
+            background: transparent;
+            font-size: 12px;
+        }
 
-            @* Only show activate seller if they do NOT have one yet *@
-            @if (!hasSellerProfile)
-            {
-                <div style="background:var(--vt-primary-light);border-radius:var(--vt-radius-md);padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
-                    <div>
-                        <div style="font-size:13px;font-weight:500;color:var(--vt-primary);">Start selling on Varsity Trade</div>
-                        <div style="font-size:11px;color:var(--vt-primary-mid);margin-top:2px;">Set up your seller profile and reach students at your campus.</div>
-                    </div>
-                    <a href="/seller/activate" class="vt-btn vt-btn-primary" style="white-space:nowrap;">
-                        <i class="ti ti-store" aria-hidden="true"></i> Activate seller
-                    </a>
-                </div>
+    .vt-inbox-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 0.5px solid var(--vt-border-light);
+        border-bottom: 0.5px solid var(--vt-border-light);
+    }
+
+        .vt-inbox-tabs button {
+            border: 0;
+            background: transparent;
+            padding: 10px;
+            font-size: 11px;
+            color: #888;
+            cursor: pointer;
+        }
+
+            .vt-inbox-tabs button.active {
+                color: var(--vt-primary);
+                border-bottom: 2px solid var(--vt-primary);
             }
 
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <a href="/auth/logout" class="vt-btn vt-btn-outline">
-                    <i class="ti ti-logout" aria-hidden="true"></i> Log out
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+    .vt-inbox-conversation {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 14px;
+        border-bottom: 0.5px solid var(--vt-border-light);
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .vt-inbox-conversation:hover {
+            background: var(--vt-primary-light);
+        }
+
+    .vt-inbox-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--vt-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .vt-inbox-conversation-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .vt-inbox-conversation-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+        .vt-inbox-conversation-top small {
+            color: #999;
+            font-size: 9px;
+            font-weight: 400;
+        }
+
+    .vt-inbox-listing,
+    .vt-inbox-preview {
+        font-size: 10px;
+        color: #888;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 3px;
+    }
+
+    .vt-inbox-unread {
+        min-width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--vt-primary);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+    }
+
+    .vt-inbox-empty-list {
+        text-align: center;
+        padding: 50px 20px;
+        color: #888;
+        font-size: 12px;
+    }
+
+        .vt-inbox-empty-list i {
+            display: block;
+            font-size: 34px;
+            color: #aaa5e8;
+            margin-bottom: 10px;
+        }
+
+    .vt-inbox-empty-thread {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 500px;
+    }
+
+        .vt-inbox-empty-thread > i {
+            font-size: 44px;
+            color: #aaa5e8;
+            margin-bottom: 14px;
+        }
+
+    .vt-inbox-empty-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--vt-text-primary);
+        margin-bottom: 8px;
+    }
+
+    .vt-inbox-empty-text {
+        font-size: 12px;
+        color: #888;
+    }
+</style>
+
+<script>
+    const searchInput =
+        document.getElementById("conversationSearch");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            const query = this.value.toLowerCase();
+
+            document
+                .querySelectorAll(".vt-inbox-conversation")
+                .forEach(function (item) {
+
+                    item.style.display =
+                        item.innerText
+                            .toLowerCase()
+                            .includes(query)
+                            ? "flex"
+                            : "none";
+                });
+        });
+    }
+</script>

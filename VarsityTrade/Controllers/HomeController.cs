@@ -46,7 +46,7 @@ namespace VarsityTrade.Web.Controllers
             {
                 var listings =
                     await _api.GetAsync<List<ListingCardViewModel>>(
-                        "api/listings");
+                        "api/listings/public");
 
                 allListings =
                     listings ?? new List<ListingCardViewModel>();

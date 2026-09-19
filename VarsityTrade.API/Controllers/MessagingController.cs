@@ -37,7 +37,7 @@ namespace VarsityTrade.API.Controllers
         // Used on the inbox page
         // ─────────────────────────────────────────────────────────────
         /// <summary>Returns all conversations for the logged in user — buyer and seller threads.</summary>
-        [HttpGet("conversation")]
+        [HttpGet("conversations")]
         public async Task<IActionResult> GetConversations()
         {
             var userId = GetCurrentUserId();
@@ -48,6 +48,32 @@ namespace VarsityTrade.API.Controllers
 
             if (conversation == null)
                 return NotFound(new { message = "Conversation not found." });
+
+            return Ok(conversation);
+        }
+        // GET /api/messaging/conversations/{id}
+        // Returns one conversation for the current participant
+        [HttpGet("conversations/{id:int}")]
+        public async Task<IActionResult> GetConversation(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId == null)
+                return Unauthorized(new
+                {
+                    message = "User identity not found in token."
+                });
+
+            var conversation =
+                await _messagingService.GetConversationByIdAsync(
+                    id,
+                    userId.Value);
+
+            if (conversation == null)
+                return NotFound(new
+                {
+                    message = "Conversation not found."
+                });
 
             return Ok(conversation);
         }
@@ -97,7 +123,7 @@ namespace VarsityTrade.API.Controllers
         // Sends a new message in an existing conversation
         // ─────────────────────────────────────────────────────────────
         /// <summary>Starts a new conversation or returns the existing one for this listing and buyer.</summary>
-        [HttpPost("conversation/{id}")]
+        [HttpPost("conversations/{id}/messages")]
         public async Task<IActionResult> SendMessage(
             int id,
             [FromBody] SendMessageRequestDto request)

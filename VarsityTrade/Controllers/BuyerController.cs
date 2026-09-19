@@ -14,6 +14,8 @@ namespace VarsityTrade.Web.Controllers
         // ApiService handles all HTTP calls to the backend API
         private readonly ApiService _api;
 
+
+
         public BuyerController(ApiService api)
         {
             _api = api;
@@ -105,6 +107,31 @@ namespace VarsityTrade.Web.Controllers
                 : View(model);
         }
 
+        // GET /buyer/inbox/start?listingId=123
+        // Creates the conversation if needed, then opens the thread.
+        [HttpGet("inbox/start")]
+        public async Task<IActionResult> StartConversation(int listingId)
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var conversation =
+                await _api.PostAsync<ConversationViewModel>(
+                    "api/messaging/conversations",
+                    new
+                    {
+                        listingId = listingId,
+                        initialMessage = (string?)null
+                    });
+
+            if (conversation == null)
+                return NotFound();
+
+            return RedirectToAction(
+                "Conversation",
+                new { id = conversation.ConversationId });
+        }
+
         // ─────────────────────────────────────────────────────────────
         // GET /buyer/inbox/{id}
         // Conversation thread — shows messages in a conversation
@@ -115,14 +142,12 @@ namespace VarsityTrade.Web.Controllers
             var auth = RequireAuth();
             if (auth != null) return auth;
 
-            // Load the conversation details
             var conversation = await _api.GetAsync<ConversationViewModel>(
                 $"api/messaging/conversations/{id}");
 
             if (conversation == null)
                 return NotFound();
 
-            // Load all messages in the conversation — also marks them as read
             var messages = await _api.GetAsync<List<MessageViewModel>>(
                 $"api/messaging/conversations/{id}/messages");
 
@@ -134,7 +159,9 @@ namespace VarsityTrade.Web.Controllers
             };
 
             ViewData["SidebarPage"] = "inbox";
-            return View(model);
+
+            // Explicitly specify view path to avoid naming conflicts
+            return View("~/Views/Buyer/Conversation.cshtml", model);
         }
 
         // ─────────────────────────────────────────────────────────────
