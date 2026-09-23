@@ -17,6 +17,7 @@ namespace VarsityTrade.Web.Models.Seller
         public int ActiveListingsCount { get; set; }
         public int PendingOffersCount { get; set; }
         public int UnreadMessagesCount { get; set; }
+        
 
         // Recent listings preview
         public List<SellerListingViewModel> RecentListings { get; set; } = new();
@@ -127,10 +128,21 @@ public class SellerListingViewModel
         public List<ConditionOption> Conditions { get; set; } = new();
     }
 
-    public class CategoryOption
+    
+
+public class CategoryOption
     {
+        [JsonProperty("categoryId")]
         public int CategoryId { get; set; }
+
+        [JsonProperty("name")]
         public string Name { get; set; } = string.Empty;
+
+        [JsonProperty("iconName")]
+        public string? IconName { get; set; }
+
+        [JsonProperty("parentCategoryId")]
+        public int? ParentCategoryId { get; set; }
     }
 
     public class ConditionOption
@@ -139,5 +151,12 @@ public class SellerListingViewModel
         public string Name { get; set; } = string.Empty;
     }
 
-   
+    // View model for the Edit Listing page — pre-populates form with existing data
+    public class EditListingViewModel : CreateListingViewModel
+    {
+        public int ListingId { get; set; }
+        public string CurrentStatus { get; set; } = string.Empty;
+    }
+
+
 }

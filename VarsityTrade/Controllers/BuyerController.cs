@@ -125,7 +125,15 @@ namespace VarsityTrade.Web.Controllers
                     });
 
             if (conversation == null)
-                return NotFound();
+            {
+                TempData["Error"] =
+                    "Could not start the conversation. Please try again.";
+
+                return RedirectToAction(
+                    "Detail",
+                    "Listings",
+                    new { id = listingId });
+            }
 
             return RedirectToAction(
                 "Conversation",
@@ -163,6 +171,8 @@ namespace VarsityTrade.Web.Controllers
             // Explicitly specify view path to avoid naming conflicts
             return View("~/Views/Buyer/Conversation.cshtml", model);
         }
+
+
 
         // ─────────────────────────────────────────────────────────────
         // GET /buyer/offers

@@ -39,7 +39,9 @@
                     @foreach (var conversation in Model.Conversations)
                     {
                         <a class="vt-inbox-conversation"
-                           href="/buyer/inbox/@conversation.ConversationId">
+                           asp-controller="Buyer"
+                           asp-action="Conversation"
+                           asp-route-id="@conversation.ConversationId">
 
                             <div class="vt-inbox-avatar">
                                 @(
@@ -151,18 +153,18 @@
         padding: 7px 10px;
     }
 
-        .vt-inbox-search i {
-            color: #aaa;
-            font-size: 16px;
-        }
+    .vt-inbox-search i {
+        color: #aaa;
+        font-size: 16px;
+    }
 
-        .vt-inbox-search input {
-            width: 100%;
-            border: 0;
-            outline: none;
-            background: transparent;
-            font-size: 12px;
-        }
+    .vt-inbox-search input {
+        width: 100%;
+        border: 0;
+        outline: none;
+        background: transparent;
+        font-size: 12px;
+    }
 
     .vt-inbox-tabs {
         display: grid;
@@ -171,19 +173,19 @@
         border-bottom: 0.5px solid var(--vt-border-light);
     }
 
-        .vt-inbox-tabs button {
-            border: 0;
-            background: transparent;
-            padding: 10px;
-            font-size: 11px;
-            color: #888;
-            cursor: pointer;
-        }
+    .vt-inbox-tabs button {
+        border: 0;
+        background: transparent;
+        padding: 10px;
+        font-size: 11px;
+        color: #888;
+        cursor: pointer;
+    }
 
-            .vt-inbox-tabs button.active {
-                color: var(--vt-primary);
-                border-bottom: 2px solid var(--vt-primary);
-            }
+    .vt-inbox-tabs button.active {
+        color: var(--vt-primary);
+        border-bottom: 2px solid var(--vt-primary);
+    }
 
     .vt-inbox-conversation {
         display: flex;
@@ -195,9 +197,9 @@
         color: inherit;
     }
 
-        .vt-inbox-conversation:hover {
-            background: var(--vt-primary-light);
-        }
+    .vt-inbox-conversation:hover {
+        background: var(--vt-primary-light);
+    }
 
     .vt-inbox-avatar {
         width: 38px;
@@ -225,11 +227,11 @@
         font-weight: 500;
     }
 
-        .vt-inbox-conversation-top small {
-            color: #999;
-            font-size: 9px;
-            font-weight: 400;
-        }
+    .vt-inbox-conversation-top small {
+        color: #999;
+        font-size: 9px;
+        font-weight: 400;
+    }
 
     .vt-inbox-listing,
     .vt-inbox-preview {
@@ -260,12 +262,12 @@
         font-size: 12px;
     }
 
-        .vt-inbox-empty-list i {
-            display: block;
-            font-size: 34px;
-            color: #aaa5e8;
-            margin-bottom: 10px;
-        }
+    .vt-inbox-empty-list i {
+        display: block;
+        font-size: 34px;
+        color: #aaa5e8;
+        margin-bottom: 10px;
+    }
 
     .vt-inbox-empty-thread {
         display: flex;
@@ -276,11 +278,11 @@
         min-height: 500px;
     }
 
-        .vt-inbox-empty-thread > i {
-            font-size: 44px;
-            color: #aaa5e8;
-            margin-bottom: 14px;
-        }
+    .vt-inbox-empty-thread > i {
+        font-size: 44px;
+        color: #aaa5e8;
+        margin-bottom: 14px;
+    }
 
     .vt-inbox-empty-title {
         font-size: 14px;

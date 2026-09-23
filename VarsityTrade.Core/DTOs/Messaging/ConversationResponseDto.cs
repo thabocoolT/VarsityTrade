@@ -25,6 +25,12 @@ namespace VarsityTrade.Core.DTOs.Messaging
         //The seller in this conversation
         public int SellerProfileId { get; set; }
         public string StoreName { get; set; } = string.Empty;
+        public string SellerFirstName { get; set; } = string.Empty;
+        public string SellerLastName { get; set; } = string.Empty;
+        public string SellerUniversityName { get; set; } = string.Empty;
+        public string SellerUniversityShortName { get; set; } = string.Empty;
+        public decimal SellerRating { get; set; }
+        public int SellerTotalSales { get; set; }
 
         //Timestamps for sorting the inbox by most recent activity
         public DateTime CreatedAt { get; set; }

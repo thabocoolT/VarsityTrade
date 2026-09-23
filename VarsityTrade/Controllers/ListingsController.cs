@@ -99,6 +99,13 @@ namespace VarsityTrade.Web.Controllers
             }
         }
 
+        // GET /listings/edit/{id} — redirects to seller edit page
+        [HttpGet("edit/{id:int}")]
+        public IActionResult Edit(int id)
+        {
+            return RedirectToAction("EditListing", "Seller", new { id });
+        }
+
         // ─────────────────────────────────────────────────────────────
         // GET /listings/{id}
         // ─────────────────────────────────────────────────────────────

@@ -142,18 +142,23 @@ namespace VarsityTrade.Web.Controllers
         [HttpGet("listings/create")]
         public async Task<IActionResult> CreateListing()
         {
-            var auth = RequireSellerMode();
+            var auth = RequireAuth();
             if (auth != null) return auth;
+
+            var allCategories = await GetCategoriesAsync();
+            var conditions = await GetConditionsAsync();
 
             var model = new CreateListingViewModel
             {
-                Categories = await GetCategoriesAsync(),
-                Conditions = await GetConditionsAsync(),
+                Categories = allCategories,
+                Conditions = conditions,
             };
 
-            ViewData["SidebarPage"] = "seller-listings";
+            ViewData["SidebarPage"] = "seller-create";
             return View(model);
         }
+
+
 
         // ─────────────────────────────────────────────────────────────
         // POST /seller/listings/create
@@ -305,6 +310,9 @@ public async Task<IActionResult> MarkAsSold(int listingId)
             // Mark seller profile as active in session
             HttpContext.Session.SetString("HasSellerProfile", "true");
 
+            // Store store name in session for navbar display
+            HttpContext.Session.SetString("StoreName", model.StoreName);
+
             // Switch to seller mode immediately after activation
             HttpContext.Session.SetString("CurrentMode", "Seller");
 
@@ -403,121 +411,82 @@ public async Task<IActionResult> MarkAsSold(int listingId)
         }
         // ─────────────────────────────────────────────────────────────
         // GET /seller/listings/edit/{id}
-        // Opens the seller's existing listing for editing.
+        // Edit an existing listing
         // ─────────────────────────────────────────────────────────────
         [HttpGet("listings/edit/{id:int}")]
         public async Task<IActionResult> EditListing(int id)
         {
-            var auth = RequireSellerMode();
+            var auth = RequireAuth();
+            if (auth != null) return auth;
 
-            if (auth != null)
-                return auth;
+            // Fetch the existing listing
+            var listing = await _api.GetAsync<dynamic>($"api/listings/{id}");
+            if (listing == null) return NotFound();
 
-            var listing =
-                await _api.GetAsync<
-                    VarsityTrade.Web.Models.Listings.ListingDetailViewModel>(
-                        $"api/listings/{id}");
+            var allCategories = await GetCategoriesAsync();
+            var conditions = await GetConditionsAsync();
 
-            if (listing == null)
-                return NotFound();
-
-            var profile =
-                await _api.GetAsync<dynamic>(
-                    "api/sellerprofiles/my");
-
-            if (profile == null)
-                return RedirectToAction("Activate");
-
-            var sellerProfileId =
-                (int?)(profile.sellerProfileId ?? 0);
-
-            if (sellerProfileId != listing.SellerProfileId)
-                return Forbid();
-
-            var model = new CreateListingViewModel
+            // Pre-populate the view model with existing data
+            var model = new EditListingViewModel
             {
-                Title = listing.Title,
-                Description = listing.Description,
-                Price = listing.Price,
-                CategoryId = listing.CategoryId,
-                ListingType = listing.ListingType,
-                IsNegotiable = listing.IsNegotiable,
-                Quantity = listing.Quantity,
-                CampusPickup = listing.CampusPickup,
-                DeliveryAvailable = listing.DeliveryAvailable,
-
-                Categories = await GetCategoriesAsync(),
-                Conditions = await GetConditionsAsync()
+                ListingId = id,
+                Title = (string)(listing.title ?? ""),
+                Description = (string)(listing.description ?? ""),
+                Price = (decimal)(listing.price ?? 0),
+                CategoryId = (int)(listing.categoryId ?? 0),
+                ConditionId = (int)(listing.conditionId ?? 0),
+                ListingType = (string)(listing.listingType ?? "Sale"),
+                IsNegotiable = (bool)(listing.isNegotiable ?? false),
+                Quantity = (int)(listing.quantity ?? 1),
+                CampusPickup = (bool)(listing.campusPickup ?? true),
+                DeliveryAvailable = (bool)(listing.deliveryAvailable ?? false),
+                CurrentStatus = (string)(listing.status ?? ""),
+                Categories = allCategories,
+                Conditions = conditions,
             };
 
-            // Condition ID isn't currently returned by the
-            // ListingDetailViewModel, so the existing condition
-            // selection is left to the seller on the edit form.
-            ViewData["ListingId"] = id;
             ViewData["SidebarPage"] = "seller-listings";
-
             return View(model);
         }
 
         // ─────────────────────────────────────────────────────────────
         // POST /seller/listings/edit/{id}
-        // Updates the seller's listing through the existing API.
+        // Saves edits to an existing listing
         // ─────────────────────────────────────────────────────────────
         [HttpPost("listings/edit/{id:int}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditListing(
-            int id,
-            CreateListingViewModel model)
+        public async Task<IActionResult> EditListing(int id, EditListingViewModel model, string? imageUrls)
         {
-            var auth = RequireSellerMode();
+            var auth = RequireAuth();
+            if (auth != null) return auth;
 
-            if (auth != null)
-                return auth;
-
-            model.Categories =
-                await GetCategoriesAsync();
-
-            model.Conditions =
-                await GetConditionsAsync();
+            model.Categories = await GetCategoriesAsync();
+            model.Conditions = await GetConditionsAsync();
+            model.ListingId = id;
 
             if (!ModelState.IsValid)
-            {
-                ViewData["ListingId"] = id;
-                ViewData["SidebarPage"] = "seller-listings";
-
                 return View(model);
-            }
 
-            var result =
-                await _api.PutAsync<dynamic>(
-                    $"api/listings/{id}",
-                    new
-                    {
-                        title = model.Title,
-                        description = model.Description,
-                        price = model.Price,
-                        categoryId = model.CategoryId,
-                        conditionId = model.ConditionId,
-                        listingType = model.ListingType,
-                        isNegotiable = model.IsNegotiable,
-                        quantity = model.Quantity,
-                        campusPickup = model.CampusPickup,
-                        deliveryAvailable =
-                            model.DeliveryAvailable
-                    });
+            var result = await _api.PutAsync<dynamic>($"api/listings/{id}", new
+            {
+                title = model.Title,
+                description = model.Description,
+                price = model.Price,
+                categoryId = model.CategoryId,
+                conditionId = model.ConditionId,
+                listingType = model.ListingType,
+                isNegotiable = model.IsNegotiable,
+                quantity = model.Quantity,
+                campusPickup = model.CampusPickup,
+                deliveryAvailable = model.DeliveryAvailable,
+            });
 
             if (result == null)
             {
-                ModelState.AddModelError(
-                    string.Empty,
-                    "Could not update the listing.");
-
-                ViewData["ListingId"] = id;
-                ViewData["SidebarPage"] = "seller-listings";
-
+                ModelState.AddModelError(string.Empty, "Could not update listing. Please try again.");
                 return View(model);
             }
 
+            TempData["Success"] = "Listing updated successfully.";
             return RedirectToAction("Listings");
         }
 

@@ -43,7 +43,9 @@ namespace VarsityTrade.Application.Services
                 .Include(c => c.Listing)            //Load listing for title and price
                     .ThenInclude(l => l.ListingImages)     //Load listing images for thumbnail
                 .Include(c => c.Buyer)              //Load buyer for name and profile picture
-                .Include(c => c.SellerProfile)      //Load seller profile for name and profile picture
+                .Include(c => c.SellerProfile)
+                    .ThenInclude(sp => sp.User)
+                        .ThenInclude(u => u.University)      //Load seller profile for name and profile picture
                 .Include(c => c.Messages)            //Load messages for last message and timestamp
                 .Where(c =>
                        (c.BuyerId==userId || c.SellerProfileId==sellerProfileId)
@@ -75,7 +77,9 @@ namespace VarsityTrade.Application.Services
                 .Include(c=> c.Listing)            //Load listing for title and price
                     .ThenInclude(l => l.ListingImages)     //Load listing images for thumbnail
                 .Include(c => c.Buyer)              //Load buyer for name and profile picture
-                .Include(c => c.SellerProfile)      //Load seller profile for name and profile picture
+                .Include(c => c.SellerProfile)
+                    .ThenInclude(sp => sp.User)
+                        .ThenInclude(u => u.University)   //Load seller profile for name and profile picture
                 .Include(c => c.Messages)            //Load messages for last message and timestamp
                 .FirstOrDefaultAsync(c =>
                     c.ConversationId == conversationId &&
@@ -154,6 +158,8 @@ namespace VarsityTrade.Application.Services
                     .ThenInclude(l=> l.ListingImages)
                 .Include(c => c.Buyer)
                 .Include(c => c.SellerProfile)
+                    .ThenInclude(sp => sp.User)
+                        .ThenInclude(u => u.University)
                 .Include(c => c.Messages)
                 .FirstOrDefaultAsync(c=>
                     c.BuyerId == buyerId
@@ -305,8 +311,26 @@ namespace VarsityTrade.Application.Services
                 BuyerId = conversation.BuyerId,  
                 BuyerFirstName=conversation.Buyer?.FirstName?? string.Empty,
                 BuyerLastName= conversation.Buyer?.LastName?? string.Empty,
-                SellerProfileId= conversation.SellerProfileId,
-                StoreName= conversation.SellerProfile?.StoreName ?? string.Empty,
+                SellerProfileId = conversation.SellerProfileId,
+                StoreName = conversation.SellerProfile?.StoreName ?? string.Empty,
+
+                SellerFirstName =
+                    conversation.SellerProfile?.User?.FirstName ?? string.Empty,
+
+                SellerLastName =
+                    conversation.SellerProfile?.User?.LastName ?? string.Empty,
+
+                SellerUniversityName =
+                    conversation.SellerProfile?.User?.University?.Name ?? string.Empty,
+
+                SellerUniversityShortName =
+                    conversation.SellerProfile?.User?.University?.ShortName ?? string.Empty,
+
+                SellerRating =
+                    conversation.SellerProfile?.AverageRating ?? 0,
+
+                SellerTotalSales =
+                    conversation.SellerProfile?.TotalSales ?? 0,
                 CreatedAt=conversation.CreatedAt,
                 LastMessageAt= conversation.LastMessageAt,
                 LastMessageContent= lastMessage?.Content,

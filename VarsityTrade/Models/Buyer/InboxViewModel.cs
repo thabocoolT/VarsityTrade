@@ -25,6 +25,11 @@
         public string? LastMessageContent { get; set; }
         public int UnreadCount { get; set; }
         public double SellerRating { get; set; }
+        public string SellerFirstName { get; set; } = string.Empty;
+        public string SellerLastName { get; set; } = string.Empty;
+        public string SellerUniversityName { get; set; } = string.Empty;
+        public string SellerUniversityShortName { get; set; } = string.Empty;
+        public int SellerTotalSales { get; set; }
     }
 
     // Represents a single message in a conversation thread

@@ -3,6 +3,13 @@
     ViewData["Title"] = "Create Listing";
     ViewData["SidebarPage"] = "seller-create";
     Layout = "_Layout";
+
+    // Split into parent and child categories
+    var parentCats = Model.Categories.Where(c => c.ParentCategoryId == null).ToList();
+    var subCats    = Model.Categories.Where(c => c.ParentCategoryId != null).ToList();
+    var suburb     = Context.Session.GetString("Suburb") ?? "—";
+    var residence  = Context.Session.GetString("ResidenceName") ?? "—";
+    var uniName    = Context.Session.GetString("UniversityName") ?? "Your University";
 }
 
 <div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
@@ -10,16 +17,17 @@
 
     <div style="display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start;">
         <div>
+
             @* Page header *@
             <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                 <div>
                     <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
                         <i class="ti ti-plus" aria-hidden="true" style="color:#4B3BC7;"></i> Create new listing
                     </div>
-                    <div style="font-size:11px;color:#888;">Fill in the details below to list your item for students at your campus</div>
+                    <div style="font-size:11px;color:#888;">Your listing will be visible to students at @uniName only</div>
                 </div>
                 <a href="/seller/listings" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:7px;padding:8px 14px;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:5px;">
-                    <i class="ti ti-arrow-left" aria-hidden="true"></i> Back to listings
+                    <i class="ti ti-arrow-left" aria-hidden="true"></i> Back
                 </a>
             </div>
 
@@ -27,65 +35,80 @@
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="imageUrls" id="imageUrlsInput" />
 
-                <div asp-validation-summary="ModelOnly" style="background:#FDECEA;border:0.5px solid #F5A8A8;border-radius:7px;padding:8px 10px;font-size:11px;color:#B91C1C;margin-bottom:12px;"></div>
-
                 @* Image upload *@
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
                     <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
-                        <i class="ti ti-photo" aria-hidden="true"></i> Listing photos
+                        <i class="ti ti-photo" aria-hidden="true"></i> Listing images
                     </div>
-
-                    @* Upload zone *@
-                    <div id="uploadZone"
-                         style="border:2px dashed #AFA9EC;border-radius:10px;padding:24px;text-align:center;cursor:pointer;background:#f5f4f9;margin-bottom:12px;"
-                         onclick="document.getElementById('imageFileInput').click()">
+                    <div id="uploadZone" onclick="document.getElementById('imageFileInput').click()"
+                         style="border:1.5px dashed #AFA9EC;border-radius:10px;padding:20px;text-align:center;background:#EEEDFE;cursor:pointer;margin-bottom:8px;">
                         <i class="ti ti-cloud-upload" aria-hidden="true" style="font-size:28px;color:#4B3BC7;display:block;margin-bottom:6px;"></i>
-                        <div style="font-size:12px;color:#555;font-weight:500;margin-bottom:3px;">Drag and drop photos here or click to browse</div>
-                        <div style="font-size:11px;color:#888;">Upload up to 6 photos · JPG, PNG, WEBP · Max 5MB each</div>
-                        <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,.webp" multiple
-                               style="display:none;" onchange="handleImageUpload(this)" />
+                        <div style="font-size:12px;font-weight:500;color:#3C3489;margin-bottom:3px;">Drag and drop images here</div>
+                        <div style="font-size:11px;color:#7F77DD;">or click to browse — up to 6 images, JPG or PNG</div>
+                        <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,.webp" multiple style="display:none;" onchange="handleImageUpload(this)" />
                     </div>
-
-                    @* Image previews *@
-                    <div id="imagePreviewGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;"></div>
-                    <div id="uploadProgress" style="display:none;font-size:11px;color:#4B3BC7;margin-top:6px;">
-                        <i class="ti ti-loader" aria-hidden="true"></i> Uploading...
-                    </div>
+                    <div id="imagePreviewGrid" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+                    <div id="uploadProgress" style="display:none;font-size:11px;color:#4B3BC7;margin-top:6px;"><i class="ti ti-loader" aria-hidden="true"></i> Uploading...</div>
+                    <div style="font-size:10px;color:#888;margin-top:6px;">First image will be used as the cover photo.</div>
                 </div>
 
-                @* Item details *@
+                @* Listing details *@
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
                     <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
-                        <i class="ti ti-file-description" aria-hidden="true"></i> Item details
+                        <i class="ti ti-tag" aria-hidden="true"></i> Listing details
                     </div>
+
+                    @* Title *@
                     <div style="margin-bottom:10px;">
-                        <div style="font-size:11px;color:#555;margin-bottom:4px;">Title <span style="color:#e74c3c;">*</span></div>
-                        <input asp-for="Title" type="text" placeholder="e.g. HP Pavilion 15 Laptop — 2022 Model"
-                               style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        <div style="font-size:11px;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:3px;">
+                            Listing title <span style="color:#e74c3c;">*</span>
+                        </div>
+                        <input asp-for="Title" type="text" maxlength="80"
+                               placeholder="e.g. HP Pavilion 15 Laptop — Core i5, 8GB RAM"
+                               id="titleInput"
+                               style="width:100%;border:0.5px solid #4B3BC7;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                        <div style="font-size:10px;color:#aaa;text-align:right;margin-top:2px;"><span id="titleCount">0</span> / 80 characters</div>
                         <span asp-validation-for="Title" style="font-size:10px;color:#e74c3c;"></span>
                     </div>
-                    <div style="margin-bottom:10px;">
-                        <div style="font-size:11px;color:#555;margin-bottom:4px;">Description <span style="color:#e74c3c;">*</span></div>
-                        <textarea asp-for="Description" rows="5"
-                                  placeholder="Describe your item — include the condition, age, any defects, accessories included..."
-                                  style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;resize:none;"></textarea>
-                        <span asp-validation-for="Description" style="font-size:10px;color:#e74c3c;"></span>
-                    </div>
+
+                    @* Category + Subcategory *@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
                         <div>
-                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Category <span style="color:#e74c3c;">*</span></div>
-                            <select asp-for="CategoryId" style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:3px;">
+                                Category <span style="color:#e74c3c;">*</span>
+                            </div>
+                            <select id="parentCategorySelect"
+                                    onchange="loadSubcategories(this.value)"
+                                    style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
                                 <option value="">Select category...</option>
-                                @foreach (var cat in Model.Categories)
+                                @foreach (var cat in parentCats)
                                 {
                                     <option value="@cat.CategoryId">@cat.Name</option>
                                 }
                             </select>
-                            <span asp-validation-for="CategoryId" style="font-size:10px;color:#e74c3c;"></span>
                         </div>
+                        <div id="subcategoryContainer" style="display:none;">
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">
+                                Subcategory <span style="font-size:10px;color:#888;">(optional)</span>
+                            </div>
+                            <select id="subCategorySelect"
+                                    asp-for="CategoryId"
+                                    style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                                <option value="">All subcategories</option>
+                            </select>
+                        </div>
+                        @* Hidden fallback when no subcategory *@
+                        <input type="hidden" id="categoryIdFallback" name="CategoryId" value="" />
+                    </div>
+
+                    @* Condition *@
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
                         <div>
-                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Condition <span style="color:#e74c3c;">*</span></div>
-                            <select asp-for="ConditionId" style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:3px;">
+                                Condition <span style="color:#e74c3c;">*</span>
+                            </div>
+                            <select asp-for="ConditionId"
+                                    style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
                                 <option value="">Select condition...</option>
                                 @foreach (var cond in Model.Conditions)
                                 {
@@ -94,12 +117,39 @@
                             </select>
                             <span asp-validation-for="ConditionId" style="font-size:10px;color:#e74c3c;"></span>
                         </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
                         <div>
-                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Price (R) <span style="color:#e74c3c;">*</span></div>
-                            <input asp-for="Price" type="number" min="0" step="0.01" placeholder="0.00"
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Listing type <span style="color:#e74c3c;">*</span></div>
+                            <select asp-for="ListingType"
+                                    style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
+                                <option value="Sale">For sale</option>
+                                <option value="Trade">Trade / exchange</option>
+                                <option value="Sale or Trade">Sale or trade</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    @* Description *@
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:11px;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:3px;">
+                            Description <span style="color:#e74c3c;">*</span>
+                        </div>
+                        <textarea asp-for="Description" rows="4" maxlength="500" id="descInput"
+                                  placeholder="Describe your item — include brand, model, any defects, and reason for selling..."
+                                  style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;resize:none;"></textarea>
+                        <div style="font-size:10px;color:#aaa;text-align:right;margin-top:2px;"><span id="descCount">0</span> / 500 characters</div>
+                        <span asp-validation-for="Description" style="font-size:10px;color:#e74c3c;"></span>
+                    </div>
+
+                    @* Price *@
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div>
+                            <div style="font-size:11px;color:#555;margin-bottom:4px;display:flex;align-items:center;gap:3px;">
+                                Price (R) <span style="color:#e74c3c;">*</span>
+                            </div>
+                            <input asp-for="Price" type="number" min="0" step="0.01" id="priceInput"
+                                   placeholder="e.g. 4500"
                                    style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
+                            <div style="font-size:10px;color:#888;margin-top:3px;">Enter amount in South African Rand.</div>
                             <span asp-validation-for="Price" style="font-size:10px;color:#e74c3c;"></span>
                         </div>
                         <div>
@@ -107,178 +157,462 @@
                             <input asp-for="Quantity" type="number" min="1" value="1"
                                    style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;outline:none;" />
                         </div>
-                        <div>
-                            <div style="font-size:11px;color:#555;margin-bottom:4px;">Listing type</div>
-                            <select asp-for="ListingType" style="width:100%;border:0.5px solid #ddd;border-radius:7px;padding:8px 10px;font-size:12px;color:#26215C;background:#fff;outline:none;">
-                                <option value="Sale">Sale</option>
-                                <option value="Trade">Trade</option>
-                                <option value="Sale or Trade">Sale or Trade</option>
-                            </select>
-                        </div>
                     </div>
                 </div>
 
-                @* Pickup & options *@
+                @* Pickup & delivery *@
                 <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:16px;margin-bottom:12px;">
                     <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:12px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:6px;">
-                        <i class="ti ti-map-pin" aria-hidden="true"></i> Pickup & options
+                        <i class="ti ti-map-pin" aria-hidden="true"></i> Pickup & delivery
                     </div>
-                    @foreach (var (field, label, sub) in new[] {
-                        ("IsNegotiable",     "Price is negotiable",       "Buyers can make offers below your asking price"),
-                        ("CampusPickup",     "Campus pickup available",   "Buyers can collect from your campus location"),
-                        ("DeliveryAvailable","Delivery available",        "You can deliver to nearby residences"),
+                    <div style="background:#f5f4f9;border:0.5px solid #e0ddf5;border-radius:7px;padding:7px 10px;font-size:11px;color:#888;display:flex;align-items:center;gap:5px;margin-bottom:12px;">
+                        <i class="ti ti-info-circle" aria-hidden="true"></i>
+                        Location pulled from your profile — @suburb · @residence. Update in profile settings.
+                    </div>
+                    @foreach (var (field, label, sub, defaultOn) in new[] {
+                        ("CampusPickup",     "Campus pickup",          "Buyer collects from your res or agreed campus spot",          true),
+                        ("DeliveryAvailable","Delivery available",     "You can deliver to nearby residences",                       false),
+                        ("IsNegotiable",     "Price negotiable",       "Buyers can message you to negotiate the price",              true),
                     })
                     {
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f0eefb;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid #f0eefb;">
                             <div>
                                 <div style="font-size:12px;color:#26215C;font-weight:500;">@label</div>
                                 <div style="font-size:10px;color:#888;margin-top:1px;">@sub</div>
                             </div>
-                            <input type="checkbox" name="@field" value="true"
-                                   @(field == "CampusPickup" ? "checked" : "")
-                                   style="width:16px;height:16px;" />
+                            <label style="position:relative;width:34px;height:18px;cursor:pointer;flex-shrink:0;">
+                                <input type="checkbox" name="@field" value="true" @(defaultOn?"checked":"")
+                                       style="opacity:0;width:0;height:0;" />
+                                <span style="position:absolute;inset:0;background:@(defaultOn?"#4B3BC7":"#ddd");border-radius:9px;"></span>
+                                <span style="position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:2px;@(defaultOn?"right:2px;":"left:2px;")"></span>
+                            </label>
                         </div>
                     }
                 </div>
 
-                <div style="display:flex;gap:10px;">
-                    <button type="submit" style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:10px 24px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
-                        <i class="ti ti-check" aria-hidden="true"></i> Publish listing
+                @* Form actions *@
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                    <button type="submit" style="background:#4B3BC7;color:#fff;border:none;border-radius:7px;padding:10px 24px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer;">
+                        <i class="ti ti-send" aria-hidden="true"></i> Publish listing
                     </button>
-                    <a href="/seller/listings" style="background:#fff;color:#666;border:0.5px solid #ddd;border-radius:7px;padding:10px 16px;font-size:12px;cursor:pointer;text-decoration:none;display:flex;align-items:center;">Cancel</a>
+                    <button type="button" style="background:#fff;color:#4B3BC7;border:1.5px solid #4B3BC7;border-radius:7px;padding:10px 16px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;">
+                        <i class="ti ti-file" aria-hidden="true"></i> Save as draft
+                    </button>
+                    <a href="/seller/listings" style="background:#fff;color:#888;border:0.5px solid #ddd;border-radius:7px;padding:10px 14px;font-size:12px;cursor:pointer;text-decoration:none;display:flex;align-items:center;">Cancel</a>
                 </div>
             </form>
         </div>
 
-        @* Right sidebar — tips *@
+        @* Right sidebar — live preview + tips *@
         <div>
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:5px;">
-                    <i class="ti ti-bulb" aria-hidden="true" style="color:#B45309;"></i> Listing tips
-                </div>
-                @foreach (var tip in new[] {
-                    ("ti-camera",     "Take clear photos in good lighting from multiple angles"),
-                    ("ti-pencil",     "Use a descriptive title with brand, model and year"),
-                    ("ti-currency-dollar","Be competitive — check similar listings for pricing ideas"),
-                    ("ti-tag",        "Choose the most specific category to reach the right buyers"),
-                    ("ti-clock",      "Listings expire after 90 days — keep them updated"),
-                })
-                {
-                    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:11px;color:#555;line-height:1.4;">
-                        <i class="ti @tip.Item1" aria-hidden="true" style="color:#4B3BC7;font-size:13px;flex-shrink:0;margin-top:1px;"></i>
-                        @tip.Item2
-                    </div>
-                }
-            </div>
-
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:5px;">
+            @* Live preview card *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;overflow:hidden;margin-bottom:12px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;padding:10px 14px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:5px;">
                     <i class="ti ti-eye" aria-hidden="true"></i> Live preview
                 </div>
-                <div id="livePreview" style="background:#f5f4f9;border-radius:8px;overflow:hidden;">
-                    <div id="previewImg" style="background:#EEEDFE;height:80px;display:flex;align-items:center;justify-content:center;color:#7F77DD;font-size:28px;">
-                        <i class="ti ti-photo" aria-hidden="true"></i>
-                    </div>
-                    <div style="padding:8px 10px;">
-                        <div id="previewTitle" style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:2px;">Your listing title</div>
-                        <div id="previewPrice" style="font-size:13px;font-weight:500;color:#4B3BC7;margin-bottom:3px;">R 0</div>
-                        <div id="previewMeta" style="font-size:10px;color:#888;">Condition · Category</div>
-                    </div>
+                <div id="previewImg" style="background:#EEEDFE;height:100px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:36px;">
+                    <i class="ti ti-photo" aria-hidden="true"></i>
                 </div>
+                <div style="padding:10px 12px;">
+                    <div id="previewTitle" style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:3px;">Your listing title</div>
+                    <div id="previewPrice" style="font-size:14px;font-weight:500;color:#4B3BC7;margin-bottom:4px;">R 0</div>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;">
+                        <span id="previewCondition" style="font-size:9px;background:#EAF3DE;color:#27500A;border-radius:4px;padding:2px 6px;display:none;"></span>
+                        <span id="previewCategory" style="font-size:9px;background:#EEEDFE;color:#3C3489;border-radius:4px;padding:2px 6px;display:none;"></span>
+                        <span style="font-size:9px;background:#f5f4f9;color:#666;border-radius:4px;padding:2px 6px;display:flex;align-items:center;gap:2px;">
+                            <i class="ti ti-map-pin" aria-hidden="true" style="font-size:9px;"></i> @suburb · @residence
+                        </span>
+                    </div>
+                    <div style="font-size:10px;color:#888;">@uniName · Just now</div>
+                </div>
+            </div>
+
+            @* Tips card *@
+            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
+                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e0ddf5;display:flex;align-items:center;gap:5px;">
+                    <i class="ti ti-bulb" aria-hidden="true"></i> Tips for a great listing
+                </div>
+                @foreach (var (icon, color, tip) in new[] {
+                    ("ti-check","#4B3BC7","Use clear, well-lit photos — front, back, and any defects"),
+                    ("ti-check","#4B3BC7","Include brand, model, and specs in the title"),
+                    ("ti-check","#4B3BC7","Be honest about condition — builds trust with buyers"),
+                    ("ti-check","#4B3BC7","Set a fair price — check similar listings first"),
+                    ("ti-check","#4B3BC7","Enable trade offers to attract more buyers"),
+                    ("ti-x",   "#e74c3c","Never list items you do not personally own"),
+                })
+                {
+                    <div style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#555;margin-bottom:7px;line-height:1.4;">
+                        <i class="ti @icon" aria-hidden="true" style="color:@color;font-size:12px;margin-top:1px;flex-shrink:0;"></i> @tip
+                    </div>
+                }
             </div>
         </div>
     </div>
 </div>
 
+@{
+    var subCatData = parentCats
+        .ToDictionary(
+            p => p.CategoryId.ToString(),
+            p => subCats
+                .Where(s => s.ParentCategoryId == p.CategoryId)
+                .Select(s => new
+                {
+                    id = s.CategoryId,
+                    name = s.Name
+                })
+                .ToList()
+        );
+
+    var subCatJson = System.Text.Json.JsonSerializer.Serialize(subCatData);
+}
+
 @section Scripts {
 <script>
-    var uploadedUrls = [];
+    // ── Subcategory data generated safely by Razor/C# ──
+    const subCatData = @Html.Raw(subCatJson.ToString());
 
-    // Live preview updates
-    document.querySelector('[name="Title"]')?.addEventListener('input', function() {
-        document.getElementById('previewTitle').textContent = this.value || 'Your listing title';
+    function loadSubcategories(parentId) {
+        const container = document.getElementById('subcategoryContainer');
+        const subSelect = document.getElementById('subCategorySelect');
+        const fallback = document.getElementById('categoryIdFallback');
+        const subs = subCatData[parentId] || [];
+
+        // Clear old options
+        subSelect.innerHTML = '<option value="">All in this category</option>';
+
+        if (subs.length > 0) {
+            subs.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                subSelect.appendChild(opt);
+            });
+
+            container.style.display = 'block';
+
+            // CategoryId comes from the subcategory select
+            subSelect.name = 'CategoryId';
+            fallback.name = '';
+            fallback.value = '';
+        } else {
+            // No subcategories — submit parent category ID
+            container.style.display = 'none';
+
+            subSelect.name = '';
+            fallback.name = 'CategoryId';
+            fallback.value = parentId;
+        }
+
+        // Update live preview category tag
+        const parentSelect = document.getElementById('parentCategorySelect');
+        const selectedText =
+            parentSelect.options[parentSelect.selectedIndex]?.text ?? '';
+
+        const catTag = document.getElementById('previewCategory');
+
+        if (selectedText && selectedText !== 'Select category...') {
+            catTag.textContent = selectedText;
+            catTag.style.display = 'inline-flex';
+        } else {
+            catTag.style.display = 'none';
+        }
+    }
+
+    // ── Update CategoryId when subcategory changes ──
+    document.getElementById('subCategorySelect')
+        ?.addEventListener('change', function () {
+
+            const fallback = document.getElementById('categoryIdFallback');
+            const parentId = document.getElementById('parentCategorySelect').value;
+
+            if (!this.value) {
+                // "All in this category" selected
+                this.name = '';
+                fallback.name = 'CategoryId';
+                fallback.value = parentId;
+            } else {
+                // Actual subcategory selected
+                this.name = 'CategoryId';
+                fallback.name = '';
+                fallback.value = '';
+            }
+        });
+
+    // ── Character counters ──
+    document.getElementById('titleInput')?.addEventListener('input', function () {
+        document.getElementById('titleCount').textContent = this.value.length;
+        document.getElementById('previewTitle').textContent =
+            this.value || 'Your listing title';
     });
-    document.querySelector('[name="Price"]')?.addEventListener('input', function() {
-        document.getElementById('previewPrice').textContent = 'R ' + (parseFloat(this.value) || 0).toLocaleString();
+
+    document.getElementById('descInput')?.addEventListener('input', function () {
+        document.getElementById('descCount').textContent = this.value.length;
     });
+
+    document.getElementById('priceInput')?.addEventListener('input', function () {
+        const val = parseFloat(this.value) || 0;
+
+        document.getElementById('previewPrice').textContent =
+            'R ' + val.toLocaleString('en-ZA', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+    });
+
+    // ── Condition live preview ──
+    document.querySelector('[name="ConditionId"]')
+        ?.addEventListener('change', function () {
+
+            const text = this.options[this.selectedIndex]?.text ?? '';
+            const tag = document.getElementById('previewCondition');
+
+            if (text && text !== 'Select condition...') {
+                tag.textContent = text;
+                tag.style.display = 'inline-flex';
+            } else {
+                tag.style.display = 'none';
+            }
+        });
+
+    // ── Image upload ──
+    let uploadedUrls = [];
 
     async function handleImageUpload(input) {
+
         if (uploadedUrls.length >= 6) {
             alert('Maximum 6 images allowed.');
             return;
         }
 
-        const files = Array.from(input.files).slice(0, 6 - uploadedUrls.length);
+        const files = Array.from(input.files)
+            .slice(0, 6 - uploadedUrls.length);
+
+        if (files.length === 0) {
+            return;
+        }
+
         document.getElementById('uploadProgress').style.display = 'block';
 
         for (const file of files) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert(`${file.name} is too large. Maximum 5MB per image.`);
+
+            // Validate file type
+            const allowedTypes = [
+                'image/jpeg',
+                'image/png',
+                'image/webp'
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert(`${file.name} is not a supported image type.`);
                 continue;
             }
 
-            const formData = new FormData();
-            formData.append('file', file);
+            // Validate file size
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`${file.name} is too large (max 5MB).`);
+                continue;
+            }
+
+            const fd = new FormData();
+            fd.append('file', file);
 
             try {
+
                 const resp = await fetch('/api/listings/upload-image', {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer @Context.Session.GetString("AccessToken")'
+                        'Authorization':
+                            'Bearer @Context.Session.GetString("AccessToken")'
                     },
-                    body: formData
+                    body: fd
                 });
 
-                if (resp.ok) {
-                    const data = await resp.json();
-                    uploadedUrls.push(data.url);
-                    addImagePreview(data.url, uploadedUrls.length - 1);
-                    if (uploadedUrls.length === 1) {
-                        document.getElementById('previewImg').innerHTML = `<img src="${data.url}" style="width:100%;height:100%;object-fit:cover;">`;
-                    }
+                if (!resp.ok) {
+                    console.error(
+                        'Image upload failed:',
+                        resp.status,
+                        resp.statusText
+                    );
+
+                    alert(`Failed to upload ${file.name}.`);
+                    continue;
                 }
+
+                const data = await resp.json();
+
+                if (!data.url) {
+                    console.error('Upload response did not contain a URL:', data);
+                    alert(`Upload failed for ${file.name}.`);
+                    continue;
+                }
+
+                uploadedUrls.push(data.url);
+
+                addPreview(
+                    data.url,
+                    uploadedUrls.length - 1
+                );
+
+                // First image becomes live preview cover
+                if (uploadedUrls.length === 1) {
+
+                    document.getElementById('previewImg').innerHTML =
+                        `<img src="${data.url}"
+                              style="width:100%;height:100%;object-fit:cover;">`;
+                }
+
             } catch (e) {
-                console.error('Upload error', e);
+
+                console.error('Upload error:', e);
+                alert(`An error occurred while uploading ${file.name}.`);
             }
         }
 
         document.getElementById('uploadProgress').style.display = 'none';
-        document.getElementById('imageUrlsInput').value = uploadedUrls.join(',');
+
+        document.getElementById('imageUrlsInput').value =
+            uploadedUrls.join(',');
     }
 
-    function addImagePreview(url, index) {
+    function addPreview(url, index) {
+
         const grid = document.getElementById('imagePreviewGrid');
+
         const div = document.createElement('div');
-        div.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;';
+
+        div.style.cssText =
+            'position:relative;width:56px;height:56px;' +
+            'border-radius:7px;overflow:hidden;' +
+            'border:0.5px solid #AFA9EC;flex-shrink:0;';
+
         div.innerHTML = `
-            <img src="${url}" style="width:100%;height:100%;object-fit:cover;">
-            ${index === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(75,59,199,0.8);color:#fff;font-size:9px;text-align:center;padding:2px;">Cover</div>' : ''}
-            <button type="button" onclick="removeImage(${index}, this.parentElement)" style="position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+            <img src="${url}"
+                 style="width:100%;height:100%;object-fit:cover;">
+
+            ${index === 0
+                ? `<div style="
+                        position:absolute;
+                        bottom:0;
+                        left:0;
+                        right:0;
+                        background:rgba(75,59,199,0.8);
+                        color:#fff;
+                        font-size:8px;
+                        text-align:center;
+                        padding:1px;">
+                        Cover
+                   </div>`
+                : ''}
+
+            <button type="button"
+                    onclick="removeImage(${index}, this.parentElement)"
+                    style="
+                        position:absolute;
+                        top:2px;
+                        right:2px;
+                        background:#e74c3c;
+                        color:#fff;
+                        border:none;
+                        border-radius:50%;
+                        width:14px;
+                        height:14px;
+                        font-size:8px;
+                        cursor:pointer;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;">
+                ✕
+            </button>
         `;
+
         grid.appendChild(div);
     }
 
     function removeImage(index, el) {
+
         uploadedUrls.splice(index, 1);
+
         el.remove();
-        document.getElementById('imageUrlsInput').value = uploadedUrls.join(',');
+
+        document.getElementById('imageUrlsInput').value =
+            uploadedUrls.join(',');
+
+        // Rebuild previews so indexes remain correct
+        rebuildImagePreviews();
+
+        // Update cover preview
+        const previewImg = document.getElementById('previewImg');
+
+        if (uploadedUrls.length > 0) {
+            previewImg.innerHTML =
+                `<img src="${uploadedUrls[0]}"
+                      style="width:100%;height:100%;object-fit:cover;">`;
+        } else {
+            previewImg.innerHTML =
+                '<i class="ti ti-photo" aria-hidden="true"></i>';
+        }
     }
 
-    // Drag and drop
+    function rebuildImagePreviews() {
+
+        const grid = document.getElementById('imagePreviewGrid');
+
+        grid.innerHTML = '';
+
+        uploadedUrls.forEach((url, index) => {
+            addPreview(url, index);
+        });
+    }
+
+    // ── Drag and drop ──
     const zone = document.getElementById('uploadZone');
-    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = '#4B3BC7'; });
-    zone.addEventListener('dragleave', () => { zone.style.borderColor = '#AFA9EC'; });
-    zone.addEventListener('drop', e => {
+
+    zone?.addEventListener('dragover', e => {
         e.preventDefault();
+        zone.style.borderColor = '#4B3BC7';
+    });
+
+    zone?.addEventListener('dragleave', () => {
         zone.style.borderColor = '#AFA9EC';
+    });
+
+    zone?.addEventListener('drop', e => {
+
+        e.preventDefault();
+
+        zone.style.borderColor = '#AFA9EC';
+
         const input = document.getElementById('imageFileInput');
-        input.files = e.dataTransfer.files;
+
+        const files = Array.from(e.dataTransfer.files)
+            .filter(file =>
+                ['image/jpeg', 'image/png', 'image/webp']
+                    .includes(file.type)
+            )
+            .slice(0, 6 - uploadedUrls.length);
+
+        if (files.length === 0) {
+            alert('Please drop JPG, PNG, or WebP images.');
+            return;
+        }
+
+        // DataTransfer allows us to populate the file input
+        const dataTransfer = new DataTransfer();
+
+        files.forEach(file => dataTransfer.items.add(file));
+
+        input.files = dataTransfer.files;
+
         handleImageUpload(input);
     });
 
-    // On submit collect image URLs
-    document.getElementById('createListingForm').addEventListener('submit', function() {
-        document.getElementById('imageUrlsInput').value = uploadedUrls.join(',');
-    });
+    // ── Collect image URLs before submit ──
+    document.getElementById('createListingForm')
+        ?.addEventListener('submit', function () {
+
+            document.getElementById('imageUrlsInput').value =
+                uploadedUrls.join(',');
+        });
 </script>
 }

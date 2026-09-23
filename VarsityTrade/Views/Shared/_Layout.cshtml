@@ -1,16 +1,11 @@
 ﻿@inject VarsityTrade.Web.Services.ApiService ApiService
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
 
-        const trigger =
-            document.getElementById("vt-category-trigger");
-
-        const menu =
-            document.getElementById("vt-category-menu");
-
-        const chevron =
-            document.getElementById("vt-category-chevron");
+        const trigger = document.getElementById("vt-category-trigger");
+        const menu = document.getElementById("vt-category-menu");
+        const chevron = document.getElementById("vt-category-chevron");
 
         if (!trigger || !menu) {
             return;
@@ -18,8 +13,7 @@
 
         function setMenuState(open) {
 
-            menu.style.display =
-                open ? "block" : "none";
+            menu.style.display = open ? "block" : "none";
 
             trigger.setAttribute(
                 "aria-expanded",
@@ -27,14 +21,13 @@
             );
 
             if (chevron) {
-                chevron.className =
-                    open
-                        ? "ti ti-chevron-up"
-                        : "ti ti-chevron-down";
+                chevron.className = open
+                    ? "ti ti-chevron-up"
+                    : "ti ti-chevron-down";
             }
         }
 
-        trigger.addEventListener("click", function(event) {
+        trigger.addEventListener("click", function (event) {
 
             event.stopPropagation();
 
@@ -44,10 +37,9 @@
             setMenuState(!isOpen);
         });
 
-        trigger.addEventListener("keydown", function(event) {
+        trigger.addEventListener("keydown", function (event) {
 
-            if (event.key === "Enter" ||
-                event.key === " ") {
+            if (event.key === "Enter" || event.key === " ") {
 
                 event.preventDefault();
 
@@ -58,7 +50,7 @@
             }
         });
 
-        document.addEventListener("click", function(event) {
+        document.addEventListener("click", function (event) {
 
             if (!trigger.contains(event.target)) {
                 setMenuState(false);
@@ -66,45 +58,61 @@
         });
     });
 </script>
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>@ViewData["Title"] — Varsity Trade</title>
 
-    <!--  Tabler Icons — icon library used throughout the platform -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@latest/tabler-icons.min.css" />
+    <!-- Tabler Icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@latest/tabler-icons.min.css" />
 
     <!-- Varsity Trade brand stylesheet -->
-    <link rel="stylesheet" href="~/css/varsitytrade.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/css/varsitytrade.css"
+          asp-append-version="true" />
 
-    <!-- Page-specific styles injected here -->
+    <!-- Page-specific styles -->
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body>
 
-    <!-- ── ANNOUNCEMENT BAR ─────────────────────────────────── -->
-    <!-- ── ANNOUNCEMENT BAR ─────────────────────────────────── -->
-@{
-    var isAdminUser = Context.Session.GetString("UserRole") == "Admin";
-}
-<div class="vt-announce" style="@(isAdminUser ? "background:#26215C;" : "background:#4B3BC7;")">
-    @if (isAdminUser)
-    {
-        <i class="ti ti-shield-check" aria-hidden="true"></i>
-        <span>Varsity Trade — Admin Panel · Restricted Access</span>
-    }
-    else
-    {
-        <i class="ti ti-speakerphone" aria-hidden="true"></i>
-        <span>Welcome to Varsity Trade — The #1 Marketplace for Students</span>
-    }
-</div>
+    <!-- ========================================================= -->
+    <!-- ANNOUNCEMENT BAR -->
+    <!-- ========================================================= -->
 
-    <!-- ── NAVBAR ───────────────────────────────────────────── -->
+    @{
+        var isAdminUser =
+            Context.Session.GetString("UserRole") == "Admin";
+    }
+
+    <div class="vt-announce"
+         style="@(isAdminUser ? "background:#26215C;" : "background:#4B3BC7;")">
+
+        @if (isAdminUser)
+        {
+            <i class="ti ti-shield-check" aria-hidden="true"></i>
+            <span>Varsity Trade — Admin Panel · Restricted Access</span>
+        }
+        else
+        {
+            <i class="ti ti-speakerphone" aria-hidden="true"></i>
+            <span>Welcome to Varsity Trade — The #1 Marketplace for Students</span>
+        }
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- NAVBAR -->
+    <!-- ========================================================= -->
+
     <nav class="vt-nav">
 
         @{
@@ -113,321 +121,793 @@
                     List<VarsityTrade.Web.Models.Seller.CategoryOption>>(
                         "api/categories")
                 ?? new List<VarsityTrade.Web.Models.Seller.CategoryOption>();
+
+            var navMode =
+                Context.Session.GetString("CurrentMode") ?? "Buyer";
+
+            var isLoggedIn =
+                Context.Session.GetString("AccessToken") != null;
+
+            var isSellerMode =
+                isLoggedIn && navMode == "Seller";
         }
 
-        <!-- Logo -->
+
+        <!-- ===================================================== -->
+        <!-- LOGO -->
+        <!-- ===================================================== -->
+
         <a href="/" class="vt-nav-logo">
+
             <div class="vt-nav-logo-icon">
                 <i class="ti ti-school" aria-hidden="true"></i>
             </div>
+
             <div>
-                <div class="vt-nav-logo-text">Varsity Trade</div>
-                <div class="vt-nav-logo-sub">Buy. Sell. Trade.</div>
+                <div class="vt-nav-logo-text">
+                    Varsity Trade
+                </div>
+
+                <div class="vt-nav-logo-sub">
+                    Buy. Sell. Trade.
+                </div>
             </div>
+
         </a>
 
-        <!-- Categories dropdown trigger -->
-        <div class="vt-nav-cat"
-             id="vt-category-trigger"
-             role="button"
-             tabindex="0"
-             aria-expanded="false"
-             aria-haspopup="true"
-             style="position:relative;">
 
-            <i class="ti ti-category"
-               aria-hidden="true"
-               style="font-size:13px"></i>
+        <!-- ===================================================== -->
+        <!-- BUYER / GUEST NAVIGATION -->
+        <!-- Categories hidden in Seller mode -->
+        <!-- ===================================================== -->
 
-            All categories
+        @if (!isSellerMode)
+        {
+            <!-- Categories dropdown -->
 
-            <i class="ti ti-chevron-down"
-               id="vt-category-chevron"
-               aria-hidden="true"
-               style="font-size:12px"></i>
+            <div class="vt-nav-cat"
+                 id="vt-category-trigger"
+                 role="button"
+                 tabindex="0"
+                 aria-expanded="false"
+                 aria-haspopup="true"
+                 style="position:relative;">
 
-            <div id="vt-category-menu"
-                 style="display:none;
-                position:absolute;
-                top:calc(100% + 8px);
-                left:0;
-                min-width:210px;
-                max-height:360px;
-                overflow-y:auto;
-                background:#fff;
-                border:0.5px solid #e0ddf5;
-                border-radius:10px;
-                box-shadow:0 8px 24px rgba(38,33,92,0.12);
-                padding:6px;
-                z-index:1000;">
+                <i class="ti ti-category"
+                   aria-hidden="true"
+                   style="font-size:13px">
+                </i>
 
-                <a href="/listings/browse"
-                   style="display:block;
-                    padding:8px 10px;
-                    border-radius:6px;
-                    color:#26215C;
-                    text-decoration:none;
-                    font-size:12px;">
-                    All categories
+                All categories
+
+                <i class="ti ti-chevron-down"
+                   id="vt-category-chevron"
+                   aria-hidden="true"
+                   style="font-size:12px">
+                </i>
+
+
+                <!-- Category menu -->
+
+                <div id="vt-category-menu"
+                     style="
+                        display:none;
+                        position:absolute;
+                        top:calc(100% + 8px);
+                        left:0;
+                        min-width:210px;
+                        max-height:360px;
+                        overflow-y:auto;
+                        background:#fff;
+                        border:0.5px solid #e0ddf5;
+                        border-radius:10px;
+                        box-shadow:0 8px 24px rgba(38,33,92,0.12);
+                        padding:6px;
+                        z-index:1000;">
+
+                    <a href="/listings/browse"
+                       style="
+                            display:block;
+                            padding:8px 10px;
+                            border-radius:6px;
+                            color:#26215C;
+                            text-decoration:none;
+                            font-size:12px;">
+
+                        All categories
+
+                    </a>
+
+                    @foreach (var category in navCategories)
+                    {
+                        var encodedCategory =
+                            Uri.EscapeDataString(category.Name);
+
+                        <a href="/listings/browse?category=@encodedCategory"
+                           style="
+                                display:block;
+                                padding:8px 10px;
+                                border-radius:6px;
+                                color:#444;
+                                text-decoration:none;
+                                font-size:12px;">
+
+                            @category.Name
+
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+        }
+
+
+        <!-- ===================================================== -->
+        <!-- SEARCH / SELLER DASHBOARD BAR -->
+        <!-- ===================================================== -->
+
+        @if (!isSellerMode)
+        {
+            <!-- Buyer / Guest search -->
+
+            <form class="vt-nav-search"
+                  asp-controller="Listings"
+                  asp-action="Search"
+                  method="get">
+
+                <input type="text"
+                       name="q"
+                       placeholder="Search for items, brands or keywords..."
+                       value="@ViewData["SearchQuery"]" />
+
+                <button type="submit"
+                        class="vt-nav-search-btn">
+
+                    <i class="ti ti-search"
+                       aria-hidden="true">
+                    </i>
+
+                </button>
+
+            </form>
+        }
+        else
+        {
+            <!-- Seller mode -->
+
+            <div style="
+                    flex:1;
+                    background:#EEEDFE;
+                    border-radius:7px;
+                    padding:7px 14px;
+                    font-size:12px;
+                    color:#4B3BC7;
+                    display:flex;
+                    align-items:center;
+                    gap:6px;">
+
+                <i class="ti ti-store"
+                   aria-hidden="true">
+                </i>
+
+                Seller Dashboard —
+                @(Context.Session.GetString("StoreName")
+                    ?? ((Context.Session.GetString("FirstName") ?? "Seller") + "'s Shop"))
+
+            </div>
+        }
+
+
+        <!-- ===================================================== -->
+        <!-- NAV LINKS -->
+        <!-- ===================================================== -->
+
+        @if (!isSellerMode)
+        {
+            <!-- Buyer / Guest -->
+
+            <div class="vt-nav-links">
+
+                <a href="/listings/browse">
+                    Explore
                 </a>
 
-                @foreach (var category in navCategories)
-                {
-                    var encodedCategory =
-                        Uri.EscapeDataString(category.Name);
+                <a href="/home/how-it-works">
+                    How it works
+                </a>
 
-                    <a href="/listings/browse?category=@encodedCategory"
-                       style="display:block;
-                        padding:8px 10px;
-                        border-radius:6px;
-                        color:#444;
-                        text-decoration:none;
-                        font-size:12px;">
-                        @category.Name
-                    </a>
-                }
             </div>
-        </div>
-
-        <!-- Search bar -->
-        <form class="vt-nav-search" asp-controller="Listings" asp-action="Search" method="get">
-            <input type="text"
-                   name="q"
-                   placeholder="Search for items, brands or keywords..."
-                   value="@ViewData["SearchQuery"]" />
-            <button type="submit" class="vt-nav-search-btn">
-                <i class="ti ti-search" aria-hidden="true"></i>
-            </button>
-        </form>
-
-        <!-- Nav links -->
-        <div class="vt-nav-links">
-            <a href="/listings/browse">Explore</a>
-            <a href="/home/how-it-works">How it works</a>
-        </div>
-
-        @if (Context.Session.GetString("AccessToken") != null)
+        }
+        else
         {
-            var currentMode = Context.Session.GetString("CurrentMode") ?? "Buyer";
-            var hasSellerProfile = Context.Session.GetString("HasSellerProfile") == "true";
-            var isSeller = currentMode == "Seller";
+            <!-- Seller -->
+
+            <div class="vt-nav-links">
+
+                <a href="/seller/listings">
+                    My listings
+                </a>
+
+                <a href="/seller/offers">
+                    Offers
+                </a>
+
+            </div>
+        }
+
+
+        <!-- ===================================================== -->
+        <!-- LOGGED-IN USER ACTIONS -->
+        <!-- ===================================================== -->
+
+        @if (isLoggedIn)
+        {
+            var currentMode =
+                Context.Session.GetString("CurrentMode") ?? "Buyer";
+
+            var hasSellerProfile =
+                Context.Session.GetString("HasSellerProfile") == "true";
+
+            var isSeller =
+                currentMode == "Seller";
+
+
+            <!-- User icons -->
 
             <div class="vt-nav-icons">
 
-                @if (isSeller)
-                {
-                    @* SELLER MODE navbar icons *@
-                    <a href="/buyer/inbox" class="vt-nav-icon-btn" title="Seller Inbox">
-                        <i class="ti ti-message-circle" aria-hidden="true"></i>
-                    </a>
-                    <a href="/buyer/notifications" class="vt-nav-icon-btn" title="Notifications">
-                        <i class="ti ti-bell" aria-hidden="true"></i>
-                    </a>
-                    <a href="/buyer/profile" class="vt-nav-avatar" title="My Account">
-                        @(Context.Session.GetString("UserInitials") ?? "?")
-                    </a>
-                    <a href="/auth/logout" class="vt-nav-icon-btn" title="Log out">
-                        <i class="ti ti-logout" aria-hidden="true"></i>
-                    </a>
-                }
-                else
-                {
-                    @* BUYER MODE navbar icons *@
-                    <a href="/buyer/inbox" class="vt-nav-icon-btn" title="Inbox">
-                        <i class="ti ti-message-circle" aria-hidden="true"></i>
-                    </a>
-                    <a href="/buyer/notifications" class="vt-nav-icon-btn" title="Notifications">
-                        <i class="ti ti-bell" aria-hidden="true"></i>
-                    </a>
-                    <a href="/buyer/profile" class="vt-nav-avatar" title="My Profile">
-                        @(Context.Session.GetString("UserInitials") ?? "?")
-                    </a>
-                    <a href="/auth/logout" class="vt-nav-icon-btn" title="Log out">
-                        <i class="ti ti-logout" aria-hidden="true"></i>
-                    </a>
-                }
+                <a href="@(isSeller ? "/seller/inbox" : "/buyer/inbox")"
+                   class="vt-nav-icon-btn"
+                   title="Inbox">
+
+                    <i class="ti ti-message-circle"
+                       aria-hidden="true">
+                    </i>
+
+                </a>
+
+
+                <a href="/buyer/notifications"
+                   class="vt-nav-icon-btn"
+                   title="Notifications">
+
+                    <i class="ti ti-bell"
+                       aria-hidden="true">
+                    </i>
+
+                </a>
+
+
+                <a href="/buyer/profile"
+                   class="vt-nav-avatar"
+                   title="My Profile">
+
+                    @(Context.Session.GetString("UserInitials") ?? "?")
+
+                </a>
+
+
+                <a href="/auth/logout"
+                   class="vt-nav-icon-btn"
+                   title="Log out">
+
+                    <i class="ti ti-logout"
+                       aria-hidden="true">
+                    </i>
+
+                </a>
 
             </div>
 
-            @* Mode switch button and action button *@
+
+            <!-- ================================================= -->
+            <!-- MODE / PRIMARY ACTION BUTTONS -->
+            <!-- ================================================= -->
+
             @if (isSeller)
             {
-                @* In seller mode — show Switch to Buyer and New Listing *@
-                <a href="/seller/switch-to-buyer" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
-                    <i class="ti ti-shopping-cart" aria-hidden="true"></i> Switch to buyer
+                <!-- Seller mode -->
+
+                <a href="/seller/switch-to-buyer"
+                   class="vt-btn vt-btn-outline"
+                   style="
+                        font-size:11px;
+                        padding:7px 12px;
+                        white-space:nowrap;">
+
+                    <i class="ti ti-shopping-cart"
+                       aria-hidden="true">
+                    </i>
+
+                    Switch to buyer
+
                 </a>
-                @if (isSeller)
-                {
-                    <a href="/seller/listings/create" class="vt-sell-btn">
-                        <i class="ti ti-plus" aria-hidden="true"></i> New listing
-                    </a>
-                }
-                else
-                {
-                    <a href="/listings/browse" class="vt-sell-btn">
-                        <i class="ti ti-search" aria-hidden="true"></i> Browse
-                    </a>
-                }
+
+
+                <a href="/seller/listings/create"
+                   class="vt-sell-btn">
+
+                    <i class="ti ti-plus"
+                       aria-hidden="true">
+                    </i>
+
+                    New listing
+
+                </a>
             }
             else
             {
-                @* In buyer mode — show Switch to Seller only if they have a seller profile *@
+                <!-- Buyer mode -->
+
                 @if (hasSellerProfile)
                 {
-                    <a href="/seller/switch-to-seller" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
-                        <i class="ti ti-store" aria-hidden="true"></i> My Shop
+                    <a href="/seller/switch-to-seller"
+                       class="vt-btn vt-btn-outline"
+                       style="
+                            font-size:11px;
+                            padding:7px 12px;
+                            white-space:nowrap;">
+
+                        <i class="ti ti-store"
+                           aria-hidden="true">
+                        </i>
+
+                        My Shop
+
                     </a>
                 }
                 else
                 {
-                    <a href="/seller/activate" class="vt-btn vt-btn-outline" style="font-size:11px;padding:7px 12px;">
-                        <i class="ti ti-store" aria-hidden="true"></i> Start selling
+                    <a href="/seller/activate"
+                       class="vt-btn vt-btn-outline"
+                       style="
+                            font-size:11px;
+                            padding:7px 12px;
+                            white-space:nowrap;">
+
+                        <i class="ti ti-store"
+                           aria-hidden="true">
+                        </i>
+
+                        Start selling
+
                     </a>
                 }
-                <a href="/listings/browse" class="vt-sell-btn">
-                    <i class="ti ti-search" aria-hidden="true"></i> Browse
+
+
+                <a href="/listings/browse"
+                   class="vt-sell-btn">
+
+                    <i class="ti ti-search"
+                       aria-hidden="true">
+                    </i>
+
+                    Browse
+
                 </a>
             }
         }
         else
         {
-            @* Guest navbar *@
+            <!-- ================================================= -->
+            <!-- GUEST NAVBAR -->
+            <!-- ================================================= -->
+
             <div class="vt-nav-links">
-                <a href="/auth/login">Log in</a>
+
+                <a href="/auth/login">
+                    Log in
+                </a>
+
             </div>
-            <a href="/auth/register" class="vt-sell-btn">
-                <i class="ti ti-plus" aria-hidden="true"></i> Sell an item
+
+
+            <a href="/auth/register"
+               class="vt-sell-btn">
+
+                <i class="ti ti-plus"
+                   aria-hidden="true">
+                </i>
+
+                Sell an item
+
             </a>
         }
 
     </nav>
 
-    <!-- ── PAGE CONTENT ─────────────────────────────────────── -->
+
+    <!-- ========================================================= -->
+    <!-- PAGE CONTENT -->
+    <!-- ========================================================= -->
+
     <main>
         @RenderBody()
     </main>
 
-    <!-- ── FOOTER ───────────────────────────────────────────── -->
+
+    <!-- ========================================================= -->
+    <!-- FOOTER -->
+    <!-- ========================================================= -->
+
     <footer>
-        @* Full 4-column footer matching wireframe *@
-        <div style="background:#26215C;padding:24px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:20px;">
-            @* Brand column *@
+
+        <!-- Footer main -->
+
+        <div style="
+                background:#26215C;
+                padding:24px;
+                display:grid;
+                grid-template-columns:2fr 1fr 1fr 1fr;
+                gap:20px;">
+
+            <!-- Brand -->
+
             <div>
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                    <div style="background:#4B3BC7;color:#fff;border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;">
-                        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+
+                <div style="
+                        display:flex;
+                        align-items:center;
+                        gap:6px;
+                        margin-bottom:8px;">
+
+                    <div style="
+                            background:#4B3BC7;
+                            color:#fff;
+                            border-radius:6px;
+                            width:24px;
+                            height:24px;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-size:12px;">
+
+                        <i class="ti ti-shopping-bag"
+                           aria-hidden="true">
+                        </i>
+
                     </div>
-                    <span style="font-size:13px;font-weight:500;color:#fff;">Varsity Trade</span>
+
+                    <span style="
+                            font-size:13px;
+                            font-weight:500;
+                            color:#fff;">
+
+                        Varsity Trade
+
+                    </span>
+
                 </div>
-                <div style="font-size:11px;color:#AFA9EC;line-height:1.5;margin-bottom:10px;">
-                    A trusted marketplace built<br>for students, by students.
+
+
+                <div style="
+                        font-size:11px;
+                        color:#AFA9EC;
+                        line-height:1.5;
+                        margin-bottom:10px;">
+
+                    A trusted marketplace built<br />
+                    for students, by students.
+
                 </div>
-                <div style="display:flex;gap:8px;">
-                    @foreach (var icon in new[] { "ti-brand-instagram", "ti-brand-x", "ti-brand-tiktok", "ti-brand-youtube" })
+
+
+                <div style="
+                        display:flex;
+                        gap:8px;">
+
+                    @foreach (var icon in new[]
                     {
-                        <div style="width:26px;height:26px;border-radius:50%;background:#3C3489;display:flex;align-items:center;justify-content:center;color:#AFA9EC;font-size:13px;">
-                            <i class="ti @icon" aria-hidden="true"></i>
+                        "ti-brand-instagram",
+                        "ti-brand-x",
+                        "ti-brand-tiktok",
+                        "ti-brand-youtube"
+                    })
+                    {
+                        <div style="
+                                width:26px;
+                                height:26px;
+                                border-radius:50%;
+                                background:#3C3489;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                color:#AFA9EC;
+                                font-size:13px;">
+
+                            <i class="ti @icon"
+                               aria-hidden="true">
+                            </i>
+
                         </div>
                     }
+
                 </div>
+
             </div>
 
-            @* Marketplace column *@
+
+            <!-- Marketplace -->
+
             <div>
-                <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Marketplace</div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    <a href="/listings/browse" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+
+                <div style="
+                        font-size:12px;
+                        font-weight:500;
+                        color:#fff;
+                        margin-bottom:10px;">
+
+                    Marketplace
+
+                </div>
+
+
+                <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:6px;">
+
+                    <a href="/listings/browse"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Browse items
+
                     </a>
 
-                    <a href="/seller/activate" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/seller/activate"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Sell an item
+
                     </a>
 
-                    <a href="/listings/browse" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/listings/browse"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Categories
+
                     </a>
 
-                    <a href="/home/how-it-works" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/home/how-it-works"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         How it works
+
                     </a>
 
-                    <a href="/home/safety" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/home/safety"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Safety tips
+
                     </a>
+
                 </div>
+
             </div>
 
-            @* Support column *@
+
+            <!-- Support -->
+
             <div>
-                <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Support</div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    <a href="/home/help" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+
+                <div style="
+                        font-size:12px;
+                        font-weight:500;
+                        color:#fff;
+                        margin-bottom:10px;">
+
+                    Support
+
+                </div>
+
+
+                <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:6px;">
+
+                    <a href="/home/help"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Help centre
+
                     </a>
 
-                    <a href="/home/contact" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/home/contact"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Contact us
+
                     </a>
 
-                    <a href="/home/report" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/home/report"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Report an issue
+
                     </a>
 
-                    <a href="/home/terms" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/home/terms"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Terms of use
+
                     </a>
 
-                    <a href="/home/privacy" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
+                    <a href="/home/privacy"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
                         Privacy policy
+
                     </a>
+
                 </div>
+
             </div>
 
-            @* Company column *@
+
+            <!-- Company -->
+
             <div>
-                <div style="font-size:12px;font-weight:500;color:#fff;margin-bottom:10px;">Company</div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                    <a href="/home/about" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
-                        About us
-                    </a>
 
-                    <a href="/home/blog" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
-                        Blog
-                    </a>
+                <div style="
+                        font-size:12px;
+                        font-weight:500;
+                        color:#fff;
+                        margin-bottom:10px;">
 
-                    <a href="/home/careers" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
-                        Careers
-                    </a>
+                    Company
 
-                    <a href="/home/ambassadors" style="font-size:11px;color:#AFA9EC;text-decoration:none;">
-                        Student ambassadors
-                    </a>
                 </div>
+
+
+                <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:6px;">
+
+                    <a href="/home/about"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
+                        About us
+
+                    </a>
+
+                    <a href="/home/blog"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
+                        Blog
+
+                    </a>
+
+                    <a href="/home/careers"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
+                        Careers
+
+                    </a>
+
+                    <a href="/home/ambassadors"
+                       style="
+                            font-size:11px;
+                            color:#AFA9EC;
+                            text-decoration:none;">
+
+                        Student ambassadors
+
+                    </a>
+
+                </div>
+
             </div>
+
         </div>
 
-        @* Footer bottom bar *@
-        <div style="background:#1a1448;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:11px;color:#534AB7;">© 2026 Varsity Trade. All rights reserved.</span>
-            <div style="display:flex;gap:14px;">
-                <a href="/home/terms" style="font-size:11px;color:#534AB7;text-decoration:none;">
+
+        <!-- Footer bottom -->
+
+        <div style="
+                background:#1a1448;
+                padding:10px 24px;
+                display:flex;
+                justify-content:space-between;
+                align-items:center;">
+
+            <span style="
+                    font-size:11px;
+                    color:#534AB7;">
+
+                © 2026 Varsity Trade. All rights reserved.
+
+            </span>
+
+
+            <div style="
+                    display:flex;
+                    gap:14px;">
+
+                <a href="/home/terms"
+                   style="
+                        font-size:11px;
+                        color:#534AB7;
+                        text-decoration:none;">
+
                     Terms
+
                 </a>
 
-                <a href="/home/privacy" style="font-size:11px;color:#534AB7;text-decoration:none;">
+                <a href="/home/privacy"
+                   style="
+                        font-size:11px;
+                        color:#534AB7;
+                        text-decoration:none;">
+
                     Privacy
+
                 </a>
 
-                <a href="/home/cookies" style="font-size:11px;color:#534AB7;text-decoration:none;">
+                <a href="/home/cookies"
+                   style="
+                        font-size:11px;
+                        color:#534AB7;
+                        text-decoration:none;">
+
                     Cookies
+
                 </a>
+
             </div>
+
         </div>
+
     </footer>
 
-    <!-- Page-specific scripts injected here -->
+
+    <!-- Page-specific scripts -->
+
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
+
 </html>
