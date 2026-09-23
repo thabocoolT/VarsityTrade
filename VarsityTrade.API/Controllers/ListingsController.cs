@@ -70,7 +70,7 @@ namespace VarsityTrade.API.Controllers
         // ─────────────────────────────────────────────────────────────
         [Authorize]
         [HttpGet("university/{universityId}")]
-        [AllowAnonymous] // Guests can browse listings without logging in
+        
         public async Task<IActionResult> GetListingsByUniversity(
             int universityId)
         {

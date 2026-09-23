@@ -34,10 +34,9 @@ namespace VarsityTrade.Web.Controllers
             }
             else
             {
-                // Guest — show all listings from university 1 as default
-                // In production this would show a combined feed across universities
+                // Guest — show active listings from all universities
                 listings = await _api.GetAsync<List<ListingCardViewModel>>(
-                    "api/listings/university/1") ?? new();
+                    "api/listings/public") ?? new();
             }
 
             // Apply filters
