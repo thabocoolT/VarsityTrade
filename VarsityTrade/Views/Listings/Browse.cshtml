@@ -419,104 +419,150 @@
 
                     @foreach (var listing in Model.Listings)
                     {
-                        <a href="/listings/@listing.ListingId"
-                           style="background:#fff;
-                                  border:0.5px solid #e0ddf5;
-                                  border-radius:10px;
-                                  overflow:hidden;
-                                  cursor:pointer;
-                                  text-decoration:none;
-                                  color:inherit;
-                                  display:block;">
+                        <div style="background:#fff;
+            border:0.5px solid #e0ddf5;
+            border-radius:10px;
+            overflow:hidden;
+            position:relative;">
 
-                            <div style="background:#f0eefb;
-                                        height:140px;
-                                        display:flex;
-                                        align-items:center;
-                                        justify-content:center;
-                                        color:#7F77DD;
-                                        font-size:32px;
-                                        position:relative;">
+    <div style="background:#f0eefb;
+                height:140px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                color:#7F77DD;
+                font-size:32px;
+                position:relative;">
 
-                               @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
-                                {
-                                    <img src="@ImageHelper.ResolveUrl(listing.CoverImageUrl)"
-                                         alt="@listing.Title"
-                                         style="width:100%;height:100%;object-fit:cover;" />
-                                }
-                                else
-                                {
-                                    <i class="ti ti-photo"
-                                       aria-hidden="true"></i>
-                                }
+        <a href="/listings/@listing.ListingId"
+           style="display:block;
+                  width:100%;
+                  height:100%;
+                  text-decoration:none;
+                  color:inherit;">
 
-                                @if (listing.IsFeatured)
-                                {
-                                    <span style="position:absolute;
-                                                 top:6px;
-                                                 left:6px;
-                                                 background:#4B3BC7;
-                                                 color:#fff;
-                                                 font-size:9px;
-                                                 padding:2px 6px;
-                                                 border-radius:4px;">
-                                        Featured
-                                    </span>
-                                }
+            @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
+            {
+                <img src="@ImageHelper.ResolveUrl(listing.CoverImageUrl)"
+                     alt="@listing.Title"
+                     style="width:100%;
+                            height:100%;
+                            object-fit:cover;" />
+            }
+            else
+            {
+                <div style="width:100%;
+                            height:100%;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;">
+                    <i class="ti ti-photo"
+                       aria-hidden="true"></i>
+                </div>
+            }
 
-                            </div>
+        </a>
 
-                            <div style="padding:8px 10px;">
+        @if (listing.IsFeatured)
+        {
+            <span style="position:absolute;
+                         top:6px;
+                         left:6px;
+                         background:#4B3BC7;
+                         color:#fff;
+                         font-size:9px;
+                         padding:2px 6px;
+                         border-radius:4px;
+                         z-index:2;">
+                Featured
+            </span>
+        }
 
-                                <div style="font-size:12px;
-                                            font-weight:500;
-                                            color:#26215C;
-                                            margin-bottom:2px;
-                                            white-space:nowrap;
-                                            overflow:hidden;
-                                            text-overflow:ellipsis;">
+        @if (isLoggedIn)
+        {
+            <form method="post"
+                  action="/buyer/saved/save"
+                  style="position:absolute;
+                         top:6px;
+                         right:6px;
+                         margin:0;
+                         z-index:3;">
 
-                                    @listing.Title
+                <input type="hidden"
+                       name="listingId"
+                       value="@listing.ListingId" />
 
-                                </div>
+                <input type="hidden"
+                       name="returnUrl"
+                       value="@Context.Request.Path@Context.Request.QueryString" />
 
-                                <div style="font-size:13px;
-                                            font-weight:500;
-                                            color:#4B3BC7;
-                                            margin-bottom:3px;">
+                <button type="submit"
+                        title="@(listing.IsSaved ? "Already saved" : "Save listing")"
+                        aria-label="@(listing.IsSaved ? "Already saved" : "Save listing")"
+                        style="width:30px;
+                               height:30px;
+                               border:none;
+                               border-radius:50%;
+                               background:rgba(255,255,255,.95);
+                               color:@(listing.IsSaved ? "#e74c3c" : "#777");
+                               display:flex;
+                               align-items:center;
+                               justify-content:center;
+                               cursor:pointer;
+                               box-shadow:0 1px 4px rgba(0,0,0,.12);">
 
-                                    R @listing.Price.ToString("N0")
+                    <i class="ti @(listing.IsSaved ? "ti-heart-filled" : "ti-heart")"
+                       aria-hidden="true"
+                       style="font-size:16px;"></i>
 
-                                </div>
+                </button>
 
-                                <div style="font-size:10px;
-                                            color:#888;
-                                            display:flex;
-                                            align-items:center;
-                                            gap:4px;
-                                            flex-wrap:wrap;">
+            </form>
+        }
 
-                                    <span>
-                                        @listing.Condition
-                                    </span>
+    </div>
 
-                                    <span>·</span>
+    <a href="/listings/@listing.ListingId"
+       style="display:block;
+              padding:8px 10px;
+              text-decoration:none;
+              color:inherit;">
 
-                                    <span>
-                                        @listing.CategoryName
-                                    </span>
+        <div style="font-size:12px;
+                    font-weight:500;
+                    color:#26215C;
+                    margin-bottom:2px;
+                    white-space:nowrap;
+                    overflow:hidden;
+                    text-overflow:ellipsis;">
+            @listing.Title
+        </div>
 
-                                    <span>·</span>
+        <div style="font-size:13px;
+                    font-weight:500;
+                    color:#4B3BC7;
+                    margin-bottom:3px;">
+            R @listing.Price.ToString("N0")
+        </div>
 
-                                    <span>
-                                        ★ @listing.SellerRating.ToString("F1")
-                                    </span>
+        <div style="font-size:10px;
+                    color:#888;
+                    display:flex;
+                    align-items:center;
+                    gap:4px;
+                    flex-wrap:wrap;">
 
-                                </div>
+            <span>@listing.Condition</span>
+            <span>·</span>
+            <span>@listing.CategoryName</span>
+            <span>·</span>
+            <span>★ @listing.SellerRating.ToString("F1")</span>
 
-                            </div>
+        </div>
 
-                        </a>
+    </a>
+
+</div>
                     }
 
                 </div>

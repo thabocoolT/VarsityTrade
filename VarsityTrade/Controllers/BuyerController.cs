@@ -14,7 +14,23 @@ namespace VarsityTrade.Web.Controllers
         // ApiService handles all HTTP calls to the backend API
         private readonly ApiService _api;
 
+        private IActionResult RedirectToLocal(
+        string? returnUrl,
+        string fallbackAction,
+        string fallbackController,
+        int listingId)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl)
+                && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
 
+            return RedirectToAction(
+                fallbackAction,
+                fallbackController,
+                new { id = listingId });
+        }
 
         public BuyerController(ApiService api)
         {
@@ -247,7 +263,10 @@ namespace VarsityTrade.Web.Controllers
         //-----------------------------------------------------------
 
         [HttpGet("saved")]
-        public async Task<IActionResult> Saved(string filter = "All")
+        public async Task<IActionResult> Saved(
+        string filter = "All",
+        string sort = "recent",
+        string view = "grid")
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
@@ -256,12 +275,18 @@ namespace VarsityTrade.Web.Controllers
                 await _api.GetAsync<List<ListingCardViewModel>>(
                     "api/listings/saved");
 
-            var listings =
-                savedListings ?? new List<ListingCardViewModel>();
+           
+
 
             // Only apply filters that can be supported by the data
             // currently returned by the saved-listings API.
-            if (filter.Equals("Still available", StringComparison.OrdinalIgnoreCase))
+            var listings =
+            savedListings ?? new List<ListingCardViewModel>();
+
+            // Filter
+            if (filter.Equals(
+                    "Still available",
+                    StringComparison.OrdinalIgnoreCase))
             {
                 listings = listings
                     .Where(l =>
@@ -270,6 +295,30 @@ namespace VarsityTrade.Web.Controllers
                             StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
+
+            // Sort
+            listings = sort.ToLowerInvariant() switch
+            {
+                "price-low" => listings
+                    .OrderBy(l => l.Price)
+                    .ToList(),
+
+                "price-high" => listings
+                    .OrderByDescending(l => l.Price)
+                    .ToList(),
+
+                _ => listings
+                    .OrderByDescending(l => l.CreatedAt)
+                    .ToList()
+            };
+
+            ViewBag.SavedListings = listings;
+            ViewBag.ActiveFilter = filter;
+            ViewBag.ActiveSort = sort;
+            ViewBag.ActiveView =
+                view.Equals("list", StringComparison.OrdinalIgnoreCase)
+                    ? "list"
+                    : "grid";
 
             ViewBag.SavedListings = listings;
             ViewBag.ActiveFilter = filter;
@@ -280,7 +329,9 @@ namespace VarsityTrade.Web.Controllers
         }
 
         [HttpPost("saved/save")]
-        public async Task<IActionResult> SaveListing(int listingId)
+        public async Task<IActionResult> SaveListing(
+        int listingId,
+        string? returnUrl)
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
@@ -295,19 +346,19 @@ namespace VarsityTrade.Web.Controllers
                 TempData["Error"] =
                     "Could not save this listing. Please try again.";
 
-                return RedirectToAction(
+                return RedirectToLocal(returnUrl,
                     "Detail",
                     "Listings",
-                    new { id = listingId });
+                    listingId);
             }
 
             TempData["Success"] =
                 "Listing saved successfully.";
 
-            return RedirectToAction(
+            return RedirectToLocal(returnUrl,
                 "Detail",
                 "Listings",
-                new { id = listingId });
+                listingId);
         }
 
         [HttpPost("saved/unsave")]

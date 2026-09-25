@@ -54,5 +54,10 @@ namespace VarsityTrade.Web.Models.Listings
 
         [JsonProperty("isLoggedIn")]
         public bool IsLoggedIn { get; set; }
+
+        [JsonProperty("isSaved")]
+        public bool IsSaved { get; set; }
+
+
     }
 }

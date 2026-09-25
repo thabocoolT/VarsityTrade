@@ -60,6 +60,25 @@ namespace VarsityTrade.Web.Controllers
                 ? await GetUniversityNameAsync(int.Parse(universityIdStr ?? "1"))
                 : "South African Universities";
 
+            // Load the current user's saved listings so the Browse cards
+            // can show the correct save state.
+            if (isLoggedIn)
+            {
+                var savedListings =
+                    await _api.GetAsync<List<ListingCardViewModel>>(
+                        "api/listings/saved");
+
+                var savedIds = savedListings?
+                    .Select(l => l.ListingId)
+                    .ToHashSet()
+                    ?? new HashSet<int>();
+
+                foreach (var listing in listings)
+                {
+                    listing.IsSaved = savedIds.Contains(listing.ListingId);
+                }
+            }
+
             var model = new BrowseViewModel
             {
                 Listings = listings,
