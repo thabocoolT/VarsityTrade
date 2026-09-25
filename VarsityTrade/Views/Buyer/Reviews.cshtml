@@ -1,73 +1,448 @@
 ﻿@{
-    ViewData["Title"] = "My Reviews";
-    ViewData["SidebarPage"] = "reviews";
+    ViewData["Title"] = "Saved Listings";
+    ViewData["SidebarPage"] = "saved";
     Layout = "_Layout";
-    var reviews = ViewBag.Reviews as List<VarsityTrade.Web.Models.Reviews.ReviewViewModel> ?? new();
-    var activeFilter = ViewBag.ActiveFilter as string ?? "Reviews left";
+
+    var listings =
+        ViewBag.SavedListings
+        as List<VarsityTrade.Web.Models.Listings.ListingCardViewModel>
+        ?? new();
+
+    var activeFilter =
+        ViewBag.ActiveFilter as string
+        ?? "All";
 }
 
 <div style="display:grid;grid-template-columns:220px 1fr;gap:14px;padding:16px 24px;align-items:start;">
+
     @await Html.PartialAsync("_SidebarFull")
 
     <div>
-        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+
+        @* Page header *@
+        <div style="
+            background:#fff;
+            border:0.5px solid #e0ddf5;
+            border-radius:12px;
+            padding:14px 18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:14px;">
+
             <div>
-                <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
-                    <i class="ti ti-star" aria-hidden="true" style="color:#4B3BC7;"></i> My reviews
+
+                <div style="
+                    font-size:15px;
+                    font-weight:500;
+                    color:#26215C;
+                    margin-bottom:2px;">
+
+                    <i class="ti ti-heart"
+                       aria-hidden="true"
+                       style="color:#4B3BC7;"></i>
+
+                    Saved listings
+
                 </div>
-                <div style="font-size:11px;color:#888;">Reviews you have left for sellers after completed trades</div>
+
+                <div style="
+                    font-size:11px;
+                    color:#888;">
+
+                    Items you have saved for later —
+                    @listings.Count
+                    item@(listings.Count != 1 ? "s" : "")
+
+                </div>
+
             </div>
+
         </div>
 
-        <div style="display:flex;gap:6px;margin-bottom:12px;">
-            @foreach (var f in new[] { "Reviews left", "Pending reviews" })
+
+        @* Toolbar *@
+        <div style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:12px;">
+
+            <div style="
+                font-size:12px;
+                color:#666;">
+
+                Showing
+
+                <b style="color:#26215C;">
+                    @listings.Count
+                </b>
+
+                saved item@(listings.Count != 1 ? "s" : "")
+
+            </div>
+
+            <div style="
+                display:flex;
+                align-items:center;
+                gap:8px;">
+
+                <select style="
+                    border:0.5px solid #ddd;
+                    border-radius:6px;
+                    padding:5px 8px;
+                    font-size:12px;
+                    color:#444;
+                    background:#fff;">
+
+                    <option>
+                        Sort: Recently saved
+                    </option>
+
+                    <option>
+                        Price: Low to high
+                    </option>
+
+                    <option>
+                        Price: High to low
+                    </option>
+
+                </select>
+
+                <div style="
+                    display:flex;
+                    gap:4px;">
+
+                    <div style="
+                        width:28px;
+                        height:28px;
+                        border:0.5px solid #AFA9EC;
+                        border-radius:6px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        color:#4B3BC7;
+                        font-size:14px;
+                        background:#EEEDFE;">
+
+                        <i class="ti ti-layout-grid"
+                           aria-hidden="true"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @* Filter tabs *@
+        <div style="
+            display:flex;
+            gap:6px;
+            margin-bottom:12px;">
+
+            @foreach (var f in new[]
             {
-                <a href="/buyer/reviews?filter=@f"
-                   style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
+                "All",
+                "Price dropped",
+                "Still available"
+            })
+            {
+                <a href="/buyer/saved?filter=@Uri.EscapeDataString(f)"
+                   style="
+                        font-size:11px;
+                        border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");
+                        border-radius:6px;
+                        padding:5px 10px;
+                        text-decoration:none;
+                        @(activeFilter == f
+                            ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;"
+                            : "color:#666;background:#fff;")">
+
                     @f
+
                 </a>
             }
+
         </div>
 
-        @if (reviews.Any())
+
+        @* Grid *@
+        @if (listings.Any())
         {
-            <div style="display:flex;flex-direction:column;gap:10px;">
-                @foreach (var review in reviews)
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(3,minmax(0,1fr));
+                gap:10px;">
+
+                @foreach (var listing in listings)
                 {
-                    <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 16px;">
-                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-                            <div style="width:40px;height:40px;background:#EEEDFE;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#4B3BC7;font-size:18px;flex-shrink:0;">
-                                <i class="ti ti-tag" aria-hidden="true"></i>
+                    var daysAgo =
+                        Math.Max(
+                            0,
+                            (int)(DateTime.UtcNow - listing.CreatedAt).TotalDays);
+
+                    <div style="
+                        background:#fff;
+                        border:0.5px solid #e0ddf5;
+                        border-radius:10px;
+                        overflow:hidden;">
+
+                        @* Image *@
+                        <div style="
+                            background:#f0eefb;
+                            height:86px;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            color:#7F77DD;
+                            position:relative;
+                            font-size:28px;">
+
+                            @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
+                            {
+                                <img src="@listing.CoverImageUrl"
+                                     alt="@listing.Title"
+                                     style="
+                                        width:100%;
+                                        height:100%;
+                                        object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <i class="ti ti-photo"
+                                   aria-hidden="true"></i>
+                            }
+
+                            <div style="
+                                position:absolute;
+                                top:6px;
+                                right:6px;
+                                color:#e74c3c;
+                                font-size:15px;">
+
+                                <i class="ti ti-heart-filled"
+                                   aria-hidden="true"></i>
+
                             </div>
-                            <div>
-                                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:2px;">@review.ListingTitle</div>
-                                <div style="font-size:11px;color:#888;">Seller: @review.StoreName</div>
-                            </div>
-                            <div style="margin-left:auto;color:#BA7517;font-size:14px;">
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    <span>@(i <= review.Rating ? "★" : "☆")</span>
-                                }
-                            </div>
+
+                            @if (listing.IsFeatured)
+                            {
+                                <div style="
+                                    position:absolute;
+                                    top:6px;
+                                    left:6px;
+                                    background:#4B3BC7;
+                                    color:#fff;
+                                    font-size:9px;
+                                    padding:2px 6px;
+                                    border-radius:4px;">
+
+                                    Featured
+
+                                </div>
+                            }
+
                         </div>
-                        @if (!string.IsNullOrEmpty(review.Comment))
-                        {
-                            <div style="background:#f5f4f9;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;line-height:1.5;font-style:italic;">
-                                "@review.Comment"
+
+
+                        @* Card content *@
+                        <div style="padding:8px 10px;">
+
+                            <div style="
+                                font-size:12px;
+                                font-weight:500;
+                                color:#26215C;
+                                margin-bottom:2px;
+                                white-space:nowrap;
+                                overflow:hidden;
+                                text-overflow:ellipsis;">
+
+                                @listing.Title
+
                             </div>
-                        }
-                        <div style="font-size:10px;color:#aaa;margin-top:8px;">@review.CreatedAt.ToString("dd MMM yyyy")</div>
+
+
+                            <div style="
+                                font-size:12px;
+                                font-weight:500;
+                                color:#4B3BC7;
+                                margin-bottom:3px;">
+
+                                R @listing.Price.ToString("N0")
+
+                            </div>
+
+
+                            <div style="
+                                font-size:10px;
+                                color:#888;
+                                margin-bottom:6px;">
+
+                                @listing.Condition
+                                ·
+                                @(daysAgo == 0
+                                    ? "Today"
+                                    : $"{daysAgo}d ago")
+
+                            </div>
+
+
+                            <div style="
+                                display:flex;
+                                gap:5px;">
+
+                                @* View *@
+                                <a href="/listings/@listing.ListingId"
+                                   style="
+                                        flex:1;
+                                        background:#4B3BC7;
+                                        color:#fff;
+                                        border:none;
+                                        border-radius:5px;
+                                        padding:5px;
+                                        font-size:10px;
+                                        cursor:pointer;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        gap:3px;
+                                        text-decoration:none;">
+
+                                    <i class="ti ti-eye"
+                                       aria-hidden="true"></i>
+
+                                    View
+
+                                </a>
+
+
+                                @* Message *@
+                                <a href="/buyer/inbox/start?listingId=@listing.ListingId"
+                                   style="
+                                        flex:1;
+                                        background:#fff;
+                                        color:#666;
+                                        border:0.5px solid #ddd;
+                                        border-radius:5px;
+                                        padding:5px;
+                                        font-size:10px;
+                                        cursor:pointer;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        gap:3px;
+                                        text-decoration:none;">
+
+                                    <i class="ti ti-message-circle"
+                                       aria-hidden="true"></i>
+
+                                    Message
+
+                                </a>
+
+
+                                @* Unsave *@
+                                <form asp-controller="Buyer"
+                                      asp-action="UnsaveListing"
+                                      method="post"
+                                      style="margin:0;">
+
+                                    <input type="hidden"
+                                           name="listingId"
+                                           value="@listing.ListingId" />
+
+                                    <button type="submit"
+                                            title="Remove from saved listings"
+                                            style="
+                                                background:#FDECEA;
+                                                color:#B91C1C;
+                                                border:none;
+                                                border-radius:5px;
+                                                padding:5px 7px;
+                                                font-size:10px;
+                                                cursor:pointer;
+                                                display:flex;
+                                                align-items:center;
+                                                justify-content:center;">
+
+                                        <i class="ti ti-heart-off"
+                                           aria-hidden="true"></i>
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
                     </div>
                 }
+
             </div>
         }
         else
         {
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
-                <i class="ti ti-star" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
-                <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No reviews yet</div>
-                <p style="font-size:12px;color:#888;">Complete a trade and leave your first review for the seller.</p>
+            <div style="
+                background:#fff;
+                border:0.5px solid #e0ddf5;
+                border-radius:12px;
+                text-align:center;
+                padding:60px 20px;">
+
+                <i class="ti ti-heart"
+                   aria-hidden="true"
+                   style="
+                        font-size:40px;
+                        color:#AFA9EC;
+                        display:block;
+                        margin-bottom:12px;"></i>
+
+                <div style="
+                    font-size:14px;
+                    font-weight:500;
+                    margin-bottom:6px;">
+
+                    No saved listings yet
+
+                </div>
+
+                <p style="
+                    font-size:12px;
+                    color:#888;">
+
+                    Browse listings and tap the heart icon
+                    to save items for later.
+
+                </p>
+
+                <a href="/listings/browse"
+                   style="
+                        display:inline-flex;
+                        align-items:center;
+                        gap:6px;
+                        background:#4B3BC7;
+                        color:#fff;
+                        border-radius:7px;
+                        padding:9px 18px;
+                        font-size:12px;
+                        font-weight:500;
+                        text-decoration:none;
+                        margin-top:14px;">
+
+                    <i class="ti ti-search"
+                       aria-hidden="true"></i>
+
+                    Browse listings
+
+                </a>
+
             </div>
         }
+
     </div>
+
 </div>

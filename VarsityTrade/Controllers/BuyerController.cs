@@ -243,27 +243,96 @@ namespace VarsityTrade.Web.Controllers
         }
 
         //-----------------------------------------------------------
-        //Buyer saved listings
+        // Buyer saved listings
         //-----------------------------------------------------------
+
         [HttpGet("saved")]
         public async Task<IActionResult> Saved(string filter = "All")
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
 
-            // Deferred to QA — saved listings API endpoint
-            // For now show empty state
-            var savedListings = await _api.GetAsync<List<ListingCardViewModel>>(
-                        "api/listings/saved");
+            var savedListings =
+                await _api.GetAsync<List<ListingCardViewModel>>(
+                    "api/listings/saved");
 
-            ViewBag.SavedListings = savedListings
-                ?? new List<ListingCardViewModel>();
+            var listings =
+                savedListings ?? new List<ListingCardViewModel>();
 
+            // Only apply filters that can be supported by the data
+            // currently returned by the saved-listings API.
+            if (filter.Equals("Still available", StringComparison.OrdinalIgnoreCase))
+            {
+                listings = listings
+                    .Where(l =>
+                        l.Status.Equals(
+                            "Active",
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            ViewBag.SavedListings = listings;
             ViewBag.ActiveFilter = filter;
+
             ViewData["SidebarPage"] = "saved";
+
             return View();
         }
 
+        [HttpPost("saved/save")]
+        public async Task<IActionResult> SaveListing(int listingId)
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var result =
+                await _api.PostWithStatusAsync<object>(
+                    $"api/listings/{listingId}/save",
+                    new { });
+
+            if (!result.Success)
+            {
+                TempData["Error"] =
+                    "Could not save this listing. Please try again.";
+
+                return RedirectToAction(
+                    "Detail",
+                    "Listings",
+                    new { id = listingId });
+            }
+
+            TempData["Success"] =
+                "Listing saved successfully.";
+
+            return RedirectToAction(
+                "Detail",
+                "Listings",
+                new { id = listingId });
+        }
+
+        [HttpPost("saved/unsave")]
+        public async Task<IActionResult> UnsaveListing(int listingId)
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            var success =
+                await _api.DeleteAsync(
+                    $"api/listings/{listingId}/save");
+
+            if (!success)
+            {
+                TempData["Error"] =
+                    "Could not remove this listing from your saved listings.";
+
+                return RedirectToAction("Saved");
+            }
+
+            TempData["Success"] =
+                "Listing removed from saved listings.";
+
+            return RedirectToAction("Saved");
+        }
         //-------------------------------------------------────────----
         //Buyer reviews
         //-------------------------------------------------────────----

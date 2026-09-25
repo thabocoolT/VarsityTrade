@@ -614,10 +614,69 @@
                     {
                         @if (isLoggedIn)
                         {
+                            @if (ViewBag.IsSaved == true)
+                            {
+                                <form asp-controller="Buyer"
+                                      asp-action="UnsaveListing"
+                                      method="post"
+                                      style="margin:0 0 8px 0;">
+
+                                    <input type="hidden"
+                                           name="listingId"
+                                           value="@Model.ListingId" />
+
+                                    <button type="submit"
+                                            class="vt-btn vt-btn-outline"
+                                            style="
+                                        width:100%;
+                                        justify-content:center;
+                                        color:#B91C1C;
+                                        border-color:#E6B0AA;">
+
+                                        <i class="ti ti-heart-off"
+                                           aria-hidden="true"></i>
+
+                                        Remove from saved
+                                    </button>
+
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-controller="Buyer"
+                                      asp-action="SaveListing"
+                                      method="post"
+                                      style="margin:0 0 8px 0;">
+
+                                    <input type="hidden"
+                                           name="listingId"
+                                           value="@Model.ListingId" />
+
+                                    <button type="submit"
+                                            class="vt-btn vt-btn-outline"
+                                            style="
+                                        width:100%;
+                                        justify-content:center;">
+
+                                        <i class="ti ti-heart"
+                                           aria-hidden="true"></i>
+
+                                        Save listing
+                                    </button>
+
+                                </form>
+                            }
+
                             <a href="/buyer/inbox/start?listingId=@Model.ListingId"
                                class="vt-btn vt-btn-outline"
-                               style="width:100%;justify-content:center;margin-bottom:8px;">
-                                <i class="ti ti-message-circle" aria-hidden="true"></i>
+                               style="
+                                width:100%;
+                                justify-content:center;
+                                margin-bottom:8px;">
+
+                                <i class="ti ti-message-circle"
+                                   aria-hidden="true"></i>
+
                                 Message seller
                             </a>
 
@@ -629,6 +688,7 @@
 
                                 <i class="ti ti-arrows-exchange"
                                    aria-hidden="true"></i>
+
                                 Make an offer
                             </a>
                         }
@@ -642,6 +702,7 @@
 
                                 <i class="ti ti-login"
                                    aria-hidden="true"></i>
+
                                 Log in to contact seller
                             </a>
                         }

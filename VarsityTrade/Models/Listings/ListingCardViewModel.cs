@@ -51,5 +51,8 @@ namespace VarsityTrade.Web.Models.Listings
 
         [JsonProperty("sellerProfileId")]
         public int SellerProfileId { get; set; }
+
+        [JsonProperty("isLoggedIn")]
+        public bool IsLoggedIn { get; set; }
     }
 }

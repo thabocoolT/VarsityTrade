@@ -241,7 +241,28 @@ namespace VarsityTrade.Web.Controllers
                 }
             }
 
+            var isSaved = false;
+
+            
+
+            if (!string.IsNullOrEmpty(accessToken) && !isOwner)
+            {
+                var savedResult =
+                    await _api.GetAsync<dynamic>(
+                        $"api/listings/{listing.ListingId}/saved");
+
+                try
+                {
+                    isSaved = savedResult?.saved == true;
+                }
+                catch
+                {
+                    isSaved = false;
+                }
+            }
+
             ViewBag.IsOwner = isOwner;
+            ViewBag.IsSaved = isSaved;
             ViewBag.RelatedListings = relatedListings;
 
             ViewData["SidebarPage"] = "browse";
