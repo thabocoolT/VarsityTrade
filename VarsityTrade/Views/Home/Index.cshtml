@@ -603,13 +603,11 @@
                             color:#7F77DD;
                             position:relative;">
 
-                            @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
+                           @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
                             {
-                                <img src="@listing.CoverImageUrl"
+                                <img src="@ImageHelper.ResolveUrl(listing.CoverImageUrl)"
                                      alt="@listing.Title"
-                                     style="width:100%;
-                                height:100%;
-                                object-fit:cover;" />
+                                     style="width:100%;height:100%;object-fit:cover;" />
                             }
                             else
                             {

@@ -7,9 +7,17 @@
 
     var conversation = Model.Conversation;
 
+    var sellerName =
+        $"{conversation.SellerFirstName} {conversation.SellerLastName}".Trim();
+
+    if (string.IsNullOrWhiteSpace(sellerName))
+    {
+        sellerName = conversation.StoreName;
+    }
+
     var sellerInitial =
-        !string.IsNullOrWhiteSpace(conversation.StoreName)
-            ? conversation.StoreName[0].ToString().ToUpper()
+        !string.IsNullOrWhiteSpace(sellerName)
+            ? sellerName[0].ToString().ToUpper()
             : "?";
 
     var currentUserInitial =
@@ -44,7 +52,7 @@
 
                 <div>
                     <div class="vt-thread-name">
-                        @conversation.StoreName
+                        @sellerName
                     </div>
 
                     <div class="vt-thread-meta">
@@ -221,13 +229,13 @@
                     </div>
 
                     <div>
-                        <div class="vt-thread-seller-name">
-                            @conversation.StoreName
-                        </div>
+                       <div class="vt-thread-seller-name">
+                        @sellerName
+                    </div>
 
-                        <div class="vt-thread-seller-meta">
-                            Seller on Varsity Trade
-                        </div>
+                    <div class="vt-thread-seller-meta">
+                        @conversation.SellerUniversityName
+                    </div>
                     </div>
 
                 </div>

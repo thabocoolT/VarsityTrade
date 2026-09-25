@@ -129,15 +129,11 @@
                                 font-size:16px;
                                 flex-shrink:0;">
 
-                                @if (!string.IsNullOrWhiteSpace(
-                                    listing.CoverImageUrl))
+                                @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
                                 {
-                                    <img src="@listing.CoverImageUrl"
+                                    <img src="@ImageHelper.ResolveUrl(listing.CoverImageUrl)"
                                          alt="@listing.Title"
-                                         style="width:100%;
-                                    height:100%;
-                                    object-fit:cover;
-                                    border-radius:6px;" />
+                                         style="width:100%;height:100%;object-fit:cover;" />
                                 }
                                 else
                                 {

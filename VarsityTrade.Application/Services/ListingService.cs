@@ -250,6 +250,91 @@ namespace VarsityTrade.Application.Services
         }
 
         // ─────────────────────────────────────────────────────────────
+        // SAVED LISTINGS
+        // ─────────────────────────────────────────────────────────────
+
+        public async Task<bool> SaveListingAsync(int userId, int listingId)
+        {
+            // Make sure the listing exists and is still available.
+            var listingExists = await _context.Listings.AnyAsync(l =>
+                l.ListingId == listingId &&
+                l.DeletedAt == null &&
+                l.ListingStatus.Name == "Active");
+
+            if (!listingExists)
+                return false;
+
+            // Prevent duplicate saves.
+            var alreadySaved = await _context.SavedListigs.AnyAsync(s =>
+                s.UserId == userId &&
+                s.ListingId == listingId);
+
+            if (alreadySaved)
+                return true;
+
+            var savedListing = new SavedListing
+            {
+                UserId = userId,
+                ListingId = listingId,
+                SavedAt = DateTime.UtcNow
+            };
+
+            await _context.SavedListigs.AddAsync(savedListing);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> UnsaveListingAsync(int userId, int listingId)
+        {
+            var savedListing = await _context.SavedListigs
+                .FirstOrDefaultAsync(s =>
+                    s.UserId == userId &&
+                    s.ListingId == listingId);
+
+            if (savedListing == null)
+                return false;
+
+            _context.SavedListigs.Remove(savedListing);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<bool> IsListingSavedAsync(int userId, int listingId)
+        {
+            return await _context.SavedListigs.AnyAsync(s =>
+                s.UserId == userId &&
+                s.ListingId == listingId);
+        }
+
+        public async Task<IEnumerable<ListingResponseDto>> GetSavedListingsAsync(int userId)
+        {
+            var listings = await _context.SavedListigs
+                .Include(s => s.Listing)
+                    .ThenInclude(l => l.SellerProfile)
+                        .ThenInclude(sp => sp.User)
+                .Include(s => s.Listing)
+                    .ThenInclude(l => l.Category)
+                .Include(s => s.Listing)
+                    .ThenInclude(l => l.Condition)
+                .Include(s => s.Listing)
+                    .ThenInclude(l => l.ListingStatus)
+                .Include(s => s.Listing)
+                    .ThenInclude(l => l.University)
+                .Include(s => s.Listing)
+                    .ThenInclude(l => l.ListingImages)
+                .Where(s =>
+                    s.UserId == userId &&
+                    s.Listing.DeletedAt == null)
+                .OrderByDescending(s => s.SavedAt)
+                .Select(s => s.Listing)
+                .ToListAsync();
+
+            return listings.Select(MapToResponseDto);
+        }
+
+        // ─────────────────────────────────────────────────────────────
         // PRIVATE HELPER — MAP TO RESPONSE DTO
         // Maps a Listing entity to a ListingResponseDto
         // Centralised here so all methods return consistent data

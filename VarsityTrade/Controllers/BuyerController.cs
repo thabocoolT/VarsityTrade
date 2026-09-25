@@ -253,7 +253,12 @@ namespace VarsityTrade.Web.Controllers
 
             // Deferred to QA — saved listings API endpoint
             // For now show empty state
-            ViewBag.SavedListings = new List<VarsityTrade.Web.Models.Listings.ListingCardViewModel>();
+            var savedListings = await _api.GetAsync<List<ListingCardViewModel>>(
+                        "api/listings/saved");
+
+            ViewBag.SavedListings = savedListings
+                ?? new List<ListingCardViewModel>();
+
             ViewBag.ActiveFilter = filter;
             ViewData["SidebarPage"] = "saved";
             return View();

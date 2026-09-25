@@ -44,9 +44,19 @@
                            asp-route-id="@conversation.ConversationId">
 
                             <div class="vt-inbox-avatar">
+                                @{
+                                    var sellerNameForAvatar =
+                                        $"{conversation.SellerFirstName} {conversation.SellerLastName}".Trim();
+
+                                    if (string.IsNullOrWhiteSpace(sellerNameForAvatar))
+                                    {
+                                        sellerNameForAvatar = conversation.StoreName;
+                                    }
+                                }
+
                                 @(
-                                    !string.IsNullOrWhiteSpace(conversation.StoreName)
-                                        ? conversation.StoreName[0].ToString().ToUpper()
+                                    !string.IsNullOrWhiteSpace(sellerNameForAvatar)
+                                        ? sellerNameForAvatar[0].ToString().ToUpper()
                                         : "?"
                                 )
                             </div>
@@ -55,7 +65,16 @@
 
                                 <div class="vt-inbox-conversation-top">
                                     <span>
-                                        @conversation.StoreName
+                                        @{
+
+                                           var sellerName = $"{conversation.StoreName}{conversation.SellerLastName}".Trim();
+
+                                            if (string.IsNullOrWhiteSpace(sellerName))
+                                            {
+                                                sellerName = conversation.StoreName;
+                                            }
+                                        }
+                                            @sellerName
                                     </span>
 
                                     <small>

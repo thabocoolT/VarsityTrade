@@ -34,5 +34,13 @@ namespace VarsityTrade.Core.Interfaces
         Task
             IncrementViewCountAsync(
                 int listingId);
+
+        Task<bool> SaveListingAsync(int userId, int listingId);
+
+        Task<bool> UnsaveListingAsync(int userId, int listingId);
+
+        Task<bool> IsListingSavedAsync(int userId, int listingId);
+
+        Task<IEnumerable<ListingResponseDto>> GetSavedListingsAsync(int userId);
     }
 }

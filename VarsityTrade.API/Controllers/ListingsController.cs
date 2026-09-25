@@ -355,6 +355,94 @@ namespace VarsityTrade.API.Controllers
 
             return Ok(listings);
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // SAVED LISTINGS
+        // ─────────────────────────────────────────────────────────────
+
+        [Authorize]
+        [HttpGet("saved")]
+        public async Task<IActionResult> GetSavedListings()
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId == null)
+                return Unauthorized();
+
+            var listings = await _listingService
+                .GetSavedListingsAsync(userId.Value);
+
+            return Ok(listings);
+        }
+
+        [Authorize]
+        [HttpPost("{id:int}/save")]
+        public async Task<IActionResult> SaveListing(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId == null)
+                return Unauthorized();
+
+            var success = await _listingService
+                .SaveListingAsync(userId.Value, id);
+
+            if (!success)
+            {
+                return NotFound(new
+                {
+                    message = "Listing not found or is no longer available."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "Listing saved successfully."
+            });
+        }
+
+        [Authorize]
+        [HttpDelete("{id:int}/save")]
+        public async Task<IActionResult> UnsaveListing(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId == null)
+                return Unauthorized();
+
+            var success = await _listingService
+                .UnsaveListingAsync(userId.Value, id);
+
+            if (!success)
+            {
+                return NotFound(new
+                {
+                    message = "Saved listing not found."
+                });
+            }
+
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpGet("{id:int}/saved")]
+        public async Task<IActionResult> IsListingSaved(int id)
+        {
+            var userId = GetCurrentUserId();
+
+            if (userId == null)
+                return Unauthorized();
+
+            var saved = await _listingService
+                .IsListingSavedAsync(userId.Value, id);
+
+            return Ok(new
+            {
+                saved
+            });
+        }
+
+
         /// <summary>Uploads an image for a listing and returns the saved URL.</summary>
         [HttpPost("upload-image")]
         [Authorize]
