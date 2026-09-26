@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc; // Provides ControllerBase, Route, HttpPost etc
-using VarsityTrade.Core.DTOs.Auth; // Provides Auth DTOs
-using VarsityTrade.Core.Interfaces; // Provides IAuthService
+﻿
+using Azure.Core;
+using Microsoft.AspNetCore.Mvc;
+using VarsityTrade.Core.DTOs.Auth;
+using VarsityTrade.Core.Interfaces;
 
 namespace VarsityTrade.API.Controllers
 {
@@ -12,8 +14,8 @@ namespace VarsityTrade.API.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        // IAuthService is injected — the controller never knows about AuthService directly
-        // This keeps the controller thin and the business logic in the service
+        // IAuthService is injected through dependency injection
+        // The controller depends on the interface, not the concrete service
         private readonly IAuthService _authService;
 
         // Constructor receives IAuthService via dependency injection
@@ -26,37 +28,53 @@ namespace VarsityTrade.API.Controllers
         // POST /api/auth/register
         // Registers a new student account
         // ─────────────────────────────────────────────────────────────
-        /// <summary>Registers a new student account and returns a JWT token pair.</summary>
+        /// <summary>
+        /// Registers a new student account and returns a JWT token pair.
+        /// </summary>
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        public async Task<IActionResult> Register(
+            [FromBody] RegisterRequestDto request)
         {
-            // Call the auth service to handle registration logic
+            // Call the authentication service
             var result = await _authService.RegisterAsync(request);
 
-            // If result is null the email already exists or registration failed
+            // Registration failed
             if (result == null)
-                return BadRequest(new { message = "Registration failed. Email may already be in use." });
+            {
+                return BadRequest(new
+                {
+                    message = "Registration failed. Email may already be in use."
+                });
+            }
 
-            // Return 200 OK with the token and user info
+            // Return the authentication response
             return Ok(result);
         }
 
         // ─────────────────────────────────────────────────────────────
         // POST /api/auth/login
-        // Logs in an existing student and returns JWT tokens
+        // Logs in an existing student
         // ─────────────────────────────────────────────────────────────
-        /// <summary>Logs in an existing student and returns a JWT token pair.</summary>
+        /// <summary>
+        /// Logs in an existing student and returns a JWT token pair.
+        /// </summary>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+        public async Task<IActionResult> Login(
+            [FromBody] LoginRequestDto request)
         {
-            // Call the auth service to verify credentials and generate tokens
+            // Call the authentication service
             var result = await _authService.LoginAsync(request);
 
-            // If result is null the credentials were invalid
+            // Login failed
             if (result == null)
-                return Unauthorized(new { message = "Invalid email or password." });
+            {
+                return Unauthorized(new
+                {
+                    message = "Invalid email or password."
+                });
+            }
 
-            // Return 200 OK with the token and user info
+            // Return the authentication response
             return Ok(result);
         }
 
@@ -64,18 +82,27 @@ namespace VarsityTrade.API.Controllers
         // POST /api/auth/refresh
         // Generates a new access token using a valid refresh token
         // ─────────────────────────────────────────────────────────────
-        /// <summary>Generates a new access token using a valid refresh token.</summary>
+        /// <summary>
+        /// Generates a new access token using a valid refresh token.
+        /// </summary>
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+        public async Task<IActionResult> Refresh(
+            [FromBody] string refreshToken)
         {
-            // Call the auth service to validate and rotate the refresh token
+            // Call the authentication service to validate
+            // and rotate the refresh token
             var result = await _authService.RefreshTokenAsync(refreshToken);
 
-            // If result is null the refresh token is invalid or expired
+            // Refresh token is invalid or expired
             if (result == null)
-                return Unauthorized(new { message = "Invalid or expired refresh token." });
+            {
+                return Unauthorized(new
+                {
+                    message = "Invalid or expired refresh token."
+                });
+            }
 
-            // Return 200 OK with the new token pair
+            // Return the new token pair
             return Ok(result);
         }
     }

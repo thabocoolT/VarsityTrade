@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using VarsityTrade.Core.DTOs.Listings;
+using VarsityTrade.Core.Entities;
 using VarsityTrade.Core.Interfaces;
 using VarsityTrade.Infrastructure.Data;
 
@@ -365,40 +366,79 @@ namespace VarsityTrade.API.Controllers
         public async Task<IActionResult> GetSavedListings()
         {
             var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
 
-            if (userId == null)
-                return Unauthorized();
+            var savedListings = await _context.SavedListings
+                .Include(sl => sl.Listing)
+                    .ThenInclude(l => l.ListingStatus)
+                .Include(sl => sl.Listing)
+                    .ThenInclude(l => l.Category)
+                .Include(sl => sl.Listing)
+                    .ThenInclude(l => l.Condition)
+                .Include(sl => sl.Listing)
+                    .ThenInclude(l => l.ListingImages)
+                .Include(sl => sl.Listing)
+                    .ThenInclude(l => l.SellerProfile)
+                .Include(sl => sl.Listing)
+                    .ThenInclude(l => l.University)
+                .Where(sl => sl.UserId == userId.Value
+                          && sl.Listing.DeletedAt == null)
+                .OrderByDescending(sl => sl.SavedAt)
+                .Select(sl => new
+                {
+                    sl.Listing.ListingId,
+                    sl.Listing.Title,
+                    sl.Listing.Price,
+                    sl.Listing.ViewCount,
+                    sl.Listing.IsFeatured,
+                    sl.Listing.CreatedAt,
+                    sl.SavedAt,
+                    Status = sl.Listing.ListingStatus != null ? sl.Listing.ListingStatus.Name : "Unknown",
+                    Condition = sl.Listing.Condition != null ? sl.Listing.Condition.Name : "Unknown",
+                    CategoryName = sl.Listing.Category != null ? sl.Listing.Category.Name : "Unknown",
+                    StoreName = sl.Listing.SellerProfile != null ? sl.Listing.SellerProfile.StoreName : "Seller",
+                    UniversityShortName = sl.Listing.University != null ? sl.Listing.University.ShortName : "",
+                    CoverImageUrl = sl.Listing.ListingImages != null
+                        ? sl.Listing.ListingImages
+                            .Where(i => i.IsCoverImage)
+                            .Select(i => i.ImagePath)
+                            .FirstOrDefault()
+                          ?? sl.Listing.ListingImages
+                            .Select(i => i.ImagePath)
+                            .FirstOrDefault()
+                        : null
+                })
+                .ToListAsync();
 
-            var listings = await _listingService
-                .GetSavedListingsAsync(userId.Value);
-
-            return Ok(listings);
+            return Ok(savedListings);
         }
+
 
         [Authorize]
         [HttpPost("{id:int}/save")]
         public async Task<IActionResult> SaveListing(int id)
         {
             var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
 
-            if (userId == null)
-                return Unauthorized();
+            // Check not already saved
+            var exists = await _context.SavedListings
+                .AnyAsync(sl => sl.UserId == userId.Value && sl.ListingId == id);
 
-            var success = await _listingService
-                .SaveListingAsync(userId.Value, id);
+            if (exists)
+                return Ok(new { message = "Already saved." });
 
-            if (!success)
+            var saved = new SavedListing
             {
-                return NotFound(new
-                {
-                    message = "Listing not found or is no longer available."
-                });
-            }
+                UserId = userId.Value,
+                ListingId = id,
+                SavedAt = DateTime.UtcNow,
+            };
 
-            return Ok(new
-            {
-                message = "Listing saved successfully."
-            });
+            await _context.SavedListings.AddAsync(saved);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Listing saved." });
         }
 
         [Authorize]
@@ -469,6 +509,43 @@ namespace VarsityTrade.API.Controllers
 
             var url = $"/uploads/listings/{fileName}";
             return Ok(new { url });
+        }
+
+
+        /// <summary>Marks a listing as sold — seller only.</summary>
+        [HttpPut("{id}/sold")]
+        [Authorize]
+        public async Task<IActionResult> MarkAsSold(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Unauthorized();
+
+            var sellerProfile = await _context.SellerProfiles
+                .FirstOrDefaultAsync(sp => sp.UserId == userId.Value && sp.IsActive);
+
+            if (sellerProfile == null)
+                return Forbid();
+
+            var listing = await _context.Listings
+                .FirstOrDefaultAsync(l =>
+                    l.ListingId == id
+                    && l.SellerProfileId == sellerProfile.SellerProfileId
+                    && l.DeletedAt == null);
+
+            if (listing == null)
+                return NotFound(new { message = "Listing not found." });
+
+            var soldStatus = await _context.ListingStatuses
+                .FirstOrDefaultAsync(ls => ls.Name == "Sold");
+
+            if (soldStatus != null)
+                listing.ListingStatusId = soldStatus.ListingStatusId;
+
+            listing.UpdatedAt = DateTime.UtcNow;
+            _context.Listings.Update(listing);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Listing marked as sold." });
         }
 
 

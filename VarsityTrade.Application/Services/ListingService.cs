@@ -265,7 +265,7 @@ namespace VarsityTrade.Application.Services
                 return false;
 
             // Prevent duplicate saves.
-            var alreadySaved = await _context.SavedListigs.AnyAsync(s =>
+            var alreadySaved = await _context.SavedListings.AnyAsync(s =>
                 s.UserId == userId &&
                 s.ListingId == listingId);
 
@@ -279,7 +279,7 @@ namespace VarsityTrade.Application.Services
                 SavedAt = DateTime.UtcNow
             };
 
-            await _context.SavedListigs.AddAsync(savedListing);
+            await _context.SavedListings.AddAsync(savedListing);
             await _context.SaveChangesAsync();
 
             return true;
@@ -287,7 +287,7 @@ namespace VarsityTrade.Application.Services
 
         public async Task<bool> UnsaveListingAsync(int userId, int listingId)
         {
-            var savedListing = await _context.SavedListigs
+            var savedListing = await _context.SavedListings
                 .FirstOrDefaultAsync(s =>
                     s.UserId == userId &&
                     s.ListingId == listingId);
@@ -295,7 +295,7 @@ namespace VarsityTrade.Application.Services
             if (savedListing == null)
                 return false;
 
-            _context.SavedListigs.Remove(savedListing);
+            _context.SavedListings.Remove(savedListing);
             await _context.SaveChangesAsync();
 
             return true;
@@ -303,14 +303,14 @@ namespace VarsityTrade.Application.Services
 
         public async Task<bool> IsListingSavedAsync(int userId, int listingId)
         {
-            return await _context.SavedListigs.AnyAsync(s =>
+            return await _context.SavedListings.AnyAsync(s =>
                 s.UserId == userId &&
                 s.ListingId == listingId);
         }
 
         public async Task<IEnumerable<ListingResponseDto>> GetSavedListingsAsync(int userId)
         {
-            var listings = await _context.SavedListigs
+            var listings = await _context.SavedListings
                 .Include(s => s.Listing)
                     .ThenInclude(l => l.SellerProfile)
                         .ThenInclude(sp => sp.User)

@@ -29,7 +29,7 @@ namespace VarsityTrade.Infrastructure.Data
         public DbSet<ListingStatus> ListingStatuses { get; set; }
         public DbSet<Listing> Listings { get; set; }
         public DbSet<ListingImage> ListingImages { get; set; }
-        public DbSet<SavedListing> SavedListigs { get; set; }
+        public DbSet<SavedListing> SavedListings { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Offer> Offers { get; set; }

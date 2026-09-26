@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Edit Listing";
+    ViewData["SidebarPage"] = "seller-listings";
     Layout = "_Layout";
 
     var listingId =
@@ -14,17 +15,58 @@
 
     <div class="vt-main">
 
-        <div class="vt-card-title"
-             style="margin-bottom:14px;">
+        @* Page header *@
+        <div class="vt-page-header">
 
-            <i class="ti ti-edit"
-               aria-hidden="true"></i>
+            <div class="vt-page-header-left">
 
-            Edit listing
+                <div class="vt-page-title">
+
+                    <i class="ti ti-edit"
+                       aria-hidden="true"
+                       style="color:#4B3BC7;"></i>
+
+                    Edit listing
+
+                </div>
+
+                <div class="vt-page-sub">
+                    Update the details of your listing.
+                </div>
+
+            </div>
+
+
+            <div class="vt-page-header-right">
+
+                <a href="/listings/@listingId"
+                   style="background:#fff;
+                          color:#666;
+                          border:0.5px solid #ddd;
+                          border-radius:7px;
+                          padding:8px 14px;
+                          font-size:12px;
+                          text-decoration:none;
+                          display:flex;
+                          align-items:center;
+                          gap:5px;">
+
+                    <i class="ti ti-arrow-left"
+                       aria-hidden="true"></i>
+
+                    Back
+
+                </a>
+
+            </div>
 
         </div>
 
-        <div class="vt-card">
+
+        <div style="background:#fff;
+                    border:0.5px solid #e0ddf5;
+                    border-radius:12px;
+                    padding:16px;">
 
             <form asp-controller="Seller"
                   asp-action="EditListing"
@@ -33,88 +75,181 @@
 
                 @Html.AntiForgeryToken()
 
+
                 <div asp-validation-summary="ModelOnly"
-                     class="vt-form-error"
-                     style="margin-bottom:12px;">
+                     style="background:#FDECEA;
+                            border:0.5px solid #f3c5c0;
+                            border-radius:7px;
+                            padding:8px 10px;
+                            margin-bottom:14px;
+                            font-size:11px;
+                            color:#B91C1C;">
                 </div>
 
-                <div class="vt-form-group">
 
-                    <label class="vt-form-label">
-                        Title
+                @* Listing details heading *@
+                <div style="font-size:12px;
+                            font-weight:500;
+                            color:#26215C;
+                            margin-bottom:12px;
+                            padding-bottom:6px;
+                            border-bottom:0.5px solid #e0ddf5;
+                            display:flex;
+                            align-items:center;
+                            gap:6px;">
+
+                    <i class="ti ti-tag"
+                       aria-hidden="true"></i>
+
+                    Listing details
+
+                </div>
+
+
+                @* Title *@
+                <div style="margin-bottom:12px;">
+
+                    <label asp-for="Title"
+                           style="display:block;
+                                  font-size:11px;
+                                  color:#555;
+                                  margin-bottom:4px;">
+
+                        Listing title
+
                     </label>
+
 
                     <input asp-for="Title"
-                           class="vt-form-input" />
+                           type="text"
+                           maxlength="80"
+                           class="vt-form-input"
+                           style="width:100%;" />
+
 
                     <span asp-validation-for="Title"
-                          class="vt-form-error">
+                          style="display:block;
+                                 font-size:10px;
+                                 color:#e74c3c;
+                                 margin-top:3px;">
                     </span>
 
                 </div>
 
-                <div class="vt-form-group">
 
-                    <label class="vt-form-label">
+                @* Description *@
+                <div style="margin-bottom:12px;">
+
+                    <label asp-for="Description"
+                           style="display:block;
+                                  font-size:11px;
+                                  color:#555;
+                                  margin-bottom:4px;">
+
                         Description
+
                     </label>
 
+
                     <textarea asp-for="Description"
+                              rows="5"
+                              maxlength="500"
                               class="vt-form-input"
-                              rows="4">
+                              style="width:100%;
+                                     resize:none;">
                     </textarea>
 
+
                     <span asp-validation-for="Description"
-                          class="vt-form-error">
+                          style="display:block;
+                                 font-size:10px;
+                                 color:#e74c3c;
+                                 margin-top:3px;">
                     </span>
 
                 </div>
 
+
+                @* Price + Quantity *@
                 <div style="display:grid;
-                    grid-template-columns:1fr 1fr;
-                    gap:12px;">
+                            grid-template-columns:1fr 1fr;
+                            gap:12px;
+                            margin-bottom:12px;">
 
-                    <div class="vt-form-group">
+                    <div>
 
-                        <label class="vt-form-label">
+                        <label asp-for="Price"
+                               style="display:block;
+                                      font-size:11px;
+                                      color:#555;
+                                      margin-bottom:4px;">
+
                             Price (R)
+
                         </label>
+
 
                         <input asp-for="Price"
                                class="vt-form-input"
                                type="number"
                                min="0"
-                               step="0.01" />
+                               step="0.01"
+                               style="width:100%;" />
+
+
+                        <span asp-validation-for="Price"
+                              style="display:block;
+                                     font-size:10px;
+                                     color:#e74c3c;
+                                     margin-top:3px;">
+                        </span>
 
                     </div>
 
-                    <div class="vt-form-group">
 
-                        <label class="vt-form-label">
+                    <div>
+
+                        <label asp-for="Quantity"
+                               style="display:block;
+                                      font-size:11px;
+                                      color:#555;
+                                      margin-bottom:4px;">
+
                             Quantity
+
                         </label>
+
 
                         <input asp-for="Quantity"
                                class="vt-form-input"
                                type="number"
-                               min="1" />
+                               min="1"
+                               style="width:100%;" />
 
                     </div>
 
                 </div>
 
+
+                @* Category + Condition *@
                 <div style="display:grid;
-                    grid-template-columns:1fr 1fr;
-                    gap:12px;">
+                            grid-template-columns:1fr 1fr;
+                            gap:12px;
+                            margin-bottom:12px;">
 
-                    <div class="vt-form-group">
+                    <div>
 
-                        <label class="vt-form-label">
+                        <label asp-for="CategoryId"
+                               class="vt-form-label">
+
                             Category
+
                         </label>
 
+
                         <select asp-for="CategoryId"
-                                class="vt-form-select">
+                                class="vt-form-select"
+                                style="width:100%;">
 
                             @foreach (var category
                                 in Model.Categories)
@@ -128,18 +263,20 @@
 
                     </div>
 
-                    <div class="vt-form-group">
 
-                        <label class="vt-form-label">
+                    <div>
+
+                        <label asp-for="ConditionId"
+                               class="vt-form-label">
+
                             Condition
+
                         </label>
 
-                        <select asp-for="ConditionId"
-                                class="vt-form-select">
 
-                            <option value="0">
-                                Select condition
-                            </option>
+                        <select asp-for="ConditionId"
+                                class="vt-form-select"
+                                style="width:100%;">
 
                             @foreach (var condition
                                 in Model.Conditions)
@@ -151,96 +288,153 @@
 
                         </select>
 
+
+                        <span asp-validation-for="ConditionId"
+                              style="display:block;
+                                     font-size:10px;
+                                     color:#e74c3c;
+                                     margin-top:3px;">
+                        </span>
+
                     </div>
 
                 </div>
 
+
+                @* Listing type + negotiable *@
                 <div style="display:grid;
-                    grid-template-columns:1fr 1fr;
-                    gap:12px;">
+                            grid-template-columns:1fr 1fr;
+                            gap:12px;
+                            margin-bottom:12px;">
 
-                    <div class="vt-form-group">
+                    <div>
 
-                        <label class="vt-form-label">
+                        <label asp-for="ListingType"
+                               class="vt-form-label">
+
                             Listing type
+
                         </label>
 
+
                         <select asp-for="ListingType"
-                                class="vt-form-select">
+                                class="vt-form-select"
+                                style="width:100%;">
 
                             <option value="Sale">
-                                Sale
+                                For sale
                             </option>
 
                             <option value="Trade">
-                                Trade
+                                Trade / exchange
                             </option>
 
                             <option value="Sale or Trade">
-                                Sale or Trade
+                                Sale or trade
                             </option>
 
                         </select>
 
                     </div>
 
-                    <div class="vt-form-group"
-                         style="display:flex;
-                        align-items:center;
-                        gap:8px;
-                        padding-top:22px;">
+
+                    <div style="display:flex;
+                                align-items:center;
+                                gap:8px;
+                                padding-top:24px;">
 
                         <input asp-for="IsNegotiable"
                                type="checkbox"
-                               style="width:16px;height:16px;" />
+                               style="width:16px;
+                                      height:16px;" />
 
                         <label asp-for="IsNegotiable"
-                               class="vt-form-label"
-                               style="margin-bottom:0;">
+                               style="font-size:11px;
+                                      color:#555;
+                                      margin:0;">
+
                             Price is negotiable
+
                         </label>
 
                     </div>
 
                 </div>
 
-                <div style="display:flex;
-                    gap:16px;
-                    margin-bottom:16px;">
 
-                    <label style="display:flex;
-                        align-items:center;
-                        gap:8px;
-                        font-size:12px;">
+                @* Pickup + Delivery *@
+                <div style="border-top:0.5px solid #e0ddf5;
+                            padding-top:14px;
+                            margin-top:4px;">
 
-                        <input asp-for="CampusPickup"
-                               type="checkbox"
-                               style="width:16px;height:16px;" />
+                    <div style="font-size:12px;
+                                font-weight:500;
+                                color:#26215C;
+                                margin-bottom:10px;
+                                display:flex;
+                                align-items:center;
+                                gap:6px;">
 
-                        Campus pickup available
+                        <i class="ti ti-map-pin"
+                           aria-hidden="true"></i>
 
-                    </label>
+                        Pickup & delivery
 
-                    <label style="display:flex;
-                        align-items:center;
-                        gap:8px;
-                        font-size:12px;">
+                    </div>
 
-                        <input asp-for="DeliveryAvailable"
-                               type="checkbox"
-                               style="width:16px;height:16px;" />
 
-                        Delivery available
+                    <div style="display:flex;
+                                align-items:center;
+                                gap:24px;
+                                margin-bottom:16px;">
 
-                    </label>
+                        <label style="display:flex;
+                                      align-items:center;
+                                      gap:8px;
+                                      font-size:11px;
+                                      color:#555;">
+
+                            <input asp-for="CampusPickup"
+                                   type="checkbox"
+                                   style="width:16px;
+                                          height:16px;" />
+
+                            Campus pickup available
+
+                        </label>
+
+
+                        <label style="display:flex;
+                                      align-items:center;
+                                      gap:8px;
+                                      font-size:11px;
+                                      color:#555;">
+
+                            <input asp-for="DeliveryAvailable"
+                                   type="checkbox"
+                                   style="width:16px;
+                                          height:16px;" />
+
+                            Delivery available
+
+                        </label>
+
+                    </div>
 
                 </div>
 
+
+                @* Form actions *@
                 <div style="display:flex;
-                    gap:10px;">
+                            gap:8px;
+                            padding-top:4px;
+                            border-top:0.5px solid #f0eefb;">
 
                     <button type="submit"
-                            class="vt-btn vt-btn-primary">
+                            class="vt-btn vt-btn-primary"
+                            style="display:flex;
+                                   align-items:center;
+                                   gap:6px;">
 
                         <i class="ti ti-device-floppy"
                            aria-hidden="true"></i>
@@ -249,8 +443,15 @@
 
                     </button>
 
+
                     <a href="/listings/@listingId"
-                       class="vt-btn vt-btn-outline">
+                       class="vt-btn vt-btn-outline"
+                       style="display:flex;
+                              align-items:center;
+                              gap:6px;">
+
+                        <i class="ti ti-x"
+                           aria-hidden="true"></i>
 
                         Cancel
 

@@ -199,20 +199,7 @@ namespace VarsityTrade.Web.Controllers
             return RedirectToAction("Listings");
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // POST /seller/listings/mark-sold
-        // Marks a listing as sold
-        // ─────────────────────────────────────────────────────────────
-        [HttpPost("listings/mark-sold")]
-public async Task<IActionResult> MarkAsSold(int listingId)
-{
-    var auth = RequireAuth();
-    if (auth != null) return auth;
-
-    // Call the API to update the listing status to Sold
-    // Deferred to QA — will wire to a dedicated endpoint in Phase 5.8
-    return RedirectToAction("Listings");
-}
+        
 
         // ─────────────────────────────────────────────────────────────
         // GET /seller/offers
@@ -520,6 +507,15 @@ public async Task<IActionResult> MarkAsSold(int listingId)
             return RedirectToAction("Listings");
         }
 
+        [HttpPost("listings/mark-sold")]
+        public async Task<IActionResult> MarkAsSold(int listingId)
+        {
+            var auth = RequireAuth();
+            if (auth != null) return auth;
+
+            await _api.PutAsync($"api/listings/{listingId}/sold");
+            return RedirectToAction("Listings");
+        }
 
     }
 }
