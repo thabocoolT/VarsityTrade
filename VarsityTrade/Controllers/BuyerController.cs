@@ -393,14 +393,93 @@ namespace VarsityTrade.Web.Controllers
             var auth = RequireAuth();
             if (auth != null) return auth;
 
-            var reviews = await _api.GetAsync<List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>>(
-                "api/reviews/my") ?? new List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>();
+            var reviews =
+                await _api.GetAsync<List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>>(
+                    "api/reviews/my")
+                ?? new List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>();
+
+            var transactions =
+                await _api.GetAsync<List<VarsityTrade.Web.Models.Reviews.TransactionViewModel>>(
+                    "api/transactions/purchases")
+                ?? new List<VarsityTrade.Web.Models.Reviews.TransactionViewModel>();
+
+            // Match each review to its transaction so the page can display
+            // the actual completed transaction price.
+            foreach (var review in reviews)
+            {
+                var transaction = transactions.FirstOrDefault(
+                    t => t.TransactionId == review.TransactionId);
+
+                if (transaction != null)
+                {
+                    review.FinalPrice = transaction.FinalPrice;
+                }
+            }
+
+            // Completed purchases that do not yet have a review.
+            var pendingReviews = transactions
+                .Where(t =>
+                    t.Status.Equals(
+                        "Completed",
+                        StringComparison.OrdinalIgnoreCase)
+                    && !t.HasReview)
+                .OrderByDescending(t => t.CompletedAt)
+                .ToList();
 
             ViewBag.Reviews = reviews;
-            ViewBag.ActiveFilter = filter;
+            ViewBag.PendingReviews = pendingReviews;
+            ViewBag.ActiveFilter =
+                filter.Equals(
+                    "Pending reviews",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? "Pending reviews"
+                    : "Reviews left";
+
             ViewData["SidebarPage"] = "reviews";
+
             return View();
         }
+
+        [HttpPost("reviews/submit")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubmitReview(
+        int transactionId,
+        int rating,
+        string? comment)
+            {
+                var auth = RequireAuth();
+                if (auth != null) return auth;
+
+                if (rating < 1 || rating > 5)
+                {
+                    TempData["Error"] = "Please select a rating between 1 and 5 stars.";
+                    return RedirectToAction("Reviews", new { filter = "Pending reviews" });
+                }
+
+                var result =
+                    await _api.PostWithStatusAsync<object>(
+                        "api/reviews",
+                        new
+                        {
+                            transactionId = transactionId,
+                            rating = rating,
+                            comment = comment
+                        });
+
+                if (!result.Success)
+                {
+                    TempData["Error"] =
+                        "Could not submit your review. Please try again.";
+
+                    return RedirectToAction(
+                        "Reviews",
+                        new { filter = "Pending reviews" });
+                }
+
+                TempData["Success"] = "Review submitted successfully.";
+
+                return RedirectToAction("Reviews");
+            }
         // ─────────────────────────────────────────────────────────────
         // POST /buyer/inbox/send
         // Sends a message in a conversation

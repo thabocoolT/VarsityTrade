@@ -1,448 +1,844 @@
 ﻿@{
-    ViewData["Title"] = "Saved Listings";
-    ViewData["SidebarPage"] = "saved";
+    ViewData["Title"] = "My Reviews";
+    ViewData["SidebarPage"] = "reviews";
     Layout = "_Layout";
 
-    var listings =
-        ViewBag.SavedListings
-        as List<VarsityTrade.Web.Models.Listings.ListingCardViewModel>
+    var reviews =
+        ViewBag.Reviews
+        as List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>
+        ?? new();
+
+    var pendingReviews =
+        ViewBag.PendingReviews
+        as List<VarsityTrade.Web.Models.Reviews.TransactionViewModel>
         ?? new();
 
     var activeFilter =
         ViewBag.ActiveFilter as string
-        ?? "All";
+        ?? "Reviews left";
+
+    var averageRating =
+        reviews.Any()
+            ? reviews.Average(r => r.Rating)
+            : 0;
+
+    var fiveStars = reviews.Count(r => r.Rating == 5);
+    var fourStars = reviews.Count(r => r.Rating == 4);
+    var threeStars = reviews.Count(r => r.Rating == 3);
+    var twoStars = reviews.Count(r => r.Rating == 2);
+    var oneStar = reviews.Count(r => r.Rating == 1);
+
+    var sellersReviewed =
+        reviews
+            .Where(r => r.SellerProfileId > 0)
+            .Select(r => r.SellerProfileId)
+            .Distinct()
+            .Count();
 }
 
-<div style="display:grid;grid-template-columns:220px 1fr;gap:14px;padding:16px 24px;align-items:start;">
+<style>
+    .vt-reviews-main {
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 280px;
+        gap:14px;
+        align-items:start;
+    }
+
+    .vt-review-page-header {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px 18px;
+        margin-bottom:14px;
+    }
+
+    .vt-review-page-title {
+        font-size:15px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:2px;
+    }
+
+    .vt-review-page-sub {
+        font-size:11px;
+        color:#888;
+    }
+
+    .vt-review-tabs {
+        display:flex;
+        gap:0;
+        border-bottom:0.5px solid #e0ddf5;
+        margin-bottom:14px;
+        background:#fff;
+        border-radius:10px 10px 0 0;
+        overflow:hidden;
+    }
+
+    .vt-review-tab {
+        padding:10px 18px;
+        font-size:12px;
+        color:#888;
+        text-decoration:none;
+        border-bottom:2px solid transparent;
+    }
+
+    .vt-review-tab.active {
+        color:#4B3BC7;
+        border-bottom:2px solid #4B3BC7;
+        font-weight:500;
+    }
+
+    .vt-review-list {
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+    }
+
+    .vt-review-card {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px;
+    }
+
+    .vt-review-top {
+        display:flex;
+        align-items:flex-start;
+        gap:10px;
+        margin-bottom:8px;
+    }
+
+    .vt-review-avatar {
+        width:36px;
+        height:36px;
+        border-radius:50%;
+        background:#4B3BC7;
+        color:#fff;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+        font-weight:500;
+        flex-shrink:0;
+    }
+
+    .vt-review-info {
+        flex:1;
+        min-width:0;
+    }
+
+    .vt-review-name {
+        font-size:12px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:2px;
+    }
+
+    .vt-review-meta {
+        font-size:10px;
+        color:#888;
+        display:flex;
+        align-items:center;
+        gap:5px;
+        flex-wrap:wrap;
+    }
+
+    .vt-review-stars {
+        color:#BA7517;
+        font-size:13px;
+        margin-bottom:6px;
+    }
+
+    .vt-review-text {
+        font-size:12px;
+        color:#555;
+        line-height:1.6;
+        margin-bottom:8px;
+    }
+
+    .vt-review-listing {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        background:#f5f4f9;
+        border-radius:7px;
+        padding:7px 10px;
+    }
+
+    .vt-review-listing-img {
+        width:28px;
+        height:28px;
+        background:#EEEDFE;
+        border-radius:5px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#4B3BC7;
+        font-size:13px;
+        flex-shrink:0;
+    }
+
+    .vt-review-listing-name {
+        font-size:11px;
+        font-weight:500;
+        color:#26215C;
+    }
+
+    .vt-review-listing-meta {
+        font-size:10px;
+        color:#888;
+    }
+
+    .vt-pending-card {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px;
+        margin-bottom:10px;
+    }
+
+    .vt-pending-note {
+        background:#FEF3E2;
+        border:0.5px solid #FBBF24;
+        border-radius:7px;
+        padding:7px 10px;
+        font-size:11px;
+        color:#B45309;
+        display:flex;
+        align-items:center;
+        gap:5px;
+        margin-bottom:10px;
+    }
+
+    .vt-pending-top {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-bottom:10px;
+    }
+
+    .vt-pending-img {
+        width:40px;
+        height:40px;
+        background:#EEEDFE;
+        border-radius:8px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#4B3BC7;
+        font-size:18px;
+        flex-shrink:0;
+    }
+
+    .vt-pending-name {
+        font-size:12px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:2px;
+    }
+
+    .vt-pending-meta {
+        font-size:10px;
+        color:#888;
+    }
+
+    .vt-star-select {
+        display:flex;
+        gap:4px;
+        margin-bottom:8px;
+    }
+
+    .vt-review-star {
+        border:none;
+        background:none;
+        padding:0;
+        font-size:22px;
+        color:#ddd;
+        cursor:pointer;
+        line-height:1;
+    }
+
+    .vt-review-star.selected {
+        color:#BA7517;
+    }
+
+    .vt-review-input {
+        width:100%;
+        border:0.5px solid #ddd;
+        border-radius:7px;
+        padding:8px 10px;
+        font-size:12px;
+        background:#f5f4f9;
+        color:#26215C;
+        resize:none;
+        outline:none;
+    }
+
+    .vt-submit-review-btn {
+        background:#4B3BC7;
+        color:#fff;
+        border:none;
+        border-radius:7px;
+        padding:8px 16px;
+        font-size:12px;
+        font-weight:500;
+        margin-top:8px;
+        display:flex;
+        align-items:center;
+        gap:5px;
+        cursor:pointer;
+    }
+
+    .vt-side-card {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px;
+        margin-bottom:12px;
+    }
+
+    .vt-side-title {
+        font-size:12px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:10px;
+        padding-bottom:6px;
+        border-bottom:0.5px solid #e0ddf5;
+    }
+
+    .vt-stat-item {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:6px 0;
+        border-bottom:0.5px solid #f0eefb;
+        font-size:12px;
+    }
+
+    .vt-stat-item:last-child {
+        border-bottom:none;
+    }
+
+    .vt-stat-label {
+        color:#888;
+    }
+
+    .vt-stat-value {
+        font-weight:500;
+        color:#26215C;
+    }
+
+    .vt-bar-row {
+        display:flex;
+        align-items:center;
+        gap:6px;
+        margin-bottom:4px;
+    }
+
+    .vt-bar-label {
+        font-size:11px;
+        color:#888;
+        width:24px;
+        text-align:right;
+    }
+
+    .vt-bar-track {
+        flex:1;
+        height:5px;
+        background:#f0eefb;
+        border-radius:3px;
+        overflow:hidden;
+    }
+
+    .vt-bar-fill {
+        height:100%;
+        background:#4B3BC7;
+        border-radius:3px;
+    }
+
+    .vt-bar-count {
+        font-size:10px;
+        color:#aaa;
+        width:18px;
+    }
+
+    .vt-empty {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        text-align:center;
+        padding:50px 20px;
+    }
+
+    @@media (max-width:900px) {
+        .vt-reviews-main {
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div style="display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;padding:16px 24px;align-items:start;">
 
     @await Html.PartialAsync("_SidebarFull")
 
-    <div>
+    <div class="vt-reviews-main">
 
-        @* Page header *@
-        <div style="
-            background:#fff;
-            border:0.5px solid #e0ddf5;
-            border-radius:12px;
-            padding:14px 18px;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            margin-bottom:14px;">
+        <div>
 
-            <div>
+            <div class="vt-review-page-header">
 
-                <div style="
-                    font-size:15px;
-                    font-weight:500;
-                    color:#26215C;
-                    margin-bottom:2px;">
-
-                    <i class="ti ti-heart"
+                <div class="vt-review-page-title">
+                    <i class="ti ti-star"
                        aria-hidden="true"
-                       style="color:#4B3BC7;"></i>
+                       style="color:#BA7517;"></i>
 
-                    Saved listings
-
+                    My reviews
                 </div>
 
-                <div style="
-                    font-size:11px;
-                    color:#888;">
-
-                    Items you have saved for later —
-                    @listings.Count
-                    item@(listings.Count != 1 ? "s" : "")
-
+                <div class="vt-review-page-sub">
+                    Reviews you have left for sellers after completed transactions
                 </div>
 
             </div>
 
-        </div>
 
+            <div class="vt-review-tabs">
 
-        @* Toolbar *@
-        <div style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            margin-bottom:12px;">
+                <a href="/buyer/reviews?filter=Reviews%20left"
+                   class="vt-review-tab @(activeFilter == "Reviews left" ? "active" : "")">
 
-            <div style="
-                font-size:12px;
-                color:#666;">
-
-                Showing
-
-                <b style="color:#26215C;">
-                    @listings.Count
-                </b>
-
-                saved item@(listings.Count != 1 ? "s" : "")
-
-            </div>
-
-            <div style="
-                display:flex;
-                align-items:center;
-                gap:8px;">
-
-                <select style="
-                    border:0.5px solid #ddd;
-                    border-radius:6px;
-                    padding:5px 8px;
-                    font-size:12px;
-                    color:#444;
-                    background:#fff;">
-
-                    <option>
-                        Sort: Recently saved
-                    </option>
-
-                    <option>
-                        Price: Low to high
-                    </option>
-
-                    <option>
-                        Price: High to low
-                    </option>
-
-                </select>
-
-                <div style="
-                    display:flex;
-                    gap:4px;">
-
-                    <div style="
-                        width:28px;
-                        height:28px;
-                        border:0.5px solid #AFA9EC;
-                        border-radius:6px;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        color:#4B3BC7;
-                        font-size:14px;
-                        background:#EEEDFE;">
-
-                        <i class="ti ti-layout-grid"
-                           aria-hidden="true"></i>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        @* Filter tabs *@
-        <div style="
-            display:flex;
-            gap:6px;
-            margin-bottom:12px;">
-
-            @foreach (var f in new[]
-            {
-                "All",
-                "Price dropped",
-                "Still available"
-            })
-            {
-                <a href="/buyer/saved?filter=@Uri.EscapeDataString(f)"
-                   style="
-                        font-size:11px;
-                        border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");
-                        border-radius:6px;
-                        padding:5px 10px;
-                        text-decoration:none;
-                        @(activeFilter == f
-                            ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;"
-                            : "color:#666;background:#fff;")">
-
-                    @f
+                    Reviews I left (@reviews.Count)
 
                 </a>
+
+                <a href="/buyer/reviews?filter=Pending%20reviews"
+                   class="vt-review-tab @(activeFilter == "Pending reviews" ? "active" : "")">
+
+                    Pending reviews (@pendingReviews.Count)
+
+                </a>
+
+            </div>
+
+
+            @if (activeFilter == "Pending reviews")
+            {
+                @if (pendingReviews.Any())
+                {
+                    foreach (var transaction in pendingReviews)
+                    {
+                        <div class="vt-pending-card">
+
+                            <div class="vt-pending-note">
+                                <i class="ti ti-clock"
+                                   aria-hidden="true"></i>
+
+                                Completed transaction waiting for your review
+                            </div>
+
+                            <div class="vt-pending-top">
+
+                                <div class="vt-pending-img">
+                                    <i class="ti ti-package"
+                                       aria-hidden="true"></i>
+                                </div>
+
+                                <div>
+                                    <div class="vt-pending-name">
+                                        @transaction.ListingTitle
+                                    </div>
+
+                                    <div class="vt-pending-meta">
+                                        @transaction.StoreName
+                                        ·
+                                        R @transaction.FinalPrice.ToString("N0")
+                                        ·
+                                        Completed
+                                        @(transaction.CompletedAt == default
+                                            ? ""
+                                            : $" · {transaction.CompletedAt:dd MMM yyyy}")
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <form asp-controller="Buyer"
+                                  asp-action="SubmitReview"
+                                  method="post"
+                                  class="review-form">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="transactionId"
+                                       value="@transaction.TransactionId" />
+
+                                <input type="hidden"
+                                       name="rating"
+                                       value="0"
+                                       class="review-rating" />
+
+                                <div class="vt-star-select">
+
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <button type="button"
+                                                class="vt-review-star"
+                                                data-rating="@i"
+                                                aria-label="@i star rating">
+                                            ★
+                                        </button>
+                                    }
+
+                                </div>
+
+                                <textarea name="comment"
+                                          class="vt-review-input"
+                                          rows="2"
+                                          maxlength="2000"
+                                          placeholder="Share your experience with this seller..."></textarea>
+
+                                <button type="submit"
+                                        class="vt-submit-review-btn">
+
+                                    <i class="ti ti-send"
+                                       aria-hidden="true"></i>
+
+                                    Submit review
+
+                                </button>
+
+                            </form>
+
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="vt-empty">
+
+                        <i class="ti ti-circle-check"
+                           aria-hidden="true"
+                           style="font-size:40px;color:#4B3BC7;display:block;margin-bottom:12px;"></i>
+
+                        <div style="font-size:14px;font-weight:500;margin-bottom:6px;">
+                            No pending reviews
+                        </div>
+
+                        <p style="font-size:12px;color:#888;">
+                            You have reviewed all of your completed transactions.
+                        </p>
+
+                    </div>
+                }
+            }
+            else
+            {
+                @if (reviews.Any())
+                {
+                    <div class="vt-review-list">
+
+                        @foreach (var review in reviews.OrderByDescending(r => r.CreatedAt))
+                        {
+                            var initials =
+                                (
+                                    (review.StoreName.FirstOrDefault() == default
+                                        ? "S"
+                                        : review.StoreName[0].ToString())
+                                ).ToUpperInvariant();
+
+                            var daysAgo =
+                                Math.Max(
+                                    0,
+                                    (int)(DateTime.UtcNow - review.CreatedAt).TotalDays);
+
+                            <div class="vt-review-card">
+
+                                <div class="vt-review-top">
+
+                                    <div class="vt-review-avatar">
+                                        @initials
+                                    </div>
+
+                                    <div class="vt-review-info">
+
+                                        <div class="vt-review-name">
+                                            @review.StoreName
+                                        </div>
+
+                                        <div class="vt-review-meta">
+
+                                            <i class="ti ti-store"
+                                               aria-hidden="true"
+                                               style="font-size:10px;"></i>
+
+                                            Seller
+
+                                        </div>
+
+                                    </div>
+
+                                    <div style="font-size:10px;color:#aaa;">
+                                        @(daysAgo == 0
+                                            ? "Today"
+                                            : daysAgo == 1
+                                                ? "1 day ago"
+                                                : $"{daysAgo} days ago")
+                                    </div>
+
+                                </div>
+
+
+                                <div class="vt-review-stars">
+
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <span style="@(i <= review.Rating ? "" : "color:#ddd;")">
+                                            ★
+                                        </span>
+                                    }
+
+                                </div>
+
+
+                                @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                {
+                                    <div class="vt-review-text">
+                                        "@review.Comment"
+                                    </div>
+                                }
+
+
+                                <div class="vt-review-listing">
+
+                                    <div class="vt-review-listing-img">
+
+                                        <i class="ti ti-package"
+                                           aria-hidden="true"></i>
+
+                                    </div>
+
+                                    <div>
+
+                                        <div class="vt-review-listing-name">
+                                            @review.ListingTitle
+                                        </div>
+
+                                        <div class="vt-review-listing-meta">
+                                            R @review.FinalPrice.ToString("N0")
+                                            ·
+                                            Completed transaction
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="vt-empty">
+
+                        <i class="ti ti-star"
+                           aria-hidden="true"
+                           style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
+
+                        <div style="font-size:14px;font-weight:500;margin-bottom:6px;">
+                            No reviews yet
+                        </div>
+
+                        <p style="font-size:12px;color:#888;">
+                            Reviews you leave for sellers after completed transactions will appear here.
+                        </p>
+
+                    </div>
+                }
             }
 
         </div>
 
 
-        @* Grid *@
-        @if (listings.Any())
-        {
-            <div style="
-                display:grid;
-                grid-template-columns:repeat(3,minmax(0,1fr));
-                gap:10px;">
+        <div>
 
-                @foreach (var listing in listings)
+            <div class="vt-side-card">
+
+                <div class="vt-side-title">
+                    <i class="ti ti-star"
+                       aria-hidden="true"></i>
+
+                    My review activity
+                </div>
+
+                <div class="vt-stat-item">
+                    <span class="vt-stat-label">
+                        Reviews left
+                    </span>
+
+                    <span class="vt-stat-value">
+                        @reviews.Count
+                    </span>
+                </div>
+
+                <div class="vt-stat-item">
+                    <span class="vt-stat-label">
+                        Pending reviews
+                    </span>
+
+                    <span class="vt-stat-value"
+                          style="color:#B45309;">
+                        @pendingReviews.Count
+                    </span>
+                </div>
+
+                <div class="vt-stat-item">
+                    <span class="vt-stat-label">
+                        Avg rating given
+                    </span>
+
+                    <span class="vt-stat-value"
+                          style="color:#BA7517;">
+                        ★ @averageRating.ToString("F1")
+                    </span>
+                </div>
+
+                <div class="vt-stat-item">
+                    <span class="vt-stat-label">
+                        Sellers reviewed
+                    </span>
+
+                    <span class="vt-stat-value">
+                        @sellersReviewed
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="vt-side-card">
+
+                <div class="vt-side-title">
+                    <i class="ti ti-chart-bar"
+                       aria-hidden="true"></i>
+
+                    Ratings I gave
+                </div>
+
+                @{
+                    var totalReviews = reviews.Count;
+
+                    var fivePct =
+                        totalReviews == 0
+                            ? 0
+                            : (fiveStars * 100 / totalReviews);
+
+                    var fourPct =
+                        totalReviews == 0
+                            ? 0
+                            : (fourStars * 100 / totalReviews);
+
+                    var threePct =
+                        totalReviews == 0
+                            ? 0
+                            : (threeStars * 100 / totalReviews);
+
+                    var twoPct =
+                        totalReviews == 0
+                            ? 0
+                            : (twoStars * 100 / totalReviews);
+
+                    var onePct =
+                        totalReviews == 0
+                            ? 0
+                            : (oneStar * 100 / totalReviews);
+                }
+
+                @foreach (var item in new[]
                 {
-                    var daysAgo =
-                        Math.Max(
-                            0,
-                            (int)(DateTime.UtcNow - listing.CreatedAt).TotalDays);
+                    (Label: "5★", Count: fiveStars, Percent: fivePct),
+                    (Label: "4★", Count: fourStars, Percent: fourPct),
+                    (Label: "3★", Count: threeStars, Percent: threePct),
+                    (Label: "2★", Count: twoStars, Percent: twoPct),
+                    (Label: "1★", Count: oneStar, Percent: onePct)
+                })
+                {
+                    <div class="vt-bar-row">
 
-                    <div style="
-                        background:#fff;
-                        border:0.5px solid #e0ddf5;
-                        border-radius:10px;
-                        overflow:hidden;">
+                        <span class="vt-bar-label">
+                            @item.Label
+                        </span>
 
-                        @* Image *@
-                        <div style="
-                            background:#f0eefb;
-                            height:86px;
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            color:#7F77DD;
-                            position:relative;
-                            font-size:28px;">
-
-                            @if (!string.IsNullOrEmpty(listing.CoverImageUrl))
-                            {
-                                <img src="@listing.CoverImageUrl"
-                                     alt="@listing.Title"
-                                     style="
-                                        width:100%;
-                                        height:100%;
-                                        object-fit:cover;" />
-                            }
-                            else
-                            {
-                                <i class="ti ti-photo"
-                                   aria-hidden="true"></i>
-                            }
-
-                            <div style="
-                                position:absolute;
-                                top:6px;
-                                right:6px;
-                                color:#e74c3c;
-                                font-size:15px;">
-
-                                <i class="ti ti-heart-filled"
-                                   aria-hidden="true"></i>
-
-                            </div>
-
-                            @if (listing.IsFeatured)
-                            {
-                                <div style="
-                                    position:absolute;
-                                    top:6px;
-                                    left:6px;
-                                    background:#4B3BC7;
-                                    color:#fff;
-                                    font-size:9px;
-                                    padding:2px 6px;
-                                    border-radius:4px;">
-
-                                    Featured
-
-                                </div>
-                            }
-
+                        <div class="vt-bar-track">
+                            <div class="vt-bar-fill"
+                                 style="width:@(item.Percent)%;"></div>
                         </div>
 
-
-                        @* Card content *@
-                        <div style="padding:8px 10px;">
-
-                            <div style="
-                                font-size:12px;
-                                font-weight:500;
-                                color:#26215C;
-                                margin-bottom:2px;
-                                white-space:nowrap;
-                                overflow:hidden;
-                                text-overflow:ellipsis;">
-
-                                @listing.Title
-
-                            </div>
-
-
-                            <div style="
-                                font-size:12px;
-                                font-weight:500;
-                                color:#4B3BC7;
-                                margin-bottom:3px;">
-
-                                R @listing.Price.ToString("N0")
-
-                            </div>
-
-
-                            <div style="
-                                font-size:10px;
-                                color:#888;
-                                margin-bottom:6px;">
-
-                                @listing.Condition
-                                ·
-                                @(daysAgo == 0
-                                    ? "Today"
-                                    : $"{daysAgo}d ago")
-
-                            </div>
-
-
-                            <div style="
-                                display:flex;
-                                gap:5px;">
-
-                                @* View *@
-                                <a href="/listings/@listing.ListingId"
-                                   style="
-                                        flex:1;
-                                        background:#4B3BC7;
-                                        color:#fff;
-                                        border:none;
-                                        border-radius:5px;
-                                        padding:5px;
-                                        font-size:10px;
-                                        cursor:pointer;
-                                        display:flex;
-                                        align-items:center;
-                                        justify-content:center;
-                                        gap:3px;
-                                        text-decoration:none;">
-
-                                    <i class="ti ti-eye"
-                                       aria-hidden="true"></i>
-
-                                    View
-
-                                </a>
-
-
-                                @* Message *@
-                                <a href="/buyer/inbox/start?listingId=@listing.ListingId"
-                                   style="
-                                        flex:1;
-                                        background:#fff;
-                                        color:#666;
-                                        border:0.5px solid #ddd;
-                                        border-radius:5px;
-                                        padding:5px;
-                                        font-size:10px;
-                                        cursor:pointer;
-                                        display:flex;
-                                        align-items:center;
-                                        justify-content:center;
-                                        gap:3px;
-                                        text-decoration:none;">
-
-                                    <i class="ti ti-message-circle"
-                                       aria-hidden="true"></i>
-
-                                    Message
-
-                                </a>
-
-
-                                @* Unsave *@
-                                <form asp-controller="Buyer"
-                                      asp-action="UnsaveListing"
-                                      method="post"
-                                      style="margin:0;">
-
-                                    <input type="hidden"
-                                           name="listingId"
-                                           value="@listing.ListingId" />
-
-                                    <button type="submit"
-                                            title="Remove from saved listings"
-                                            style="
-                                                background:#FDECEA;
-                                                color:#B91C1C;
-                                                border:none;
-                                                border-radius:5px;
-                                                padding:5px 7px;
-                                                font-size:10px;
-                                                cursor:pointer;
-                                                display:flex;
-                                                align-items:center;
-                                                justify-content:center;">
-
-                                        <i class="ti ti-heart-off"
-                                           aria-hidden="true"></i>
-
-                                    </button>
-
-                                </form>
-
-                            </div>
-
-                        </div>
+                        <span class="vt-bar-count">
+                            @item.Count
+                        </span>
 
                     </div>
                 }
 
             </div>
-        }
-        else
-        {
-            <div style="
-                background:#fff;
-                border:0.5px solid #e0ddf5;
-                border-radius:12px;
-                text-align:center;
-                padding:60px 20px;">
 
-                <i class="ti ti-heart"
-                   aria-hidden="true"
-                   style="
-                        font-size:40px;
-                        color:#AFA9EC;
-                        display:block;
-                        margin-bottom:12px;"></i>
-
-                <div style="
-                    font-size:14px;
-                    font-weight:500;
-                    margin-bottom:6px;">
-
-                    No saved listings yet
-
-                </div>
-
-                <p style="
-                    font-size:12px;
-                    color:#888;">
-
-                    Browse listings and tap the heart icon
-                    to save items for later.
-
-                </p>
-
-                <a href="/listings/browse"
-                   style="
-                        display:inline-flex;
-                        align-items:center;
-                        gap:6px;
-                        background:#4B3BC7;
-                        color:#fff;
-                        border-radius:7px;
-                        padding:9px 18px;
-                        font-size:12px;
-                        font-weight:500;
-                        text-decoration:none;
-                        margin-top:14px;">
-
-                    <i class="ti ti-search"
-                       aria-hidden="true"></i>
-
-                    Browse listings
-
-                </a>
-
-            </div>
-        }
+        </div>
 
     </div>
 
 </div>
+
+@section Scripts {
+
+<script>
+    document.querySelectorAll(".review-form").forEach(function (form) {
+
+        const stars =
+            form.querySelectorAll(".vt-review-star");
+
+        const ratingInput =
+            form.querySelector(".review-rating");
+
+        stars.forEach(function (star) {
+
+            star.addEventListener("click", function () {
+
+                const rating =
+                    parseInt(this.dataset.rating);
+
+                ratingInput.value = rating;
+
+                stars.forEach(function (item) {
+
+                    const itemRating =
+                        parseInt(item.dataset.rating);
+
+                    item.classList.toggle(
+                        "selected",
+                        itemRating <= rating
+                    );
+
+                });
+
+            });
+
+        });
+
+        form.addEventListener("submit", function (event) {
+
+            if (parseInt(ratingInput.value) < 1) {
+
+                event.preventDefault();
+
+                alert("Please select a star rating first.");
+            }
+
+        });
+
+    });
+</script>
+
+}

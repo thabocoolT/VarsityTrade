@@ -167,6 +167,9 @@ namespace VarsityTrade.Infrastructure.Data
                 .HasIndex(sl => new { sl.UserId, sl.ListingId })
                 .IsUnique();
 
+            modelBuilder.Entity<SavedListing>()
+                .ToTable("SavedListigs");
+
             // Category self-referencing
             modelBuilder.Entity<Category>()
                 .HasOne(c => c.ParentCategory)

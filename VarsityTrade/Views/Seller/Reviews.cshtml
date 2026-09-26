@@ -1,118 +1,701 @@
 ﻿@{
-    ViewData["Title"] = "My Reviews Received";
+    ViewData["Title"] = "My Reviews";
     ViewData["SidebarPage"] = "seller-reviews";
     Layout = "_Layout";
-    var reviews = ViewBag.Reviews as List<VarsityTrade.Web.Models.Reviews.ReviewViewModel> ?? new();
-    var activeFilter = ViewBag.ActiveFilter as string ?? "All";
-    var avgRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0.0;
+
+    var reviews =
+        ViewBag.Reviews
+        as List<VarsityTrade.Web.Models.Reviews.ReviewViewModel>
+        ?? new();
+
+    var activeFilter =
+        ViewBag.ActiveFilter as string
+        ?? "All";
+
+    var averageRating =
+        reviews.Any()
+            ? reviews.Average(r => r.Rating)
+            : 0;
+
     var fiveStars = reviews.Count(r => r.Rating == 5);
     var fourStars = reviews.Count(r => r.Rating == 4);
-    var threePlus = reviews.Count(r => r.Rating <= 3);
+    var threeStars = reviews.Count(r => r.Rating == 3);
+    var twoStars = reviews.Count(r => r.Rating == 2);
+    var oneStar = reviews.Count(r => r.Rating == 1);
+
+    var totalReviews = reviews.Count;
 }
 
-<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
+<style>
+    .vt-seller-reviews-main {
+        display:grid;
+        grid-template-columns:minmax(0,1fr) 280px;
+        gap:14px;
+        align-items:start;
+    }
+
+    .vt-review-page-header {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px 18px;
+        margin-bottom:14px;
+    }
+
+    .vt-review-page-title {
+        font-size:15px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:2px;
+    }
+
+    .vt-review-page-sub {
+        font-size:11px;
+        color:#888;
+    }
+
+    .vt-filter-tabs {
+        display:flex;
+        gap:6px;
+        margin-bottom:12px;
+        flex-wrap:wrap;
+    }
+
+    .vt-filter-tab {
+        font-size:11px;
+        border:0.5px solid #ddd;
+        border-radius:6px;
+        padding:5px 10px;
+        color:#666;
+        background:#fff;
+        text-decoration:none;
+    }
+
+    .vt-filter-tab.active {
+        background:#EEEDFE;
+        border-color:#AFA9EC;
+        color:#4B3BC7;
+        font-weight:500;
+    }
+
+    .vt-review-list {
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+    }
+
+    .vt-review-card {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px;
+    }
+
+    .vt-review-top {
+        display:flex;
+        align-items:flex-start;
+        gap:10px;
+        margin-bottom:8px;
+    }
+
+    .vt-review-avatar {
+        width:36px;
+        height:36px;
+        border-radius:50%;
+        background:#4B3BC7;
+        color:#fff;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:13px;
+        font-weight:500;
+        flex-shrink:0;
+    }
+
+    .vt-review-info {
+        flex:1;
+        min-width:0;
+    }
+
+    .vt-review-name {
+        font-size:12px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:2px;
+    }
+
+    .vt-review-meta {
+        font-size:10px;
+        color:#888;
+        display:flex;
+        align-items:center;
+        gap:5px;
+        flex-wrap:wrap;
+    }
+
+    .vt-review-stars {
+        color:#BA7517;
+        font-size:13px;
+        margin-bottom:6px;
+    }
+
+    .vt-review-text {
+        font-size:12px;
+        color:#555;
+        line-height:1.6;
+        margin-bottom:8px;
+    }
+
+    .vt-review-listing {
+        display:flex;
+        align-items:center;
+        gap:8px;
+        background:#f5f4f9;
+        border-radius:7px;
+        padding:7px 10px;
+    }
+
+    .vt-review-listing-img {
+        width:28px;
+        height:28px;
+        background:#EEEDFE;
+        border-radius:5px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:#4B3BC7;
+        font-size:13px;
+        flex-shrink:0;
+    }
+
+    .vt-review-listing-name {
+        font-size:11px;
+        font-weight:500;
+        color:#26215C;
+    }
+
+    .vt-review-listing-meta {
+        font-size:10px;
+        color:#888;
+    }
+
+    .vt-side-card {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        padding:14px;
+        margin-bottom:12px;
+    }
+
+    .vt-side-title {
+        font-size:12px;
+        font-weight:500;
+        color:#26215C;
+        margin-bottom:10px;
+        padding-bottom:6px;
+        border-bottom:0.5px solid #e0ddf5;
+    }
+
+    .vt-rating-big {
+        display:flex;
+        align-items:center;
+        gap:12px;
+        margin-bottom:10px;
+    }
+
+    .vt-rating-num {
+        font-size:32px;
+        font-weight:500;
+        color:#26215C;
+    }
+
+    .vt-stars-big {
+        color:#BA7517;
+        font-size:16px;
+    }
+
+    .vt-rating-count {
+        font-size:11px;
+        color:#888;
+    }
+
+    .vt-bar-row {
+        display:flex;
+        align-items:center;
+        gap:6px;
+        margin-bottom:4px;
+    }
+
+    .vt-bar-label {
+        font-size:11px;
+        color:#888;
+        width:24px;
+        text-align:right;
+    }
+
+    .vt-bar-track {
+        flex:1;
+        height:5px;
+        background:#f0eefb;
+        border-radius:3px;
+        overflow:hidden;
+    }
+
+    .vt-bar-fill {
+        height:100%;
+        background:#4B3BC7;
+        border-radius:3px;
+    }
+
+    .vt-bar-count {
+        font-size:10px;
+        color:#aaa;
+        width:18px;
+    }
+
+    .vt-stat-item {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        padding:6px 0;
+        border-bottom:0.5px solid #f0eefb;
+        font-size:12px;
+    }
+
+    .vt-stat-item:last-child {
+        border-bottom:none;
+    }
+
+    .vt-stat-label {
+        color:#888;
+    }
+
+    .vt-stat-value {
+        font-weight:500;
+        color:#26215C;
+    }
+
+    .vt-empty {
+        background:#fff;
+        border:0.5px solid #e0ddf5;
+        border-radius:12px;
+        text-align:center;
+        padding:50px 20px;
+    }
+
+    @@5media (max-width:900px) {
+        .vt-seller-reviews-main {
+            grid-template-columns:1fr;
+        }
+    }
+</style>
+
+<div style="display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;padding:16px 24px;align-items:start;">
+
     @await Html.PartialAsync("_SidebarFull")
 
-    <div style="display:grid;grid-template-columns:1fr 240px;gap:14px;align-items:start;">
+    <div class="vt-seller-reviews-main">
+
         <div>
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                <div>
-                    <div style="font-size:15px;font-weight:500;color:#26215C;margin-bottom:2px;">
-                        <i class="ti ti-star" aria-hidden="true" style="color:#4B3BC7;"></i> My reviews received
-                    </div>
-                    <div style="font-size:11px;color:#888;">Reviews left by buyers after completed trades</div>
+
+            <div class="vt-review-page-header">
+
+                <div class="vt-review-page-title">
+
+                    <i class="ti ti-star"
+                       aria-hidden="true"
+                       style="color:#BA7517;"></i>
+
+                    My reviews
+
                 </div>
+
+                <div class="vt-review-page-sub">
+
+                    Reviews left by buyers after completed transactions
+
+                </div>
+
             </div>
 
-            <div style="display:flex;gap:6px;margin-bottom:12px;">
-                @foreach (var f in new[] { "All", "5 stars", "4 stars", "1-3 stars" })
+
+            <div class="vt-filter-tabs">
+
+                @foreach (var item in new[]
                 {
-                    <a href="/seller/reviews?filter=@f"
-                       style="font-size:11px;border:0.5px solid @(activeFilter == f ? "#AFA9EC" : "#ddd");border-radius:6px;padding:5px 10px;text-decoration:none;@(activeFilter == f ? "background:#EEEDFE;color:#4B3BC7;font-weight:500;" : "color:#666;background:#fff;")">
-                        @f
+                    ("All", "All"),
+                    ("5 stars", "5 stars"),
+                    ("4 stars", "4 stars"),
+                    ("3 stars", "3 stars"),
+                    ("1–2 stars", "1-2 stars")
+                })
+                {
+                    var isActive =
+                        activeFilter.Equals(
+                            item.Item2,
+                            StringComparison.OrdinalIgnoreCase);
+
+                    <a href="/seller/reviews?filter=@Uri.EscapeDataString(item.Item2)"
+                       class="vt-filter-tab @(isActive ? "active" : "")">
+
+                        @item.Item1
+
                     </a>
                 }
+
             </div>
+
 
             @if (reviews.Any())
             {
-                <div style="display:flex;flex-direction:column;gap:10px;">
-                    @foreach (var review in reviews)
+                <div class="vt-review-list">
+
+                    @foreach (var review in reviews.OrderByDescending(r => r.CreatedAt))
                     {
-                        var initials = review.StoreName.Length > 0 ? review.StoreName[0].ToString().ToUpper() : "B";
-                        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px 16px;">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                                <div style="width:36px;height:36px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;">B</div>
-                                <div style="flex:1;">
-                                    <div style="font-size:13px;font-weight:500;color:#26215C;">Buyer</div>
-                                    <div style="font-size:11px;color:#888;">Re: @review.ListingTitle · @review.CreatedAt.ToString("dd MMM yyyy")</div>
+                        var reviewerName =
+                            $"{review.ReviewerFirstName} {review.ReviewerLastName}".Trim();
+
+                        if (string.IsNullOrWhiteSpace(reviewerName))
+                        {
+                            reviewerName = "Buyer";
+                        }
+
+                        var initials =
+                            reviewerName
+                                .Split(
+                                    ' ',
+                                    StringSplitOptions.RemoveEmptyEntries)
+                                .Take(2)
+                                .Select(x => x[0])
+                                .Aggregate(
+                                    "",
+                                    (current, next) =>
+                                        current + next)
+                                .ToUpperInvariant();
+
+                        var daysAgo =
+                            Math.Max(
+                                0,
+                                (int)(DateTime.UtcNow - review.CreatedAt).TotalDays);
+
+                        <div class="vt-review-card">
+
+                            <div class="vt-review-top">
+
+                                <div class="vt-review-avatar">
+                                    @initials
                                 </div>
-                                <div style="color:#BA7517;font-size:14px;">
-                                    @for (int i = 1; i <= 5; i++)
-                                    {
-                                        <span>@(i <= review.Rating ? "★" : "☆")</span>
-                                    }
+
+                                <div class="vt-review-info">
+
+                                    <div class="vt-review-name">
+                                        @reviewerName
+                                    </div>
+
+                                    <div class="vt-review-meta">
+
+                                        <i class="ti ti-building"
+                                           aria-hidden="true"
+                                           style="font-size:10px;"></i>
+
+                                        Buyer
+
+                                        @if (!string.IsNullOrWhiteSpace(review.ReviewerSuburb))
+                                        {
+                                            <span>·</span>
+
+                                            <i class="ti ti-map-pin"
+                                               aria-hidden="true"
+                                               style="font-size:10px;"></i>
+
+                                            @review.ReviewerSuburb
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(review.ReviewerResidenceName))
+                                        {
+                                            <span>·</span>
+
+                                            @review.ReviewerResidenceName
+                                        }
+
+                                    </div>
+
                                 </div>
+
+                                <div style="font-size:10px;color:#aaa;white-space:nowrap;">
+
+                                    @(daysAgo == 0
+                                        ? "Today"
+                                        : daysAgo == 1
+                                            ? "1 day ago"
+                                            : $"{daysAgo} days ago")
+
+                                </div>
+
                             </div>
-                            @if (!string.IsNullOrEmpty(review.Comment))
+
+
+                            <div class="vt-review-stars">
+
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <span style="@(i <= review.Rating ? "" : "color:#ddd;")">
+                                        ★
+                                    </span>
+                                }
+
+                            </div>
+
+
+                            @if (!string.IsNullOrWhiteSpace(review.Comment))
                             {
-                                <div style="background:#f5f4f9;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;line-height:1.5;font-style:italic;">"@review.Comment"</div>
+                                <div class="vt-review-text">
+                                    "@review.Comment"
+                                </div>
                             }
+
+
+                            <div class="vt-review-listing">
+
+                                <div class="vt-review-listing-img">
+
+                                    <i class="ti ti-package"
+                                       aria-hidden="true"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <div class="vt-review-listing-name">
+                                        @review.ListingTitle
+                                    </div>
+
+                                    <div class="vt-review-listing-meta">
+
+                                        @if (review.FinalPrice > 0)
+                                        {
+                                            <span>
+                                                R @review.FinalPrice.ToString("N0")
+                                                ·
+                                            </span>
+                                        }
+
+                                        Completed transaction
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
                         </div>
                     }
+
                 </div>
             }
             else
             {
-                <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;text-align:center;padding:60px 20px;">
-                    <i class="ti ti-star" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
-                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">No reviews yet</div>
-                    <p style="font-size:12px;color:#888;">Reviews from buyers will appear here after completed trades.</p>
+                <div class="vt-empty">
+
+                    <i class="ti ti-star"
+                       aria-hidden="true"
+                       style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
+
+                    <div style="font-size:14px;font-weight:500;margin-bottom:6px;">
+                        No reviews yet
+                    </div>
+
+                    <p style="font-size:12px;color:#888;">
+                        Reviews from buyers will appear here after completed transactions.
+                    </p>
+
                 </div>
             }
+
         </div>
 
-        @* Right sidebar — rating breakdown *@
+
         <div>
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;text-align:center;">
-                <div style="font-size:32px;font-weight:500;color:#26215C;">@avgRating.ToString("F1")</div>
-                <div style="color:#BA7517;font-size:16px;margin:4px 0;">
-                    @for (int i = 1; i <= 5; i++)
-                    {
-                        <span>@(i <= Math.Round(avgRating) ? "★" : "☆")</span>
-                    }
+
+            <div class="vt-side-card">
+
+                <div class="vt-side-title">
+
+                    <i class="ti ti-star"
+                       aria-hidden="true"></i>
+
+                    Rating breakdown
+
                 </div>
-                <div style="font-size:11px;color:#888;">Based on @reviews.Count review@(reviews.Count != 1 ? "s" : "")</div>
-            </div>
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;margin-bottom:12px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;">Rating breakdown</div>
-                @foreach (var (stars, count) in new[] { (5, fiveStars), (4, fourStars), (3, threePlus) })
-                {
-                    var pct = reviews.Any() ? (count * 100 / reviews.Count) : 0;
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-                        <span style="font-size:11px;color:#888;width:40px;">@stars ★</span>
-                        <div style="flex:1;height:5px;background:#f0eefb;border-radius:2px;">
-                            <div style="height:100%;background:#BA7517;border-radius:2px;width:@(pct)%;"></div>
-                        </div>
-                        <span style="font-size:11px;color:#888;width:20px;text-align:right;">@count</span>
+
+                <div class="vt-rating-big">
+
+                    <div class="vt-rating-num">
+                        @averageRating.ToString("F1")
                     </div>
+
+                    <div>
+
+                        <div class="vt-stars-big">
+
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <span style="@(i <= Math.Round(averageRating) ? "" : "color:#ddd;")">
+                                    ★
+                                </span>
+                            }
+
+                        </div>
+
+                        <div class="vt-rating-count">
+
+                            Based on
+                            @totalReviews
+                            review@(totalReviews == 1 ? "" : "s")
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                @{
+                    var fivePct =
+                        totalReviews == 0
+                            ? 0
+                            : fiveStars * 100 / totalReviews;
+
+                    var fourPct =
+                        totalReviews == 0
+                            ? 0
+                            : fourStars * 100 / totalReviews;
+
+                    var threePct =
+                        totalReviews == 0
+                            ? 0
+                            : threeStars * 100 / totalReviews;
+
+                    var twoPct =
+                        totalReviews == 0
+                            ? 0
+                            : twoStars * 100 / totalReviews;
+
+                    var onePct =
+                        totalReviews == 0
+                            ? 0
+                            : oneStar * 100 / totalReviews;
                 }
-            </div>
-            <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;padding:14px;">
-                <div style="font-size:12px;font-weight:500;color:#26215C;margin-bottom:10px;">Review stats</div>
-                @foreach (var (lbl, val) in new[] {
-                    ("Total reviews", reviews.Count.ToString()),
-                    ("Average rating", avgRating.ToString("F1")),
-                    ("5-star reviews", fiveStars.ToString()),
-                    ("Response rate", "—"),
+
+                @foreach (var item in new[]
+                {
+                    (Label: "5★", Count: fiveStars, Percent: fivePct),
+                    (Label: "4★", Count: fourStars, Percent: fourPct),
+                    (Label: "3★", Count: threeStars, Percent: threePct),
+                    (Label: "2★", Count: twoStars, Percent: twoPct),
+                    (Label: "1★", Count: oneStar, Percent: onePct)
                 })
                 {
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #f0eefb;font-size:12px;">
-                        <span style="color:#888;">@lbl</span>
-                        <span style="font-weight:500;color:#26215C;">@val</span>
+                    <div class="vt-bar-row">
+
+                        <span class="vt-bar-label">
+                            @item.Label
+                        </span>
+
+                        <div class="vt-bar-track">
+
+                            <div class="vt-bar-fill"
+                                 style="width:@(item.Percent)%;"></div>
+
+                        </div>
+
+                        <span class="vt-bar-count">
+                            @item.Count
+                        </span>
+
                     </div>
                 }
+
             </div>
+
+
+            <div class="vt-side-card">
+
+                <div class="vt-side-title">
+
+                    <i class="ti ti-chart-bar"
+                       aria-hidden="true"></i>
+
+                    Review stats
+
+                </div>
+
+                <div class="vt-stat-item">
+
+                    <span class="vt-stat-label">
+                        Total reviews
+                    </span>
+
+                    <span class="vt-stat-value">
+                        @totalReviews
+                    </span>
+
+                </div>
+
+                <div class="vt-stat-item">
+
+                    <span class="vt-stat-label">
+                        Average rating
+                    </span>
+
+                    <span class="vt-stat-value"
+                          style="color:#BA7517;">
+                        ★ @averageRating.ToString("F1")
+                    </span>
+
+                </div>
+
+                <div class="vt-stat-item">
+
+                    <span class="vt-stat-label">
+                        5-star reviews
+                    </span>
+
+                    <span class="vt-stat-value">
+                        @fiveStars
+                    </span>
+
+                </div>
+
+                <div class="vt-stat-item">
+
+                    <span class="vt-stat-label">
+                        Completed reviews
+                    </span>
+
+                    <span class="vt-stat-value">
+                        @totalReviews
+                    </span>
+
+                </div>
+
+                <div class="vt-stat-item">
+
+                    <span class="vt-stat-label">
+                        Response rate
+                    </span>
+
+                    <span class="vt-stat-value"
+                          style="color:#888;">
+                        —
+                    </span>
+
+                </div>
+
+            </div>
+
         </div>
+
     </div>
+
 </div>
