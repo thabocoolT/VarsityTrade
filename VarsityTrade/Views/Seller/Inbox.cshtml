@@ -1,84 +1,593 @@
 ﻿@model VarsityTrade.Web.Models.Buyer.InboxViewModel
+
 @{
     ViewData["Title"] = "Seller Inbox";
     ViewData["SidebarPage"] = "seller-inbox";
     Layout = "_Layout";
-    var currentUserId = int.TryParse(Context.Session.GetString("UserId"), out var uid) ? uid : 0;
+
+    var conversations = Model.Conversations
+        .OrderByDescending(c => c.LastMessageAt ?? c.CreatedAt)
+        .ToList();
+
+    var unreadCount = Model.UnreadCount;
 }
 
-<div style="display:grid;grid-template-columns:44px 1fr;gap:12px;padding:16px 24px;align-items:start;">
-    @await Html.PartialAsync("_Sidebar")
+<style>
+    .seller-inbox-page {
+        background: #f5f4f9;
+    }
 
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:12px;align-items:start;">
+    .seller-inbox-main {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 12px;
+        align-items: start;
+    }
 
-        @* Left — conversation list *@
-        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;overflow:hidden;">
-            <div style="padding:12px 14px;border-bottom:0.5px solid #e0ddf5;">
-                <div style="font-size:13px;font-weight:500;color:#26215C;margin-bottom:8px;">
-                    Inbox
-                    @if (Model.UnreadCount > 0)
-                    {
-                        <span style="background:#e74c3c;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px;">@Model.UnreadCount</span>
-                    }
-                </div>
-                <div style="display:flex;align-items:center;border:0.5px solid #ddd;border-radius:6px;overflow:hidden;background:#f5f4f9;">
-                    <i class="ti ti-search" aria-hidden="true" style="padding:0 8px;color:#aaa;font-size:14px;"></i>
-                    <input type="text" placeholder="Search conversations..." style="flex:1;border:none;outline:none;padding:6px 10px;font-size:11px;background:transparent;color:#26215C;" />
-                </div>
-            </div>
-            <div style="display:flex;border-bottom:0.5px solid #e0ddf5;">
-                @foreach (var tab in new[] { "All", "Unread", "Sent" })
-                {
-                    var isActive = tab == "All";
-                    <div style="flex:1;padding:8px;font-size:11px;text-align:center;cursor:pointer;@(isActive ? "color:#4B3BC7;border-bottom:2px solid #4B3BC7;font-weight:500;" : "color:#888;border-bottom:2px solid transparent;")">@tab</div>
-                }
-            </div>
-            @if (Model.Conversations.Any())
-            {
-                @foreach (var conv in Model.Conversations)
-                {
-                    var buyerInitial = conv.BuyerFirstName.Length > 0 ? conv.BuyerFirstName[0].ToString().ToUpper() : "?";
-                    var isUnread = conv.UnreadCount > 0;
-                    var timeAgo = conv.LastMessageAt.HasValue
-                        ? (DateTime.UtcNow - conv.LastMessageAt.Value).TotalHours < 24
-                            ? conv.LastMessageAt.Value.ToString("HH:mm")
-                            : conv.LastMessageAt.Value.ToString("dd MMM")
-                        : conv.CreatedAt.ToString("dd MMM");
+    .vt-inbox-panel {
+        background: #fff;
+        border: 0.5px solid #e0ddf5;
+        border-radius: 12px;
+        overflow: hidden;
+    }
 
-                    <a href="/buyer/inbox/@conv.ConversationId"
-                       style="display:flex;align-items:flex-start;gap:8px;padding:10px 14px;border-bottom:0.5px solid #f0eefb;cursor:pointer;text-decoration:none;@(isUnread ? "background:#f5f4ff;" : "")">
-                        <div style="width:36px;height:36px;border-radius:50%;background:#4B3BC7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0;">@buyerInitial</div>
-                        <div style="flex:1;min-width:0;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-                                <span style="font-size:12px;color:#555;@(isUnread ? "font-weight:600;color:#26215C;" : "")">@conv.BuyerFirstName @conv.BuyerLastName</span>
-                                <span style="font-size:10px;color:#aaa;white-space:nowrap;">@timeAgo</span>
-                            </div>
-                            <div style="font-size:10px;color:#4B3BC7;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@conv.ListingTitle</div>
-                            <div style="font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">@(conv.LastMessageContent ?? "Started conversation")</div>
-                        </div>
-                        @if (isUnread)
+    .vt-inbox-header {
+        padding: 12px 14px;
+        border-bottom: 0.5px solid #e0ddf5;
+    }
+
+    .vt-inbox-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #26215C;
+        margin-bottom: 8px;
+    }
+
+    .vt-inbox-search {
+        display: flex;
+        align-items: center;
+        border: 0.5px solid #ddd;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #f5f4f9;
+    }
+
+    .vt-inbox-search input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 6px 10px;
+        font-size: 11px;
+        background: transparent;
+        color: #26215C;
+    }
+
+    .vt-inbox-search i {
+        padding: 0 8px;
+        color: #aaa;
+        font-size: 14px;
+    }
+
+    .vt-inbox-tabs {
+        display: flex;
+        border-bottom: 0.5px solid #e0ddf5;
+    }
+
+    .vt-inbox-tab {
+        flex: 1;
+        padding: 8px;
+        font-size: 11px;
+        color: #888;
+        text-align: center;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+    }
+
+    .vt-inbox-tab.active {
+        color: #4B3BC7;
+        border-bottom: 2px solid #4B3BC7;
+        font-weight: 500;
+    }
+
+    .vt-thread {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 14px;
+        border-bottom: 0.5px solid #f0eefb;
+        cursor: pointer;
+        text-decoration: none;
+        background: #fff;
+    }
+
+    .vt-thread:hover {
+        background: #f8f7fd;
+    }
+
+    .vt-thread.unread {
+        background: #f5f4ff;
+    }
+
+    .vt-thread-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #4B3BC7;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+
+    .vt-thread-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .vt-thread-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2px;
+    }
+
+    .vt-thread-name {
+        font-size: 12px;
+        color: #555;
+    }
+
+    .vt-thread.unread .vt-thread-name {
+        font-weight: 600;
+        color: #26215C;
+    }
+
+    .vt-thread-time {
+        font-size: 10px;
+        color: #aaa;
+        white-space: nowrap;
+    }
+
+    .vt-thread-listing {
+        font-size: 10px;
+        color: #4B3BC7;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vt-thread-preview {
+        font-size: 11px;
+        color: #888;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vt-thread-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4B3BC7;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .vt-thread-panel {
+        background: #fff;
+        border: 0.5px solid #e0ddf5;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 400px;
+    }
+
+    .vt-thread-empty {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+    }
+
+    .vt-thread-empty-content {
+        text-align: center;
+        padding: 40px;
+    }
+
+    .vt-thread-empty-content i {
+        font-size: 40px;
+        color: #AFA9EC;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .vt-thread-empty-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #26215C;
+        margin-bottom: 6px;
+    }
+
+    .vt-thread-empty-text {
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 14px;
+    }
+
+    .vt-thread-open-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #4B3BC7;
+        color: #fff;
+        border-radius: 6px;
+        padding: 7px 12px;
+        font-size: 11px;
+        text-decoration: none;
+    }
+
+    .vt-no-messages {
+        padding: 32px;
+        text-align: center;
+        font-size: 12px;
+        color: #888;
+    }
+
+    .vt-no-messages i {
+        font-size: 32px;
+        color: #AFA9EC;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    @@media (max-width: 900px) {
+        .seller-inbox-main {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="seller-inbox-page">
+
+    <div class="vt-body">
+
+        @await Html.PartialAsync("_Sidebar")
+
+        <div class="seller-inbox-main">
+
+            @* ─────────────────────────────────────────────
+               LEFT — SELLER INBOX / CONVERSATION LIST
+               ───────────────────────────────────────────── *@
+
+            <div class="vt-inbox-panel">
+
+                <div class="vt-inbox-header">
+
+                    <div class="vt-inbox-title">
+
+                        Seller inbox
+
+                        <span style="
+                            font-size:10px;
+                            color:#888;
+                            font-weight:400;">
+                            (@conversations.Count threads)
+                        </span>
+
+                        @if (unreadCount > 0)
                         {
-                            <div style="width:8px;height:8px;border-radius:50%;background:#4B3BC7;flex-shrink:0;margin-top:6px;"></div>
+                            <span style="
+                                background:#e74c3c;
+                                color:#fff;
+                                font-size:9px;
+                                padding:1px 5px;
+                                border-radius:4px;
+                                margin-left:4px;">
+                                @unreadCount
+                            </span>
                         }
-                    </a>
-                }
-            }
-            else
-            {
-                <div style="padding:32px;text-align:center;font-size:12px;color:#888;">
-                    <i class="ti ti-message-circle" aria-hidden="true" style="font-size:32px;color:#AFA9EC;display:block;margin-bottom:8px;"></i>
-                    No messages yet
+
+                    </div>
+
+                    <div class="vt-inbox-search">
+
+                        <i class="ti ti-search"
+                           aria-hidden="true"></i>
+
+                        <input type="text"
+                               id="conversationSearch"
+                               placeholder="Search messages..." />
+
+                    </div>
+
                 </div>
-            }
+
+                @* Tabs — visual structure from seller_inbox.html *@
+                <div class="vt-inbox-tabs">
+
+                    <div class="vt-inbox-tab active"
+                         data-filter="all">
+
+                        All (@conversations.Count)
+
+                    </div>
+
+                    <div class="vt-inbox-tab"
+                         data-filter="unread">
+
+                        Unread (@unreadCount)
+
+                    </div>
+
+                    <div class="vt-inbox-tab"
+                         data-filter="sent">
+
+                        Sent
+
+                    </div>
+
+                </div>
+
+                @if (conversations.Any())
+                {
+                    <div id="conversationList">
+
+                        @foreach (var conv in conversations)
+                        {
+                            var isUnread = conv.UnreadCount > 0;
+
+                            var buyerName =
+                                $"{conv.BuyerFirstName} {conv.BuyerLastName}".Trim();
+
+                            if (string.IsNullOrWhiteSpace(buyerName))
+                            {
+                                buyerName = "Buyer";
+                            }
+
+                            var buyerInitials = "";
+
+                            if (!string.IsNullOrWhiteSpace(conv.BuyerFirstName))
+                            {
+                                buyerInitials +=
+                                    conv.BuyerFirstName.Substring(0, 1).ToUpper();
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(conv.BuyerLastName))
+                            {
+                                buyerInitials +=
+                                    conv.BuyerLastName.Substring(0, 1).ToUpper();
+                            }
+
+                            if (string.IsNullOrWhiteSpace(buyerInitials))
+                            {
+                                buyerInitials = "?";
+                            }
+
+                            var timeAgo = "";
+
+                            if (conv.LastMessageAt.HasValue)
+                            {
+                                var elapsed =
+                                    DateTime.UtcNow -
+                                    conv.LastMessageAt.Value;
+
+                                if (elapsed.TotalMinutes < 60)
+                                {
+                                    timeAgo =
+                                        $"{Math.Max(1, (int)elapsed.TotalMinutes)}m";
+                                }
+                                else if (elapsed.TotalHours < 24)
+                                {
+                                    timeAgo =
+                                        $"{Math.Max(1, (int)elapsed.TotalHours)}h";
+                                }
+                                else if (elapsed.TotalDays < 7)
+                                {
+                                    timeAgo =
+                                        $"{Math.Max(1, (int)elapsed.TotalDays)}d";
+                                }
+                                else
+                                {
+                                    timeAgo =
+                                        conv.LastMessageAt.Value.ToString("dd MMM");
+                                }
+                            }
+                            else
+                            {
+                                timeAgo =
+                                    conv.CreatedAt.ToString("dd MMM");
+                            }
+
+                            <a href="/buyer/inbox/@conv.ConversationId"
+                               class="vt-thread @(isUnread ? "unread" : "")"
+                               data-unread="@isUnread"
+                               data-search="@($"{buyerName} {conv.ListingTitle} {conv.LastMessageContent}")">
+
+                                <div class="vt-thread-avatar">
+                                    @buyerInitials
+                                </div>
+
+                                <div class="vt-thread-info">
+
+                                    <div class="vt-thread-top">
+
+                                        <span class="vt-thread-name">
+                                            @buyerName
+                                        </span>
+
+                                        <span class="vt-thread-time">
+                                            @timeAgo
+                                        </span>
+
+                                    </div>
+
+                                    <div class="vt-thread-listing">
+                                        Re: @conv.ListingTitle
+                                    </div>
+
+                                    <div class="vt-thread-preview">
+                                        @(conv.LastMessageContent ?? "Started conversation")
+                                    </div>
+
+                                </div>
+
+                                @if (isUnread)
+                                {
+                                    <div class="vt-thread-dot"></div>
+                                }
+
+                            </a>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="vt-no-messages">
+
+                        <i class="ti ti-message-circle"
+                           aria-hidden="true"></i>
+
+                        No messages yet
+
+                    </div>
+                }
+
+            </div>
+
+
+            @* ─────────────────────────────────────────────
+               RIGHT — CONVERSATION AREA
+               ───────────────────────────────────────────── *@
+
+            <div class="vt-thread-panel">
+
+                <div class="vt-thread-empty">
+
+                    <div class="vt-thread-empty-content">
+
+                        <i class="ti ti-message-circle"
+                           aria-hidden="true"></i>
+
+                        <div class="vt-thread-empty-title">
+                            Select a conversation
+                        </div>
+
+                        <p class="vt-thread-empty-text">
+                            Click on a conversation from the list to view the messages.
+                        </p>
+
+                        @if (conversations.Any())
+                        {
+                            <a href="/buyer/inbox/@conversations.First().ConversationId"
+                               class="vt-thread-open-btn">
+
+                                <i class="ti ti-message-circle"
+                                   aria-hidden="true"></i>
+
+                                Open latest conversation
+
+                            </a>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
-        @* Right — select a conversation prompt *@
-        <div style="background:#fff;border:0.5px solid #e0ddf5;border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:400px;">
-            <div style="text-align:center;padding:40px;">
-                <i class="ti ti-message-circle" aria-hidden="true" style="font-size:40px;color:#AFA9EC;display:block;margin-bottom:12px;"></i>
-                <div style="font-size:14px;font-weight:500;color:#26215C;margin-bottom:6px;">Select a conversation</div>
-                <p style="font-size:12px;color:#888;">Click on a conversation from the list to view the messages.</p>
-            </div>
-        </div>
     </div>
+
 </div>
+
+@section Scripts {
+
+<script>
+
+    // ─────────────────────────────────────────────
+    // Conversation search
+    // ─────────────────────────────────────────────
+
+    const searchInput =
+        document.getElementById('conversationSearch');
+
+    const threads =
+        document.querySelectorAll('.vt-thread');
+
+    searchInput?.addEventListener('input', function () {
+
+        const search =
+            this.value.toLowerCase().trim();
+
+        threads.forEach(thread => {
+
+            const text =
+                (thread.dataset.search || '').toLowerCase();
+
+            thread.style.display =
+                !search || text.includes(search)
+                    ? 'flex'
+                    : 'none';
+
+        });
+
+    });
+
+
+    // ─────────────────────────────────────────────
+    // Inbox tabs
+    // ─────────────────────────────────────────────
+
+    const tabs =
+        document.querySelectorAll('.vt-inbox-tab');
+
+    tabs.forEach(tab => {
+
+        tab.addEventListener('click', function () {
+
+            tabs.forEach(item =>
+                item.classList.remove('active'));
+
+            this.classList.add('active');
+
+            const filter =
+                this.dataset.filter;
+
+            threads.forEach(thread => {
+
+                const isUnread =
+                    thread.dataset.unread === 'True' ||
+                    thread.dataset.unread === 'true';
+
+                if (filter === 'unread') {
+
+                    thread.style.display =
+                        isUnread ? 'flex' : 'none';
+
+                }
+                else {
+
+                    // Keep the existing real conversations visible.
+                    // "Sent" remains a visual tab until a separate
+                    // backend sent-message filter is implemented.
+
+                    thread.style.display = 'flex';
+
+                }
+
+            });
+
+        });
+
+    });
+
+</script>
+
+}
