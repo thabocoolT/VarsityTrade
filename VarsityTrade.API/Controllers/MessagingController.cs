@@ -87,10 +87,29 @@ namespace VarsityTrade.API.Controllers
         public async Task<IActionResult> GetMessages(int id)
         {
             var userId = GetCurrentUserId();
-            if (userId == null)
-                return Unauthorized(new { message = "User identity not found in token." });
 
-            var messages = await _messagingService.GetMessagesAsync(id, userId.Value);
+            if (userId == null)
+                return Unauthorized(new
+                {
+                    message = "User identity not found in token."
+                });
+
+            var conversation =
+                await _messagingService.GetConversationByIdAsync(
+                    id,
+                    userId.Value);
+
+            if (conversation == null)
+                return NotFound(new
+                {
+                    message = "Conversation not found."
+                });
+
+            var messages =
+                await _messagingService.GetMessagesAsync(
+                    id,
+                    userId.Value);
+
             return Ok(messages);
         }
 
@@ -153,6 +172,16 @@ namespace VarsityTrade.API.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
                 return Unauthorized(new { message = "User identity not found in token" });
+
+            var conversation =
+            await _messagingService.GetConversationByIdAsync(
+                id, userId.Value);
+
+            if (conversation == null)
+                return NotFound(new
+                {
+                    message = "Conversation not found."
+                });
 
             await _messagingService.MarkMessagesAsReadAsync(id, userId.Value);
             //Return 204 No content-action succeeded with no response body needed

@@ -10,35 +10,20 @@
         .ToList();
 
     var unreadCount = Model.UnreadCount;
-
-    var currentUserId =
-        int.TryParse(
-            Context.Session.GetString("UserId"),
-            out var parsedUserId)
-                ? parsedUserId
-                : 0;
-
-    var accessToken =
-        Context.Session.GetString("AccessToken") ?? "";
 }
 
 <style>
-
     .seller-inbox-main {
         width: 100%;
         min-width: 0;
-
         display: grid;
-        grid-template-columns: 280px minmax(0, 1fr);
+        grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
         gap: 12px;
         align-items: start;
     }
 
-    /* =========================================================
-       LEFT — INBOX
-       ========================================================= */
-
-    .vt-inbox-panel {
+    .vt-inbox-panel,
+    .vt-thread-panel {
         background: #fff;
         border: 0.5px solid #e0ddf5;
         border-radius: 12px;
@@ -61,34 +46,28 @@
     .vt-inbox-search {
         display: flex;
         align-items: center;
-
         border: 0.5px solid #ddd;
         border-radius: 6px;
-
         overflow: hidden;
         background: #f5f4f9;
     }
 
-    .vt-inbox-search input {
-        flex: 1;
-        min-width: 0;
+        .vt-inbox-search input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            padding: 6px 10px;
+            font-size: 11px;
+            background: transparent;
+            color: #26215C;
+        }
 
-        border: none;
-        outline: none;
-
-        padding: 6px 10px;
-
-        font-size: 11px;
-
-        background: transparent;
-        color: #26215C;
-    }
-
-    .vt-inbox-search i {
-        padding: 0 8px;
-        color: #aaa;
-        font-size: 14px;
-    }
+        .vt-inbox-search i {
+            padding: 0 8px;
+            color: #aaa;
+            font-size: 14px;
+        }
 
     .vt-inbox-tabs {
         display: flex;
@@ -97,85 +76,64 @@
 
     .vt-inbox-tab {
         flex: 1;
-
         border: 0;
         background: transparent;
-
         padding: 8px;
-
         font-family: inherit;
         font-size: 11px;
-
         color: #888;
-
         text-align: center;
-
         cursor: pointer;
-
         border-bottom: 2px solid transparent;
     }
 
-    .vt-inbox-tab.active {
-        color: #4B3BC7;
-        border-bottom: 2px solid #4B3BC7;
-        font-weight: 500;
-    }
-
-    /* =========================================================
-       MESSAGE THREADS
-       ========================================================= */
+        .vt-inbox-tab.active {
+            color: #4B3BC7;
+            border-bottom-color: #4B3BC7;
+            font-weight: 500;
+        }
 
     .vt-thread {
         width: 100%;
-
         display: flex;
         align-items: flex-start;
-
         gap: 8px;
-
         padding: 10px 14px;
-
         border: 0;
         border-bottom: 0.5px solid #f0eefb;
-
-        cursor: pointer;
-
         text-align: left;
         font-family: inherit;
-
         background: #fff;
         color: inherit;
+        text-decoration: none;
+        transition: background 0.15s ease;
     }
 
-    .vt-thread:hover {
-        background: #f8f7fd;
-    }
+        .vt-thread:hover {
+            background: #f8f7fd;
+        }
 
-    .vt-thread.active {
-        background: #EEEDFE;
-    }
+        .vt-thread:focus-visible {
+            outline: 2px solid #4B3BC7;
+            outline-offset: -2px;
+        }
 
-    .vt-thread.unread .vt-thread-name {
-        font-weight: 600;
-        color: #26215C;
-    }
+        .vt-thread.unread .vt-thread-name {
+            font-weight: 600;
+            color: #26215C;
+        }
 
     .vt-thread-avatar {
         width: 36px;
         height: 36px;
-
         border-radius: 50%;
-
         background: #4B3BC7;
         color: #fff;
-
         display: flex;
         align-items: center;
         justify-content: center;
-
         font-size: 13px;
         font-weight: 500;
-
         flex-shrink: 0;
     }
 
@@ -188,18 +146,14 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-
         gap: 8px;
-
         margin-bottom: 2px;
     }
 
     .vt-thread-name {
         min-width: 0;
-
         font-size: 12px;
         color: #555;
-
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -208,7 +162,6 @@
     .vt-thread-time {
         font-size: 10px;
         color: #aaa;
-
         white-space: nowrap;
         flex-shrink: 0;
     }
@@ -216,9 +169,7 @@
     .vt-thread-listing {
         font-size: 10px;
         color: #4B3BC7;
-
         margin-bottom: 2px;
-
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -227,7 +178,6 @@
     .vt-thread-preview {
         font-size: 11px;
         color: #888;
-
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -236,66 +186,38 @@
     .vt-thread-dot {
         width: 8px;
         height: 8px;
-
         border-radius: 50%;
-
         background: #4B3BC7;
-
         flex-shrink: 0;
-
         margin-top: 5px;
     }
 
     .vt-no-messages {
         padding: 32px;
-
         text-align: center;
-
         font-size: 12px;
         color: #888;
     }
 
-    .vt-no-messages i {
-        font-size: 32px;
-        color: #AFA9EC;
-
-        display: block;
-
-        margin-bottom: 8px;
-    }
-
-    /* =========================================================
-       RIGHT — CONVERSATION
-       ========================================================= */
+        .vt-no-messages i {
+            font-size: 32px;
+            color: #AFA9EC;
+            display: block;
+            margin-bottom: 8px;
+        }
 
     .vt-thread-panel {
-        background: #fff;
-
-        border: 0.5px solid #e0ddf5;
-        border-radius: 12px;
-
-        overflow: hidden;
-
+        min-height: 500px;
         display: flex;
         flex-direction: column;
-
-        min-width: 0;
-        min-height: 500px;
     }
-
-    /* =========================================================
-       EMPTY STATE
-       ========================================================= */
 
     .vt-thread-empty {
         flex: 1;
-
         min-height: 500px;
-
         display: flex;
         align-items: center;
         justify-content: center;
-
         text-align: center;
     }
 
@@ -303,21 +225,17 @@
         padding: 40px;
     }
 
-    .vt-thread-empty-content i {
-        font-size: 40px;
-        color: #AFA9EC;
-
-        display: block;
-
-        margin-bottom: 12px;
-    }
+        .vt-thread-empty-content i {
+            font-size: 40px;
+            color: #AFA9EC;
+            display: block;
+            margin-bottom: 12px;
+        }
 
     .vt-thread-empty-title {
         font-size: 14px;
         font-weight: 500;
-
         color: #26215C;
-
         margin-bottom: 6px;
     }
 
@@ -326,420 +244,34 @@
         color: #888;
     }
 
-    /* =========================================================
-       CONVERSATION HEADER
-       ========================================================= */
-
-    .vt-thread-header {
-        padding: 12px 16px;
-
-        border-bottom: 0.5px solid #e0ddf5;
-
-        display: flex;
-        align-items: center;
-
-        gap: 10px;
-    }
-
-    .vt-thread-avatar-lg {
-        width: 36px;
-        height: 36px;
-
-        border-radius: 50%;
-
-        background: #4B3BC7;
-        color: #fff;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-size: 13px;
-        font-weight: 500;
-
-        flex-shrink: 0;
-    }
-
-    .vt-thread-header-info {
-        min-width: 0;
-    }
-
-    .vt-thread-name-lg {
-        font-size: 13px;
-        font-weight: 500;
-
-        color: #26215C;
-    }
-
-    .vt-thread-meta-lg {
-        font-size: 11px;
-        color: #888;
-
-        display: flex;
-        align-items: center;
-
-        gap: 6px;
-
-        margin-top: 2px;
-    }
-
-    .vt-view-profile-btn {
-        font-size: 10px;
-
-        color: #4B3BC7;
-
-        border: 0.5px solid #AFA9EC;
-        border-radius: 5px;
-
-        padding: 2px 7px;
-
-        background: #EEEDFE;
-
-        white-space: nowrap;
-    }
-
-    .vt-thread-actions {
-        margin-left: auto;
-
-        display: flex;
-
-        gap: 6px;
-
-        flex-shrink: 0;
-    }
-
-    .vt-thread-btn {
-        border: 0.5px solid #ddd;
-        border-radius: 6px;
-
-        padding: 5px 10px;
-
-        font-size: 11px;
-
-        color: #555;
-        background: #fff;
-
-        display: flex;
-        align-items: center;
-
-        gap: 4px;
-
-        cursor: pointer;
-
-        text-decoration: none;
-    }
-
-    /* =========================================================
-       LISTING BAR
-       ========================================================= */
-
-    .vt-listing-bar {
-        background: #f5f4f9;
-
-        border-bottom: 0.5px solid #e0ddf5;
-
-        padding: 8px 16px;
-
-        display: flex;
-        align-items: center;
-
-        gap: 10px;
-    }
-
-    .vt-listing-img {
-        width: 32px;
-        height: 32px;
-
-        background: #EEEDFE;
-
-        border-radius: 6px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        color: #4B3BC7;
-
-        font-size: 14px;
-
-        flex-shrink: 0;
-
-        overflow: hidden;
-    }
-
-    .vt-listing-img img {
-        width: 100%;
-        height: 100%;
-
-        object-fit: cover;
-    }
-
-    .vt-listing-name {
-        font-size: 12px;
-        font-weight: 500;
-
-        color: #26215C;
-    }
-
-    .vt-listing-price {
-        font-size: 11px;
-        color: #4B3BC7;
-    }
-
-    .vt-listing-actions {
-        margin-left: auto;
-
-        display: flex;
-        gap: 6px;
-    }
-
-    .vt-listing-btn {
-        font-size: 10px;
-
-        border: 0.5px solid #ddd;
-        border-radius: 5px;
-
-        padding: 3px 8px;
-
-        color: #555;
-        background: #fff;
-
-        cursor: pointer;
-
-        white-space: nowrap;
-
-        text-decoration: none;
-    }
-
-    .vt-listing-btn-purple {
-        background: #EEEDFE;
-        color: #4B3BC7;
-        border-color: #AFA9EC;
-    }
-
-    /* =========================================================
-       MESSAGES
-       ========================================================= */
-
-    .vt-messages {
-        padding: 16px;
-
-        display: flex;
-        flex-direction: column;
-
-        gap: 12px;
-
-        min-height: 320px;
-
-        background: #fff;
-
-        overflow-y: auto;
-    }
-
-    .vt-date-sep {
+    .vt-inbox-empty {
+        padding: 32px 20px;
         text-align: center;
-
-        font-size: 10px;
-        color: #aaa;
-    }
-
-    .vt-msg {
-        display: flex;
-
-        gap: 8px;
-
-        align-items: flex-end;
-    }
-
-    .vt-msg.mine {
-        flex-direction: row-reverse;
-    }
-
-    .vt-msg-avatar {
-        width: 28px;
-        height: 28px;
-
-        border-radius: 50%;
-
-        background: #ddd;
         color: #888;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-size: 10px;
-        font-weight: 500;
-
-        flex-shrink: 0;
-    }
-
-    .vt-msg-avatar-me {
-        background: #4B3BC7;
-        color: #fff;
-    }
-
-    .vt-msg-group {
-        display: flex;
-        flex-direction: column;
-
-        gap: 3px;
-
-        max-width: 65%;
-    }
-
-    .vt-msg-bubble {
-        padding: 9px 12px;
-
-        border-radius: 12px;
-
-        font-size: 12px;
-
-        line-height: 1.5;
-
-        word-break: break-word;
-    }
-
-    .vt-msg-other {
-        background: #f5f4f9;
-        color: #26215C;
-
-        border-radius: 12px 12px 12px 2px;
-    }
-
-    .vt-msg-mine {
-        background: #4B3BC7;
-        color: #fff;
-
-        border-radius: 12px 12px 2px 12px;
-    }
-
-    .vt-msg-time {
-        font-size: 10px;
-        color: #aaa;
-    }
-
-    .vt-msg.mine .vt-msg-time {
-        text-align: right;
-    }
-
-    /* =========================================================
-       REPLY BAR
-       ========================================================= */
-
-    .vt-reply-bar {
-        border-top: 0.5px solid #e0ddf5;
-
-        padding: 10px 16px;
-
-        display: flex;
-        align-items: center;
-
-        gap: 8px;
-
-        background: #fff;
-    }
-
-    .vt-reply-input {
-        flex: 1;
-        min-width: 0;
-
-        border: 0.5px solid #ddd;
-        border-radius: 20px;
-
-        padding: 8px 14px;
-
-        font-size: 12px;
-
-        background: #f5f4f9;
-        color: #26215C;
-
-        outline: none;
-    }
-
-    .vt-reply-attach {
-        color: #aaa;
-
-        font-size: 17px;
-
-        cursor: pointer;
-    }
-
-    .vt-reply-btn {
-        background: #4B3BC7;
-        color: #fff;
-
-        border: none;
-        border-radius: 50%;
-
-        width: 34px;
-        height: 34px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        font-size: 14px;
-
-        flex-shrink: 0;
-
-        cursor: pointer;
-    }
-
-    /* =========================================================
-       LOADING / ERROR
-       ========================================================= */
-
-    .vt-thread-loading,
-    .vt-thread-error,
-    .vt-thread-no-messages {
-        min-height: 320px;
-
-        display: flex;
-        flex-direction: column;
-
-        align-items: center;
-        justify-content: center;
-
-        text-align: center;
-
-        color: #888;
-
         font-size: 12px;
     }
 
-    .vt-thread-loading i,
-    .vt-thread-error i,
-    .vt-thread-no-messages i {
-        font-size: 32px;
-
-        color: #AFA9EC;
-
-        margin-bottom: 8px;
-    }
-
-    .vt-thread-error {
-        color: #B91C1C;
-    }
-
-    .vt-thread-error i {
-        color: #B91C1C;
-    }
+        .vt-inbox-empty i {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 32px;
+            color: #AFA9EC;
+        }
 
     @@media (max-width: 900px) {
-
         .seller-inbox-main {
             grid-template-columns: 1fr;
         }
 
         .vt-thread-panel {
-            min-height: 420px;
+            min-height: 300px;
         }
 
+        .vt-thread-empty {
+            min-height: 300px;
+        }
     }
-
 </style>
-
 
 <div class="vt-body">
 
@@ -747,70 +279,46 @@
 
     <div class="vt-main seller-inbox-main">
 
-        <!-- =====================================================
-             LEFT — SELLER INBOX
-             ===================================================== -->
-
+        <!-- Seller conversation list -->
         <div class="vt-inbox-panel">
 
             <div class="vt-inbox-header">
 
                 <div class="vt-inbox-title">
-
                     Seller inbox
 
-                    <span style="
-                        font-size:10px;
-                        color:#888;
-                        font-weight:400;">
+                    <span style="font-size:10px; color:#888; font-weight:400;">
                         (@conversations.Count threads)
                     </span>
-
                 </div>
 
                 <div class="vt-inbox-search">
-
-                    <i class="ti ti-search"
-                       aria-hidden="true"></i>
+                    <i class="ti ti-search" aria-hidden="true"></i>
 
                     <input type="text"
                            id="conversationSearch"
-                           placeholder="Search messages..."
-                           autocomplete="off" />
-
+                           placeholder="Search conversations..."
+                           autocomplete="off"
+                           aria-label="Search conversations" />
                 </div>
 
             </div>
-
 
             <div class="vt-inbox-tabs">
 
                 <button type="button"
                         class="vt-inbox-tab active"
                         data-filter="all">
-
                     All (@conversations.Count)
-
                 </button>
 
                 <button type="button"
                         class="vt-inbox-tab"
                         data-filter="unread">
-
                     Unread (@unreadCount)
-
-                </button>
-
-                <button type="button"
-                        class="vt-inbox-tab"
-                        data-filter="archived">
-
-                    Archived
-
                 </button>
 
             </div>
-
 
             @if (conversations.Any())
             {
@@ -818,12 +326,10 @@
 
                     @foreach (var conv in conversations)
                     {
-                        var isUnread =
-                            conv.UnreadCount > 0;
+                        var isUnread = conv.UnreadCount > 0;
 
                         var buyerName =
-                            $"{conv.BuyerFirstName} {conv.BuyerLastName}"
-                                .Trim();
+                            $"{conv.BuyerFirstName} {conv.BuyerLastName}".Trim();
 
                         if (string.IsNullOrWhiteSpace(buyerName))
                         {
@@ -832,26 +338,21 @@
 
                         var buyerInitials = "";
 
-                        if (!string.IsNullOrWhiteSpace(
-                            conv.BuyerFirstName))
+                        if (!string.IsNullOrWhiteSpace(conv.BuyerFirstName))
                         {
-                            buyerInitials +=
-                                conv.BuyerFirstName
-                                    .Substring(0, 1)
-                                    .ToUpperInvariant();
+                            buyerInitials += conv.BuyerFirstName
+                                .Substring(0, 1)
+                                .ToUpperInvariant();
                         }
 
-                        if (!string.IsNullOrWhiteSpace(
-                            conv.BuyerLastName))
+                        if (!string.IsNullOrWhiteSpace(conv.BuyerLastName))
                         {
-                            buyerInitials +=
-                                conv.BuyerLastName
-                                    .Substring(0, 1)
-                                    .ToUpperInvariant();
+                            buyerInitials += conv.BuyerLastName
+                                .Substring(0, 1)
+                                .ToUpperInvariant();
                         }
 
-                        if (string.IsNullOrWhiteSpace(
-                            buyerInitials))
+                        if (string.IsNullOrWhiteSpace(buyerInitials))
                         {
                             buyerInitials = "?";
                         }
@@ -861,50 +362,39 @@
                         if (conv.LastMessageAt.HasValue)
                         {
                             var elapsed =
-                                DateTime.UtcNow -
-                                conv.LastMessageAt.Value;
+                                DateTime.UtcNow - conv.LastMessageAt.Value;
 
                             if (elapsed.TotalMinutes < 60)
                             {
-                                timeAgo =
-                                    $"{Math.Max(
-                                        1,
-                                        (int)elapsed.TotalMinutes)}m";
+                                timeAgo = $"{Math.Max(1, (int)elapsed.TotalMinutes)}m";
                             }
                             else if (elapsed.TotalHours < 24)
                             {
-                                timeAgo =
-                                    $"{Math.Max(
-                                        1,
-                                        (int)elapsed.TotalHours)}h";
+                                timeAgo = $"{Math.Max(1, (int)elapsed.TotalHours)}h";
                             }
                             else if (elapsed.TotalDays < 7)
                             {
-                                timeAgo =
-                                    $"{Math.Max(
-                                        1,
-                                        (int)elapsed.TotalDays)}d";
+                                timeAgo = $"{Math.Max(1, (int)elapsed.TotalDays)}d";
                             }
                             else
                             {
-                                timeAgo =
-                                    conv.LastMessageAt.Value
-                                        .ToString("dd MMM");
+                                timeAgo = conv.LastMessageAt.Value.ToString("dd MMM");
                             }
                         }
                         else
                         {
-                            timeAgo =
-                                conv.CreatedAt
-                                    .ToString("dd MMM");
+                            timeAgo = conv.CreatedAt.ToString("dd MMM");
                         }
 
+                        var searchText =
+                            $"{buyerName} {conv.ListingTitle} {conv.LastMessageContent}";
 
-                        <button type="button"
-                                class="vt-thread @(isUnread ? "unread" : "")"
-                                data-conversation-id="@conv.ConversationId"
-                                data-unread="@(isUnread ? "true" : "false")"
-                                data-search="@($"{buyerName} {conv.ListingTitle} {conv.LastMessageContent}")">
+                        <a asp-controller="Buyer"
+                           asp-action="Conversation"
+                           asp-route-id="@conv.ConversationId"
+                           class="vt-thread @(isUnread ? "unread" : "")"
+                           data-unread="@(isUnread ? "true" : "false")"
+                           data-search="@searchText">
 
                             <div class="vt-thread-avatar">
                                 @buyerInitials
@@ -929,18 +419,18 @@
                                 </div>
 
                                 <div class="vt-thread-preview">
-                                    @(conv.LastMessageContent
-                                        ?? "Started conversation")
+                                    @(conv.LastMessageContent ?? "Started conversation")
                                 </div>
 
                             </div>
 
                             @if (isUnread)
                             {
-                                <div class="vt-thread-dot"></div>
+                                <div class="vt-thread-dot"
+                                     aria-label="Unread messages"></div>
                             }
 
-                        </button>
+                        </a>
                     }
 
                 </div>
@@ -948,39 +438,36 @@
             else
             {
                 <div class="vt-no-messages">
-
-                    <i class="ti ti-message-circle"
-                       aria-hidden="true"></i>
-
+                    <i class="ti ti-message-circle" aria-hidden="true"></i>
                     No messages yet
-
                 </div>
             }
 
+            <div id="conversationSearchEmpty"
+                 class="vt-inbox-empty"
+                 hidden>
+                <i class="ti ti-search" aria-hidden="true"></i>
+                No conversations match your search.
+            </div>
+
         </div>
 
-
-        <!-- =====================================================
-             RIGHT — CONVERSATION
-             Initially empty.
-             ===================================================== -->
-
-        <div id="conversationPanel"
-             class="vt-thread-panel">
+        <!-- The conversation is displayed on the shared conversation page -->
+        <div class="vt-thread-panel">
 
             <div class="vt-thread-empty">
 
                 <div class="vt-thread-empty-content">
 
-                    <i class="ti ti-message-circle"
-                       aria-hidden="true"></i>
+                    <i class="ti ti-message-circle" aria-hidden="true"></i>
 
                     <div class="vt-thread-empty-title">
-                        Your conversations will appear here.
+                        Your conversations
                     </div>
 
                     <div class="vt-thread-empty-text">
-                        Select a conversation from the list to view your messages.
+                        Select a conversation from the list to view messages
+                        and reply to the buyer.
                     </div>
 
                 </div>
@@ -993,1138 +480,61 @@
 
 </div>
 
-
 @section Scripts {
+    <script>
+        (() => {
+            const searchInput = document.getElementById('conversationSearch');
+            const threads = Array.from(document.querySelectorAll('.vt-thread'));
+            const tabs = Array.from(document.querySelectorAll('.vt-inbox-tab'));
+            const searchEmpty = document.getElementById('conversationSearchEmpty');
 
-<script>
+            let activeFilter = 'all';
 
-    const apiBase =
-        (window.VT_API_URL ||
-            'https://localhost:7019')
-        .replace(/\/$/, '');
+            function applyFilters() {
+                const query = (searchInput?.value || '').trim().toLowerCase();
+                let visibleCount = 0;
 
-    const accessToken =
-        '@Html.Raw(accessToken)';
+                threads.forEach(thread => {
+                    const searchText = (thread.dataset.search || '').toLowerCase();
+                    const isUnread = thread.dataset.unread === 'true';
 
-    const currentUserId =
-        @currentUserId;
+                    const matchesSearch =
+                        !query || searchText.includes(query);
 
-    const currentUserInitials =
-        '@(Context.Session.GetString("UserInitials") ?? "?")';
+                    const matchesFilter =
+                        activeFilter !== 'unread' || isUnread;
 
+                    const visible = matchesSearch && matchesFilter;
 
-    const conversationSearch =
-        document.getElementById(
-            'conversationSearch');
+                    thread.hidden = !visible;
 
-    const conversationPanel =
-        document.getElementById(
-            'conversationPanel');
-
-    const conversationThreads =
-        Array.from(
-            document.querySelectorAll(
-                '.vt-thread'));
-
-    const inboxTabs =
-        Array.from(
-            document.querySelectorAll(
-                '.vt-inbox-tab'));
-
-
-    let activeFilter = 'all';
-
-    let activeConversationId = null;
-
-
-    /* =========================================================
-       API HEADERS
-       ========================================================= */
-
-    function buildAuthHeaders(
-        includeJson = false)
-    {
-        const headers = {};
-
-        if (accessToken)
-        {
-            headers.Authorization =
-                `Bearer ${accessToken}`;
-        }
-
-        if (includeJson)
-        {
-            headers['Content-Type'] =
-                'application/json';
-        }
-
-        return headers;
-    }
-
-
-    /* =========================================================
-       SEARCH + TABS
-       ========================================================= */
-
-    function applyConversationFilters()
-    {
-        const query =
-            (conversationSearch?.value || '')
-                .toLowerCase()
-                .trim();
-
-
-        conversationThreads.forEach(
-            thread =>
-            {
-                const matchesSearch =
-                    !query ||
-                    (
-                        thread.dataset.search || ''
-                    )
-                    .toLowerCase()
-                    .includes(query);
-
-
-                const isUnread =
-                    thread.dataset.unread ===
-                    'true';
-
-
-                let matchesFilter = true;
-
-
-                if (activeFilter === 'unread')
-                {
-                    matchesFilter =
-                        isUnread;
-                }
-                else if (
-                    activeFilter === 'archived')
-                {
-                    /*
-                     * There is currently no archived
-                     * conversation API field/endpoint.
-                     *
-                     * Do not invent archived data.
-                     */
-                    matchesFilter = false;
-                }
-
-
-                thread.style.display =
-                    matchesSearch &&
-                    matchesFilter
-                        ? 'flex'
-                        : 'none';
-            });
-    }
-
-
-    conversationSearch?.addEventListener(
-        'input',
-        applyConversationFilters);
-
-
-    inboxTabs.forEach(
-        tab =>
-        {
-            tab.addEventListener(
-                'click',
-                function ()
-                {
-                    inboxTabs.forEach(
-                        item =>
-                            item.classList
-                                .remove('active'));
-
-                    this.classList
-                        .add('active');
-
-                    activeFilter =
-                        this.dataset.filter ||
-                        'all';
-
-                    applyConversationFilters();
-                });
-        });
-
-
-    /* =========================================================
-       HELPERS
-       ========================================================= */
-
-    function getInitials(
-        firstName,
-        lastName)
-    {
-        const first =
-            (firstName || '').trim();
-
-        const last =
-            (lastName || '').trim();
-
-        let initials = '';
-
-
-        if (first)
-        {
-            initials +=
-                first.charAt(0)
-                    .toUpperCase();
-        }
-
-        if (last)
-        {
-            initials +=
-                last.charAt(0)
-                    .toUpperCase();
-        }
-
-
-        return initials || '?';
-    }
-
-
-    function getBuyerName(
-        conversation)
-    {
-        const name =
-            `${conversation.buyerFirstName || ''}
-              ${conversation.buyerLastName || ''}`
-                .trim();
-
-        return name || 'Buyer';
-    }
-
-
-    function formatMessageTime(
-        value)
-    {
-        const date =
-            new Date(value);
-
-        if (
-            Number.isNaN(
-                date.getTime()))
-        {
-            return '';
-        }
-
-
-        return date.toLocaleTimeString(
-            'en-ZA',
-            {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-    }
-
-
-    function formatDateSeparator(
-        value)
-    {
-        const date =
-            new Date(value);
-
-        if (
-            Number.isNaN(
-                date.getTime()))
-        {
-            return '';
-        }
-
-
-        return date.toLocaleDateString(
-            'en-ZA',
-            {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-    }
-
-
-    /* =========================================================
-       LOADING / ERROR STATES
-       ========================================================= */
-
-    function showLoadingState()
-    {
-        conversationPanel.innerHTML = `
-
-            <div class="vt-thread-loading">
-
-                <i class="ti ti-loader-2"
-                   aria-hidden="true"></i>
-
-                Loading conversation...
-
-            </div>
-
-        `;
-    }
-
-
-    function showErrorState()
-    {
-        conversationPanel.innerHTML = `
-
-            <div class="vt-thread-error">
-
-                <i class="ti ti-alert-circle"
-                   aria-hidden="true"></i>
-
-                <div>
-                    Could not load this conversation.
-                </div>
-
-                <div style="
-                    font-size:10px;
-                    color:#888;
-                    margin-top:4px;">
-
-                    Please try selecting
-                    the conversation again.
-
-                </div>
-
-            </div>
-
-        `;
-    }
-
-
-    /* =========================================================
-       EMPTY MESSAGE STATE
-       ========================================================= */
-
-    function renderEmptyMessages(
-        conversation)
-    {
-        const wrapper =
-            document.createElement('div');
-
-        wrapper.className =
-            'vt-thread-no-messages';
-
-
-        const icon =
-            document.createElement('i');
-
-        icon.className =
-            'ti ti-message-circle';
-
-        icon.setAttribute(
-            'aria-hidden',
-            'true');
-
-
-        const title =
-            document.createElement('div');
-
-        title.textContent =
-            'Start the conversation';
-
-
-        const text =
-            document.createElement('span');
-
-        text.style.display =
-            'block';
-
-        text.style.fontSize =
-            '10px';
-
-        text.style.marginTop =
-            '5px';
-
-        text.textContent =
-            `Send a message to
-             ${getBuyerName(conversation)}.`;
-
-
-        wrapper.append(
-            icon,
-            title,
-            text);
-
-
-        return wrapper;
-    }
-
-
-    /* =========================================================
-       RENDER CONVERSATION
-       ========================================================= */
-
-    function renderConversation(
-        conversation,
-        messages)
-    {
-        const buyerName =
-            getBuyerName(
-                conversation);
-
-        const buyerInitials =
-            getInitials(
-                conversation.buyerFirstName,
-                conversation.buyerLastName);
-
-
-        conversationPanel.innerHTML =
-            '';
-
-
-        /* -----------------------------------------------------
-           HEADER
-           ----------------------------------------------------- */
-
-        const header =
-            document.createElement('div');
-
-        header.className =
-            'vt-thread-header';
-
-
-        const avatar =
-            document.createElement('div');
-
-        avatar.className =
-            'vt-thread-avatar-lg';
-
-        avatar.textContent =
-            buyerInitials;
-
-
-        const headerInfo =
-            document.createElement('div');
-
-        headerInfo.className =
-            'vt-thread-header-info';
-
-
-        const nameRow =
-            document.createElement('div');
-
-        nameRow.style.display =
-            'flex';
-
-        nameRow.style.alignItems =
-            'center';
-
-        nameRow.style.gap =
-            '8px';
-
-
-        const name =
-            document.createElement('div');
-
-        name.className =
-            'vt-thread-name-lg';
-
-        name.textContent =
-            buyerName;
-
-
-        const buyerLabel =
-            document.createElement('span');
-
-        buyerLabel.className =
-            'vt-view-profile-btn';
-
-        buyerLabel.innerHTML =
-            '<i class="ti ti-user" aria-hidden="true"></i> Buyer';
-
-
-        nameRow.append(
-            name,
-            buyerLabel);
-
-
-        const meta =
-            document.createElement('div');
-
-        meta.className =
-            'vt-thread-meta-lg';
-
-
-        const buyerIcon =
-            document.createElement('i');
-
-        buyerIcon.className =
-            'ti ti-user';
-
-        buyerIcon.style.fontSize =
-            '10px';
-
-        buyerIcon.setAttribute(
-            'aria-hidden',
-            'true');
-
-
-        const buyerText =
-            document.createElement('span');
-
-        buyerText.textContent =
-            'Buyer';
-
-
-        meta.append(
-            buyerIcon,
-            buyerText);
-
-
-        headerInfo.append(
-            nameRow,
-            meta);
-
-
-        const actions =
-            document.createElement('div');
-
-        actions.className =
-            'vt-thread-actions';
-
-
-        const offers =
-            document.createElement('a');
-
-        offers.className =
-            'vt-thread-btn';
-
-        offers.href =
-            '/seller/offers';
-
-        offers.innerHTML =
-            '<i class="ti ti-arrows-exchange" aria-hidden="true"></i> Offers';
-
-
-        const report =
-            document.createElement('button');
-
-        report.type =
-            'button';
-
-        report.className =
-            'vt-thread-btn';
-
-        report.innerHTML =
-            '<i class="ti ti-flag" aria-hidden="true"></i> Report';
-
-
-        actions.append(
-            offers,
-            report);
-
-
-        header.append(
-            avatar,
-            headerInfo,
-            actions);
-
-
-        /* -----------------------------------------------------
-           LISTING BAR
-           ----------------------------------------------------- */
-
-        const listingBar =
-            document.createElement('div');
-
-        listingBar.className =
-            'vt-listing-bar';
-
-
-        const listingImage =
-            document.createElement('div');
-
-        listingImage.className =
-            'vt-listing-img';
-
-
-        if (conversation.listingCoverImage)
-        {
-            const image =
-                document.createElement('img');
-
-            image.src =
-                conversation.listingCoverImage;
-
-            image.alt =
-                conversation.listingTitle ||
-                'Listing';
-
-            listingImage.appendChild(
-                image);
-        }
-        else
-        {
-            listingImage.innerHTML =
-                '<i class="ti ti-device-laptop" aria-hidden="true"></i>';
-        }
-
-
-        const listingInfo =
-            document.createElement('div');
-
-
-        const listingName =
-            document.createElement('div');
-
-        listingName.className =
-            'vt-listing-name';
-
-        listingName.textContent =
-            conversation.listingTitle ||
-            'Listing';
-
-
-        const listingPrice =
-            document.createElement('div');
-
-        listingPrice.className =
-            'vt-listing-price';
-
-        listingPrice.textContent =
-            `R ${Number(
-                conversation.listingPrice || 0
-            ).toLocaleString(
-                'en-ZA',
-                {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 2
-                })}`;
-
-
-        listingInfo.append(
-            listingName,
-            listingPrice);
-
-
-        const listingActions =
-            document.createElement('div');
-
-        listingActions.className =
-            'vt-listing-actions';
-
-
-        const viewListing =
-            document.createElement('a');
-
-        viewListing.className =
-            'vt-listing-btn vt-listing-btn-purple';
-
-        viewListing.href =
-            `/listings/${conversation.listingId}`;
-
-        viewListing.innerHTML =
-            '<i class="ti ti-eye" aria-hidden="true"></i> View';
-
-
-        listingActions.appendChild(
-            viewListing);
-
-
-        listingBar.append(
-            listingImage,
-            listingInfo,
-            listingActions);
-
-
-        /* -----------------------------------------------------
-           MESSAGES
-           ----------------------------------------------------- */
-
-        const messagesContainer =
-            document.createElement('div');
-
-        messagesContainer.className =
-            'vt-messages';
-
-
-        if (
-            !messages ||
-            messages.length === 0)
-        {
-            messagesContainer.appendChild(
-                renderEmptyMessages(
-                    conversation));
-        }
-        else
-        {
-            let previousDate =
-                null;
-
-
-            messages.forEach(
-                message =>
-                {
-                    const messageDate =
-                        new Date(
-                            message.sentAt);
-
-
-                    const dateKey =
-                        Number.isNaN(
-                            messageDate.getTime())
-                            ? ''
-                            : messageDate
-                                .toDateString();
-
-
-                    if (
-                        dateKey &&
-                        dateKey !== previousDate)
-                    {
-                        previousDate =
-                            dateKey;
-
-
-                        const dateSeparator =
-                            document.createElement(
-                                'div');
-
-                        dateSeparator.className =
-                            'vt-date-sep';
-
-                        dateSeparator.textContent =
-                            formatDateSeparator(
-                                message.sentAt);
-
-
-                        messagesContainer
-                            .appendChild(
-                                dateSeparator);
+                    if (visible) {
+                        visibleCount++;
                     }
-
-
-                    const isMine =
-                        Number(
-                            message.senderId) ===
-                        Number(
-                            currentUserId);
-
-
-                    const messageRow =
-                        document.createElement(
-                            'div');
-
-                    messageRow.className =
-                        `vt-msg${isMine
-                            ? ' mine'
-                            : ''}`;
-
-
-                    const messageAvatar =
-                        document.createElement(
-                            'div');
-
-                    messageAvatar.className =
-                        `vt-msg-avatar${
-                            isMine
-                                ? ' vt-msg-avatar-me'
-                                : ''
-                        }`;
-
-
-                    messageAvatar.textContent =
-                        isMine
-                            ? currentUserInitials
-                            : getInitials(
-                                message.senderFirstName,
-                                message.senderLastName);
-
-
-                    const messageGroup =
-                        document.createElement(
-                            'div');
-
-                    messageGroup.className =
-                        'vt-msg-group';
-
-
-                    const bubble =
-                        document.createElement(
-                            'div');
-
-                    bubble.className =
-                        `vt-msg-bubble ${
-                            isMine
-                                ? 'vt-msg-mine'
-                                : 'vt-msg-other'
-                        }`;
-
-                    bubble.textContent =
-                        message.content || '';
-
-
-                    const messageTime =
-                        document.createElement(
-                            'div');
-
-                    messageTime.className =
-                        'vt-msg-time';
-
-                    messageTime.textContent =
-                        formatMessageTime(
-                            message.sentAt);
-
-
-                    messageGroup.append(
-                        bubble,
-                        messageTime);
-
-
-                    messageRow.append(
-                        messageAvatar,
-                        messageGroup);
-
-
-                    messagesContainer
-                        .appendChild(
-                            messageRow);
                 });
-        }
 
-
-        /* -----------------------------------------------------
-           REPLY BAR
-           ----------------------------------------------------- */
-
-        const replyBar =
-            document.createElement(
-                'form');
-
-        replyBar.className =
-            'vt-reply-bar';
-
-
-        const attach =
-            document.createElement('i');
-
-        attach.className =
-            'ti ti-paperclip vt-reply-attach';
-
-        attach.setAttribute(
-            'aria-hidden',
-            'true');
-
-
-        const input =
-            document.createElement('input');
-
-        input.className =
-            'vt-reply-input';
-
-        input.type =
-            'text';
-
-        input.placeholder =
-            'Type a message...';
-
-        input.maxLength =
-            2000;
-
-        input.required =
-            true;
-
-        input.autocomplete =
-            'off';
-
-
-        const sendButton =
-            document.createElement(
-                'button');
-
-        sendButton.className =
-            'vt-reply-btn';
-
-        sendButton.type =
-            'submit';
-
-        sendButton.innerHTML =
-            '<i class="ti ti-send" aria-hidden="true"></i>';
-
-
-        replyBar.append(
-            attach,
-            input,
-            sendButton);
-
-
-        replyBar.addEventListener(
-            'submit',
-            async function (event)
-            {
-                event.preventDefault();
-
-
-                const content =
-                    input.value.trim();
-
-
-                if (
-                    !content ||
-                    !activeConversationId)
-                {
-                    return;
+                if (searchEmpty) {
+                    searchEmpty.hidden = visibleCount !== 0;
                 }
+            }
 
+            searchInput?.addEventListener('input', applyFilters);
 
-                input.disabled =
-                    true;
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    activeFilter = tab.dataset.filter || 'all';
 
-                sendButton.disabled =
-                    true;
-
-
-                try
-                {
-                    const response =
-                        await fetch(
-                            `${apiBase}/api/messaging/conversations/${activeConversationId}/messages`,
-                            {
-                                method: 'POST',
-
-                                headers:
-                                    buildAuthHeaders(
-                                        true),
-
-                                body:
-                                    JSON.stringify({
-                                        content:
-                                            content
-                                    })
-                            });
-
-
-                    if (!response.ok)
-                    {
-                        throw new Error(
-                            `Send failed:
-                             ${response.status}`);
-                    }
-
-
-                    input.value =
-                        '';
-
-
-                    await loadConversation(
-                        activeConversationId,
-                        false);
-                }
-                catch (error)
-                {
-                    console.error(
-                        'Message send failed:',
-                        error);
-
-                    alert(
-                        'Could not send the message. Please try again.');
-                }
-                finally
-                {
-                    input.disabled =
-                        false;
-
-                    sendButton.disabled =
-                        false;
-
-                    input.focus();
-                }
-            });
-
-
-        conversationPanel.append(
-            header,
-            listingBar,
-            messagesContainer,
-            replyBar);
-
-
-        messagesContainer.scrollTop =
-            messagesContainer.scrollHeight;
-    }
-
-
-    /* =========================================================
-       LOAD SELECTED CONVERSATION
-       ========================================================= */
-
-    async function loadConversation(
-        conversationId,
-        showLoading = true)
-    {
-        activeConversationId =
-            conversationId;
-
-
-        conversationThreads.forEach(
-            thread =>
-            {
-                thread.classList.toggle(
-                    'active',
-                    Number(
-                        thread.dataset
-                            .conversationId
-                    ) ===
-                    Number(conversationId)
-                );
-            });
-
-
-        if (showLoading)
-        {
-            showLoadingState();
-        }
-
-
-        try
-        {
-            /*
-             * Existing API:
-             * GET /api/messaging/conversations/{id}
-             */
-
-            const conversationResponse =
-                await fetch(
-                    `${apiBase}/api/messaging/conversations/${conversationId}`,
-                    {
-                        method: 'GET',
-
-                        headers:
-                            buildAuthHeaders()
+                    tabs.forEach(item => {
+                        const active = item === tab;
+                        item.classList.toggle('active', active);
+                        item.setAttribute('aria-pressed', active.toString());
                     });
 
-
-            if (!conversationResponse.ok)
-            {
-                throw new Error(
-                    `Conversation failed:
-                     ${conversationResponse.status}`);
-            }
-
-
-            const conversation =
-                await conversationResponse
-                    .json();
-
-
-            /*
-             * Existing API:
-             * GET /api/messaging/conversations/{id}/messages
-             *
-             * This also marks the conversation
-             * messages as read through the
-             * existing backend implementation.
-             */
-
-            const messagesResponse =
-                await fetch(
-                    `${apiBase}/api/messaging/conversations/${conversationId}/messages`,
-                    {
-                        method: 'GET',
-
-                        headers:
-                            buildAuthHeaders()
-                    });
-
-
-            if (!messagesResponse.ok)
-            {
-                throw new Error(
-                    `Messages failed:
-                     ${messagesResponse.status}`);
-            }
-
-
-            const messages =
-                await messagesResponse
-                    .json();
-
-
-            renderConversation(
-                conversation,
-                messages);
-
-
-            /*
-             * Remove the unread state from
-             * the selected thread visually.
-             */
-
-            const selectedThread =
-                conversationThreads.find(
-                    thread =>
-                        Number(
-                            thread.dataset
-                                .conversationId
-                        ) ===
-                        Number(
-                            conversationId));
-
-
-            if (selectedThread)
-            {
-                selectedThread
-                    .classList
-                    .remove('unread');
-
-                selectedThread.dataset.unread =
-                    'false';
-
-
-                const dot =
-                    selectedThread
-                        .querySelector(
-                            '.vt-thread-dot');
-
-
-                dot?.remove();
-            }
-
-        }
-        catch (error)
-        {
-            console.error(
-                'Conversation load failed:',
-                error);
-
-            showErrorState();
-        }
-    }
-
-
-    /* =========================================================
-       THREAD CLICK
-       ========================================================= */
-
-    conversationThreads.forEach(
-        thread =>
-        {
-            thread.addEventListener(
-                'click',
-                function ()
-                {
-                    const conversationId =
-                        this.dataset
-                            .conversationId;
-
-
-                    if (!conversationId)
-                    {
-                        return;
-                    }
-
-
-                    loadConversation(
-                        Number(
-                            conversationId));
+                    applyFilters();
                 });
-        });
+            });
 
-</script>
-
+            applyFilters();
+        })();
+    </script>
 }

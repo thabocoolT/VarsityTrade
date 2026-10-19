@@ -2,341 +2,757 @@
 
 @{
     ViewData["Title"] = "Conversation";
-    ViewData["SidebarPage"] = "inbox";
     Layout = "_Layout";
 
     var conversation = Model.Conversation;
 
-    var sellerName =
-        $"{conversation.SellerFirstName} {conversation.SellerLastName}".Trim();
+    var isSellerSide =
+        conversation.BuyerId != Model.CurrentUserId;
 
-    if (string.IsNullOrWhiteSpace(sellerName))
+    ViewData["SidebarPage"] =
+        isSellerSide ? "seller-inbox" : "inbox";
+
+    var otherPartyName = isSellerSide
+        ? $"{conversation.BuyerFirstName} {conversation.BuyerLastName}".Trim()
+        : $"{conversation.SellerFirstName} {conversation.SellerLastName}".Trim();
+
+    if (string.IsNullOrWhiteSpace(otherPartyName))
     {
-        sellerName = conversation.StoreName;
+        otherPartyName = isSellerSide
+            ? "Buyer"
+            : conversation.StoreName;
     }
 
-    var sellerInitial =
-        !string.IsNullOrWhiteSpace(sellerName)
-            ? sellerName[0].ToString().ToUpper()
-            : "?";
+    var otherPartyUniversity = isSellerSide
+        ? conversation.BuyerUniversityName
+        : conversation.SellerUniversityName;
+
+    var otherPartyInitial = !string.IsNullOrWhiteSpace(otherPartyName)
+        ? otherPartyName.Substring(0, 1).ToUpperInvariant()
+        : "?";
 
     var currentUserInitial =
-        !string.IsNullOrWhiteSpace(
-            Context.Session.GetString("UserInitials"))
-                ? Context.Session.GetString("UserInitials")
-                : "?";
+        Context.Session.GetString("UserInitials") ?? "?";
+
+    var conversations = Model.Conversations
+        .OrderByDescending(c => c.LastMessageAt ?? c.CreatedAt)
+        .ToList();
 }
 
 <div class="vt-body">
 
     @await Html.PartialAsync("_Sidebar")
 
-    <div class="vt-thread-layout">
+    <main class="vt-main vt-conversation-page">
 
-        <!-- Conversation thread -->
-        <div class="vt-thread-panel">
+        <div class="vt-conversation-layout">
 
-            <div class="vt-thread-header">
+            <!-- LEFT: CONVERSATION LIST -->
+            <aside class="vt-inbox-panel">
 
-                <a href="/buyer/inbox"
-                   class="vt-thread-back">
+                <div class="vt-inbox-header">
 
-                    <i class="ti ti-arrow-left"></i>
-                    Back
-
-                </a>
-
-                <div class="vt-thread-avatar">
-                    @sellerInitial
-                </div>
-
-                <div>
-                    <div class="vt-thread-name">
-                        @sellerName
+                    <div class="vt-inbox-title">
+                        Messages
+                        <span class="vt-count">
+                            (@conversations.Count)
+                        </span>
                     </div>
 
-                    <div class="vt-thread-meta">
-                        Seller
+                    <div class="vt-inbox-search">
+                        <i class="ti ti-search" aria-hidden="true"></i>
+
+                        <input type="search"
+                               id="conversationSearch"
+                               placeholder="Search conversations..."
+                               autocomplete="off"
+                               aria-label="Search conversations" />
                     </div>
+
                 </div>
 
-                <div class="vt-thread-actions">
-
-                    <a href="/buyer/offers/make?listingId=@conversation.ListingId"
-                       class="vt-thread-action">
-                        <i class="ti ti-arrows-exchange"></i>
-                        Make offer
-                    </a>
-
+                <div class="vt-inbox-tabs">
                     <button type="button"
-                            class="vt-thread-action">
-                        <i class="ti ti-flag"></i>
-                        Report
+                            class="vt-inbox-tab active"
+                            data-filter="all">
+                        All (@conversations.Count)
                     </button>
 
+                    <button type="button"
+                            class="vt-inbox-tab"
+                            data-filter="unread">
+                        Unread
+                    </button>
                 </div>
 
-            </div>
-
-            <!-- Listing bar -->
-            <div class="vt-thread-listing">
-
-                <div class="vt-thread-listing-image">
-
-                    @if (!string.IsNullOrWhiteSpace(
-                        conversation.ListingCoverImage))
-                    {
-                        <img src="@conversation.ListingCoverImage"
-                             alt="@conversation.ListingTitle" />
-                    }
-                    else
-                    {
-                        <i class="ti ti-tag"></i>
-                    }
-
-                </div>
-
-                <div>
-
-                    <div class="vt-thread-listing-title">
-                        @conversation.ListingTitle
-                    </div>
-
-                    <div class="vt-thread-listing-price">
-                        R @conversation.ListingPrice.ToString("N0")
-                    </div>
-
-                </div>
-
-                <a href="/listings/@conversation.ListingId"
-                   class="vt-thread-listing-link">
-
-                    View listing →
-                </a>
-
-            </div>
-
-            <!-- Messages -->
-            <div class="vt-thread-messages">
-
-                @if (Model.Messages.Any())
+                @if (conversations.Any())
                 {
-                    DateTime? currentDate = null;
+                    <div class="vt-conversation-list"
+                         id="conversationList">
 
-                    @foreach (var message in Model.Messages)
-                    {
-                        var messageDate = message.SentAt.Date;
-
-                        if (currentDate != messageDate)
+                        @foreach (var conv in conversations)
                         {
-                            currentDate = messageDate;
+                            var isUnread = conv.UnreadCount > 0;
 
-                            <div class="vt-thread-date">
-                                @message.SentAt.ToString("dd MMM yyyy")
-                            </div>
-                        }
+                            var participantName =
+                                conv.BuyerId == Model.CurrentUserId
+                                    ? $"{conv.SellerFirstName} {conv.SellerLastName}".Trim()
+                                    : $"{conv.BuyerFirstName} {conv.BuyerLastName}".Trim();
 
-                        var isMine =
-                            message.SenderId == Model.CurrentUserId;
+                            if (string.IsNullOrWhiteSpace(participantName))
+                            {
+                                participantName = conv.BuyerId == Model.CurrentUserId
+                                    ? conv.StoreName
+                                    : "Buyer";
+                            }
 
-                        var senderInitial =
-                            !string.IsNullOrWhiteSpace(
-                                message.SenderFirstName)
-                                    ? message.SenderFirstName[0]
-                                        .ToString()
-                                        .ToUpper()
+                            var participantInitial =
+                                !string.IsNullOrWhiteSpace(participantName)
+                                    ? participantName.Substring(0, 1).ToUpperInvariant()
                                     : "?";
 
-                        <div class="vt-message @(isMine ? "mine" : "")">
+                            var searchText =
+                                $"{participantName} {conv.ListingTitle} {conv.LastMessageContent}";
 
-                            <div class="vt-message-avatar @(isMine ? "mine" : "")">
-                                @(isMine
-                                    ? currentUserInitial
-                                    : senderInitial)
-                            </div>
+                            var lastActivity =
+                                conv.LastMessageAt ?? conv.CreatedAt;
 
-                            <div class="vt-message-group">
+                            var timeLabel =
+                                lastActivity.ToLocalTime().Date == DateTime.Now.Date
+                                    ? lastActivity.ToLocalTime().ToString("HH:mm")
+                                    : lastActivity.ToLocalTime().ToString("dd MMM");
 
-                                <div class="vt-message-bubble">
-                                    @message.Content
+                            <a asp-controller="Buyer"
+                               asp-action="Conversation"
+                               asp-route-id="@conv.ConversationId"
+                               class="vt-thread @(conv.ConversationId == conversation.ConversationId ? "active" : "") @(isUnread ? "unread" : "")"
+                               data-unread="@(isUnread ? "true" : "false")"
+                               data-search="@searchText">
+
+                                <div class="vt-thread-avatar">
+                                    @participantInitial
                                 </div>
 
-                                <div class="vt-message-time">
-                                    @message.SentAt.ToLocalTime()
-                                        .ToString("HH:mm")
+                                <div class="vt-thread-info">
+
+                                    <div class="vt-thread-top">
+                                        <span class="vt-thread-name">
+                                            @participantName
+                                        </span>
+
+                                        <span class="vt-thread-time">
+                                            @timeLabel
+                                        </span>
+                                    </div>
+
+                                    <div class="vt-thread-listing">
+                                        Re: @conv.ListingTitle
+                                    </div>
+
+                                    <div class="vt-thread-preview">
+                                        @(conv.LastMessageContent ?? "Started conversation")
+                                    </div>
+
                                 </div>
 
-                            </div>
+                                @if (isUnread)
+                                {
+                                    <span class="vt-thread-dot"
+                                          aria-label="Unread messages"></span>
+                                }
 
-                        </div>
-                    }
+                            </a>
+                        }
+
+                    </div>
+
+                    <div id="conversationSearchEmpty"
+                         class="vt-inbox-empty"
+                         hidden>
+                        <i class="ti ti-search" aria-hidden="true"></i>
+                        No conversations match your search.
+                    </div>
                 }
                 else
                 {
-                    <div class="vt-thread-no-messages">
-                        <i class="ti ti-message-circle"></i>
-                        <div>Start the conversation</div>
-                        <span>
-                            Send a message to @conversation.StoreName.
-                        </span>
+                    <div class="vt-no-messages">
+                        <i class="ti ti-message-circle" aria-hidden="true"></i>
+                        <div>No conversations yet</div>
                     </div>
                 }
 
-            </div>
+            </aside>
 
-            <!-- Reply -->
-            <form method="post"
-                  action="/buyer/inbox/send"
-                  class="vt-reply-bar">
+            <!-- CENTRE: SELECTED CONVERSATION -->
+            <section class="vt-thread-panel">
 
-                <input type="hidden"
-                       name="conversationId"
-                       value="@conversation.ConversationId" />
+                <header class="vt-thread-header">
 
-                <input type="text"
-                       name="content"
-                       class="vt-reply-input"
-                       placeholder="Type a message..."
-                       maxlength="2000"
-                       required
-                       autocomplete="off" />
-
-                <button type="submit"
-                        class="vt-reply-btn">
-
-                    <i class="ti ti-send"></i>
-
-                </button>
-
-            </form>
-
-        </div>
-
-        <!-- Right-side information -->
-        <div class="vt-thread-right">
-
-            <div class="vt-thread-info-card">
-
-                <div class="vt-thread-info-title">
-                    <i class="ti ti-user"></i>
-                    Seller
-                </div>
-
-                <div class="vt-thread-seller">
-
-                    <div class="vt-thread-seller-avatar">
-                        @sellerInitial
+                    <div class="vt-thread-avatar vt-thread-avatar-lg">
+                        @otherPartyInitial
                     </div>
 
-                    <div>
-                       <div class="vt-thread-seller-name">
-                        @sellerName
+                    <div class="vt-thread-header-info">
+
+                        <div class="vt-thread-name-lg">
+                            @otherPartyName
+                        </div>
+
+                        <div class="vt-thread-meta-lg">
+                            <i class="ti ti-school" aria-hidden="true"></i>
+                            @(string.IsNullOrWhiteSpace(otherPartyUniversity)
+                                ? "University not available"
+                                : otherPartyUniversity)
+
+                            <span class="vt-role-label">
+                                @(isSellerSide ? "Buyer" : "Seller")
+                            </span>
+                        </div>
+
                     </div>
 
-                    <div class="vt-thread-seller-meta">
-                        @conversation.SellerUniversityName
+                    <div class="vt-thread-actions">
+
+                        @if (!isSellerSide)
+                        {
+                            <a asp-controller="Buyer"
+                               asp-action="MakeOffer"
+                               asp-route-listingId="@conversation.ListingId"
+                               class="vt-thread-btn">
+                                <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                                Make offer
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Seller"
+                               asp-action="Offers"
+                               class="vt-thread-btn">
+                                <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                                Offers
+                            </a>
+                        }
+
                     </div>
-                    </div>
 
-                </div>
+                </header>
 
-                <a href="/seller/profile/@conversation.SellerProfileId"
-                   class="vt-thread-profile-btn">
+                <!-- Listing summary -->
+                <div class="vt-listing-bar">
 
-                    <i class="ti ti-user"></i>
-                    View profile
+                    <div class="vt-listing-img">
 
-                </a>
-
-            </div>
-
-            <div class="vt-thread-info-card">
-
-                <div class="vt-thread-info-title">
-                    <i class="ti ti-tag"></i>
-                    Listing
-                </div>
-
-                <div class="vt-listing-preview">
-
-                    <div class="vt-listing-preview-image">
-
-                        @if (!string.IsNullOrWhiteSpace(
-                            conversation.ListingCoverImage))
+                        @if (!string.IsNullOrWhiteSpace(conversation.ListingCoverImage))
                         {
                             <img src="@conversation.ListingCoverImage"
                                  alt="@conversation.ListingTitle" />
                         }
                         else
                         {
-                            <i class="ti ti-tag"></i>
+                            <i class="ti ti-tag" aria-hidden="true"></i>
                         }
 
                     </div>
 
-                    <div class="vt-listing-preview-title">
-                        @conversation.ListingTitle
+                    <div class="vt-listing-info">
+
+                        <div class="vt-listing-name">
+                            @conversation.ListingTitle
+                        </div>
+
+                        <div class="vt-listing-price">
+                            R @conversation.ListingPrice.ToString("N2")
+                        </div>
+
                     </div>
 
-                    <div class="vt-listing-preview-price">
-                        R @conversation.ListingPrice.ToString("N0")
-                    </div>
+                    <a href="/listings/@conversation.ListingId"
+                       class="vt-listing-btn vt-listing-btn-purple">
+                        <i class="ti ti-eye" aria-hidden="true"></i>
+                        View listing
+                    </a>
 
                 </div>
 
-                <a href="/buyer/offers/make?listingId=@conversation.ListingId"
-                   class="vt-thread-offer-btn">
+                <!-- Message history -->
+                <div class="vt-messages" id="messageContainer">
 
-                    <i class="ti ti-arrows-exchange"></i>
-                    Make trade offer
+                    @if (Model.Messages.Any())
+                    {
+                        DateTime? currentDate = null;
 
-                </a>
+                        @foreach (var message in Model.Messages)
+                        {
+                            var messageDate = message.SentAt.Date;
 
-                <a href="/listings/@conversation.ListingId"
-                   class="vt-thread-view-btn">
+                            if (currentDate != messageDate)
+                            {
+                                currentDate = messageDate;
 
-                    <i class="ti ti-eye"></i>
-                    View full listing
+                                <div class="vt-date-sep">
+                                    @message.SentAt.ToLocalTime().ToString("dd MMM yyyy")
+                                </div>
+                            }
 
-                </a>
+                            var isMine =
+                                message.SenderId == Model.CurrentUserId;
 
-            </div>
+                            var senderInitial =
+                                !string.IsNullOrWhiteSpace(message.SenderFirstName)
+                                    ? message.SenderFirstName.Substring(0, 1).ToUpperInvariant()
+                                    : "?";
 
-            <div class="vt-thread-safety">
+                            <div class="vt-msg @(isMine ? "mine" : "")">
 
-                <div class="vt-thread-safety-title">
-                    <i class="ti ti-shield-check"></i>
-                    Safety tips
+                                <div class="vt-msg-avatar @(isMine ? "vt-msg-avatar-me" : "")">
+                                    @(isMine ? currentUserInitial : senderInitial)
+                                </div>
+
+                                <div class="vt-msg-group">
+
+                                    <div class="vt-msg-bubble @(isMine ? "vt-msg-mine" : "vt-msg-other")">
+                                        @message.Content
+                                    </div>
+
+                                    <div class="vt-msg-time">
+                                        @message.SentAt.ToLocalTime().ToString("HH:mm")
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="vt-thread-no-messages">
+                            <i class="ti ti-message-circle" aria-hidden="true"></i>
+
+                            <div>Start the conversation</div>
+
+                            <span>
+                                Send a message to @otherPartyName.
+                            </span>
+                        </div>
+                    }
+
                 </div>
 
-                <div>✓ Meet on campus in a public area</div>
-                <div>✓ Inspect the item before paying</div>
-                <div>✓ Never pay upfront or transfer money</div>
-                <div>✓ Report anything suspicious</div>
+                <!-- Reply form -->
+                <form method="post"
+                      asp-controller="Buyer"
+                      asp-action="SendMessage"
+                      class="vt-reply-bar">
 
-            </div>
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="conversationId"
+                           value="@conversation.ConversationId" />
+
+                    <input type="text"
+                           name="content"
+                           class="vt-reply-input"
+                           placeholder="Type a message..."
+                           maxlength="2000"
+                           required
+                           autocomplete="off"
+                           aria-label="Message content" />
+
+                    <button type="submit"
+                            class="vt-reply-btn"
+                            aria-label="Send message">
+                        <i class="ti ti-send" aria-hidden="true"></i>
+                    </button>
+
+                </form>
+
+            </section>
+
+            <!-- RIGHT: PARTICIPANT, LISTING AND SAFETY DETAILS -->
+            <aside class="vt-thread-right">
+
+                <!-- Participant details change according to conversation side -->
+                <section class="vt-thread-info-card">
+
+                    <div class="vt-thread-info-title">
+                        <i class="ti ti-user" aria-hidden="true"></i>
+                        @(isSellerSide ? "Buyer details" : "Seller details")
+                    </div>
+
+                    <div class="vt-participant">
+
+                        <div class="vt-participant-avatar">
+                            @otherPartyInitial
+                        </div>
+
+                        <div class="vt-participant-info">
+
+                            <div class="vt-participant-name">
+                                @otherPartyName
+                            </div>
+
+                            <div class="vt-participant-university">
+                                @(string.IsNullOrWhiteSpace(otherPartyUniversity)
+                                    ? "University not available"
+                                    : otherPartyUniversity)
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    @if (isSellerSide)
+                    {
+                        <div class="vt-detail-row">
+                            <span>Student verification</span>
+
+                            <strong>
+                                @if (conversation.BuyerStudentVerified)
+                                {
+                                    <span class="vt-verified">
+                                        <i class="ti ti-rosette-check" aria-hidden="true"></i>
+                                        Verified
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>Not verified</span>
+                                }
+                            </strong>
+                        </div>
+
+                        <div class="vt-detail-row">
+                            <span>Member since</span>
+
+                            <strong>
+                                @(conversation.BuyerJoinedAt == DateTime.MinValue
+                                    ? "Unavailable"
+                                    : conversation.BuyerJoinedAt.ToString("MMM yyyy"))
+                            </strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="vt-detail-row">
+                            <span>Seller rating</span>
+
+                            <strong>
+                                <i class="ti ti-star-filled vt-star" aria-hidden="true"></i>
+                                @conversation.SellerRating.ToString("N1")
+                            </strong>
+                        </div>
+
+                        <div class="vt-detail-row">
+                            <span>Total sales</span>
+
+                            <strong>
+                                @conversation.SellerTotalSales
+                            </strong>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(conversation.StoreName))
+                        {
+                            <div class="vt-detail-row">
+                                <span>Store</span>
+                                <strong>@conversation.StoreName</strong>
+                            </div>
+                        }
+
+                        <a href="/seller/profile/@conversation.SellerProfileId"
+                           class="vt-thread-profile-btn">
+                            <i class="ti ti-user" aria-hidden="true"></i>
+                            View seller profile
+                        </a>
+                    }
+
+                </section>
+
+                <!-- Listing details -->
+                <section class="vt-thread-info-card">
+
+                    <div class="vt-thread-info-title">
+                        <i class="ti ti-tag" aria-hidden="true"></i>
+                        Listing details
+                    </div>
+
+                    <div class="vt-listing-preview">
+
+                        <div class="vt-listing-preview-image">
+
+                            @if (!string.IsNullOrWhiteSpace(conversation.ListingCoverImage))
+                            {
+                                <img src="@conversation.ListingCoverImage"
+                                     alt="@conversation.ListingTitle" />
+                            }
+                            else
+                            {
+                                <i class="ti ti-tag" aria-hidden="true"></i>
+                            }
+
+                        </div>
+
+                        <div class="vt-listing-preview-title">
+                            @conversation.ListingTitle
+                        </div>
+
+                        <div class="vt-listing-preview-price">
+                            R @conversation.ListingPrice.ToString("N2")
+                        </div>
+
+                    </div>
+
+                    <a href="/listings/@conversation.ListingId"
+                       class="vt-thread-view-btn">
+                        <i class="ti ti-eye" aria-hidden="true"></i>
+                        View full listing
+                    </a>
+
+                    @if (!isSellerSide)
+                    {
+                        <a asp-controller="Buyer"
+                           asp-action="MakeOffer"
+                           asp-route-listingId="@conversation.ListingId"
+                           class="vt-thread-offer-btn">
+                            <i class="ti ti-arrows-exchange" aria-hidden="true"></i>
+                            Make trade offer
+                        </a>
+                    }
+
+                </section>
+
+                <!-- Safety information -->
+                <section class="vt-thread-safety">
+
+                    <div class="vt-thread-safety-title">
+                        <i class="ti ti-shield-check" aria-hidden="true"></i>
+                        Safety tips
+                    </div>
+
+                    <div>
+                        <i class="ti ti-check" aria-hidden="true"></i>
+                        Meet on campus in a public area.
+                    </div>
+
+                    <div>
+                        <i class="ti ti-check" aria-hidden="true"></i>
+                        Inspect the item before paying.
+                    </div>
+
+                    <div>
+                        <i class="ti ti-check" aria-hidden="true"></i>
+                        Never pay upfront to an unknown person.
+                    </div>
+
+                    <div>
+                        <i class="ti ti-check" aria-hidden="true"></i>
+                        Report suspicious activity through the platform's reporting feature.
+                    </div>
+
+                </section>
+
+            </aside>
 
         </div>
 
-    </div>
+    </main>
 
 </div>
+
 <style>
-    .vt-thread-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 270px;
-        gap: 14px;
-        min-height: 500px;
+    .vt-conversation-page {
+        min-width: 0;
+        width: 100%;
     }
 
+    .vt-conversation-layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 270px) minmax(320px, 1fr) minmax(220px, 260px);
+        gap: 12px;
+        align-items: start;
+        min-width: 0;
+    }
+
+    .vt-inbox-panel,
     .vt-thread-panel,
     .vt-thread-info-card,
     .vt-thread-safety {
         background: #fff;
-        border: 0.5px solid var(--vt-border-light);
+        border: 1px solid var(--vt-border-light, #e0ddf5);
         border-radius: 12px;
         overflow: hidden;
+        min-width: 0;
     }
+
+    .vt-inbox-header {
+        padding: 12px;
+        border-bottom: 1px solid #e0ddf5;
+    }
+
+    .vt-inbox-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #26215C;
+        margin-bottom: 10px;
+    }
+
+    .vt-count {
+        color: #888;
+        font-size: 10px;
+        font-weight: 400;
+    }
+
+    .vt-inbox-search {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 9px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #f5f4f9;
+    }
+
+        .vt-inbox-search i {
+            color: #999;
+        }
+
+        .vt-inbox-search input {
+            width: 100%;
+            min-width: 0;
+            padding: 8px 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #26215C;
+            font-size: 11px;
+        }
+
+    .vt-inbox-tabs {
+        display: flex;
+        border-bottom: 1px solid #e0ddf5;
+    }
+
+    .vt-inbox-tab {
+        flex: 1;
+        padding: 9px 5px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: #888;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+        .vt-inbox-tab.active {
+            color: #4B3BC7;
+            border-bottom-color: #4B3BC7;
+            font-weight: 600;
+        }
+
+    .vt-thread {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 11px 10px;
+        border-bottom: 1px solid #f0eefb;
+        color: inherit;
+        text-decoration: none;
+    }
+
+        .vt-thread:hover {
+            background: #f8f7fd;
+        }
+
+        .vt-thread.active {
+            background: #EEEDFE;
+        }
+
+        .vt-thread.unread .vt-thread-name {
+            color: #26215C;
+            font-weight: 700;
+        }
+
+    .vt-thread-avatar,
+    .vt-participant-avatar {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #4B3BC7;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .vt-thread-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .vt-thread-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 3px;
+    }
+
+    .vt-thread-name,
+    .vt-thread-preview,
+    .vt-thread-listing {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .vt-thread-name {
+        color: #555;
+        font-size: 11px;
+    }
+
+    .vt-thread-time {
+        flex-shrink: 0;
+        color: #999;
+        font-size: 9px;
+    }
+
+    .vt-thread-listing {
+        margin-bottom: 3px;
+        color: #4B3BC7;
+        font-size: 10px;
+    }
+
+    .vt-thread-preview {
+        color: #888;
+        font-size: 10px;
+    }
+
+    .vt-thread-dot {
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+        margin-top: 5px;
+        border-radius: 50%;
+        background: #4B3BC7;
+    }
+
+    .vt-no-messages,
+    .vt-inbox-empty {
+        padding: 30px 15px;
+        color: #888;
+        text-align: center;
+        font-size: 11px;
+    }
+
+        .vt-no-messages i,
+        .vt-inbox-empty i {
+            display: block;
+            margin-bottom: 8px;
+            color: #AFA9EC;
+            font-size: 30px;
+        }
 
     .vt-thread-panel {
         display: flex;
@@ -344,223 +760,261 @@
     }
 
     .vt-thread-header {
-        padding: 12px 16px;
-        border-bottom: 0.5px solid var(--vt-border-light);
         display: flex;
         align-items: center;
         gap: 10px;
+        padding: 12px;
+        border-bottom: 1px solid #e0ddf5;
     }
 
-    .vt-thread-back {
-        color: var(--vt-primary);
-        text-decoration: none;
-        font-size: 12px;
-        display: flex;
-        gap: 4px;
-        align-items: center;
-        margin-right: 4px;
+    .vt-thread-avatar-lg {
+        width: 38px;
+        height: 38px;
     }
 
-    .vt-thread-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--vt-primary);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .vt-thread-header-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .vt-thread-name-lg {
+        color: #26215C;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
-    .vt-thread-name {
-        font-size: 13px;
-        font-weight: 500;
-    }
-
-    .vt-thread-meta {
-        font-size: 10px;
+    .vt-thread-meta-lg {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        margin-top: 4px;
         color: #888;
-        margin-top: 2px;
+        font-size: 10px;
+    }
+
+    .vt-role-label {
+        padding: 2px 5px;
+        border-radius: 4px;
+        background: #EEEDFE;
+        color: #4B3BC7;
     }
 
     .vt-thread-actions {
-        margin-left: auto;
         display: flex;
-        gap: 6px;
+        flex-shrink: 0;
+        gap: 5px;
     }
 
-    .vt-thread-action {
-        border: 0.5px solid #ddd;
-        background: #fff;
-        color: #555;
+    .vt-thread-btn,
+    .vt-listing-btn,
+    .vt-thread-profile-btn,
+    .vt-thread-offer-btn,
+    .vt-thread-view-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 7px 9px;
+        border: 1px solid #ddd;
         border-radius: 6px;
-        padding: 6px 9px;
-        font-size: 10px;
+        background: #fff;
+        color: #4B3BC7;
         text-decoration: none;
+        font-size: 10px;
+        cursor: pointer;
     }
 
-    .vt-thread-listing {
-        background: #f5f4f9;
-        border-bottom: 0.5px solid var(--vt-border-light);
-        padding: 8px 16px;
+    .vt-listing-bar {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 9px;
+        padding: 9px 12px;
+        border-bottom: 1px solid #e0ddf5;
+        background: #f5f4f9;
     }
 
-    .vt-thread-listing-image {
+    .vt-listing-img {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
         width: 36px;
         height: 36px;
-        border-radius: 6px;
-        background: #eeedfe;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         overflow: hidden;
-        color: var(--vt-primary);
+        border-radius: 6px;
+        background: #EEEDFE;
+        color: #4B3BC7;
     }
 
-    .vt-thread-listing-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+        .vt-listing-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-    .vt-thread-listing-title {
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    .vt-thread-listing-price {
-        color: var(--vt-primary);
-        font-size: 10px;
-        margin-top: 2px;
-    }
-
-    .vt-thread-listing-link {
-        margin-left: auto;
-        color: var(--vt-primary);
-        font-size: 10px;
-        text-decoration: none;
-    }
-
-    .vt-thread-messages {
+    .vt-listing-info {
         flex: 1;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        min-height: 300px;
+        min-width: 0;
     }
 
-    .vt-thread-date {
-        text-align: center;
-        font-size: 9px;
-        color: #aaa;
-        margin: 4px 0;
+    .vt-listing-name {
+        color: #26215C;
+        font-size: 11px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
-    .vt-message {
-        display: flex;
-        gap: 8px;
-        align-items: flex-end;
+    .vt-listing-price {
+        margin-top: 3px;
+        color: #4B3BC7;
+        font-size: 11px;
     }
 
-    .vt-message.mine {
-        flex-direction: row-reverse;
-    }
-
-    .vt-message-avatar {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: #ddd;
-        color: #777;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 9px;
+    .vt-listing-btn {
         flex-shrink: 0;
     }
 
-    .vt-message-avatar.mine {
-        background: var(--vt-primary);
+    .vt-messages {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 12px;
+        min-height: 320px;
+        max-height: 560px;
+        overflow-y: auto;
+        padding: 16px 12px;
+        background: #fff;
+    }
+
+    .vt-date-sep {
+        margin: 4px 0;
+        color: #999;
+        text-align: center;
+        font-size: 10px;
+    }
+
+    .vt-msg {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+        .vt-msg.mine {
+            flex-direction: row-reverse;
+        }
+
+    .vt-msg-avatar {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 27px;
+        height: 27px;
+        border-radius: 50%;
+        background: #ddd;
+        color: #666;
+        font-size: 10px;
+    }
+
+    .vt-msg-avatar-me {
+        background: #4B3BC7;
         color: #fff;
     }
 
-    .vt-message-group {
-        max-width: 72%;
+    .vt-msg-group {
+        display: flex;
+        flex-direction: column;
+        max-width: 78%;
+        gap: 3px;
     }
 
-    .vt-message-bubble {
+    .vt-msg-bubble {
         padding: 9px 12px;
         border-radius: 12px 12px 12px 2px;
-        background: #f5f4f9;
-        color: var(--vt-text-primary);
-        font-size: 11px;
+        font-size: 12px;
         line-height: 1.5;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
     }
 
-    .vt-message.mine .vt-message-bubble {
-        background: var(--vt-primary);
-        color: #fff;
+    .vt-msg-other {
+        background: #f5f4f9;
+        color: #26215C;
+    }
+
+    .vt-msg-mine {
         border-radius: 12px 12px 2px 12px;
+        background: #4B3BC7;
+        color: #fff;
     }
 
-    .vt-message-time {
+    .vt-msg-time {
+        color: #999;
         font-size: 9px;
-        color: #aaa;
-        margin-top: 3px;
     }
 
-    .vt-message.mine .vt-message-time {
+    .vt-msg.mine .vt-msg-time {
         text-align: right;
     }
 
     .vt-thread-no-messages {
         margin: auto;
-        text-align: center;
+        padding: 35px 15px;
         color: #888;
+        text-align: center;
         font-size: 12px;
     }
 
-    .vt-thread-no-messages i {
-        display: block;
-        font-size: 38px;
-        color: #aaa5e8;
-        margin-bottom: 10px;
-    }
+        .vt-thread-no-messages i {
+            display: block;
+            margin-bottom: 10px;
+            color: #AFA9EC;
+            font-size: 36px;
+        }
 
-    .vt-thread-no-messages span {
-        display: block;
-        font-size: 10px;
-        margin-top: 5px;
-    }
+        .vt-thread-no-messages span {
+            display: block;
+            margin-top: 5px;
+            font-size: 10px;
+        }
 
     .vt-reply-bar {
-        border-top: 0.5px solid var(--vt-border-light);
-        padding: 10px 16px;
         display: flex;
+        align-items: center;
         gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid #e0ddf5;
+        background: #fff;
     }
 
     .vt-reply-input {
         flex: 1;
-        border: 0.5px solid #ddd;
+        min-width: 0;
+        padding: 10px 14px;
+        border: 1px solid #ddd;
         border-radius: 20px;
-        padding: 8px 14px;
-        font-size: 11px;
         outline: none;
+        background: #f5f4f9;
+        color: #26215C;
+        font-size: 12px;
     }
 
+        .vt-reply-input:focus {
+            border-color: #4B3BC7;
+        }
+
     .vt-reply-btn {
-        width: 34px;
-        height: 34px;
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
         border: 0;
         border-radius: 50%;
-        background: var(--vt-primary);
+        background: #4B3BC7;
         color: #fff;
         cursor: pointer;
     }
@@ -569,126 +1023,258 @@
         display: flex;
         flex-direction: column;
         gap: 12px;
+        min-width: 0;
     }
 
     .vt-thread-info-card {
-        padding: 14px;
+        padding: 13px;
     }
 
     .vt-thread-info-title {
-        font-size: 11px;
-        font-weight: 500;
-        padding-bottom: 7px;
-        margin-bottom: 10px;
-        border-bottom: 0.5px solid var(--vt-border-light);
-    }
-
-    .vt-thread-seller {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        padding-bottom: 9px;
+        margin-bottom: 11px;
+        border-bottom: 1px solid #e0ddf5;
+        color: #26215C;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .vt-participant {
+        display: flex;
+        align-items: center;
+        gap: 9px;
         margin-bottom: 12px;
     }
 
-    .vt-thread-seller-avatar {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: var(--vt-primary);
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
+    .vt-participant-info {
+        min-width: 0;
     }
 
-    .vt-thread-seller-name {
+    .vt-participant-name {
+        color: #26215C;
         font-size: 11px;
-        font-weight: 500;
+        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
-    .vt-thread-seller-meta {
-        font-size: 9px;
+    .vt-participant-university {
+        margin-top: 4px;
         color: #888;
-        margin-top: 2px;
+        font-size: 10px;
+        overflow-wrap: anywhere;
+    }
+
+    .vt-detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 0;
+        border-top: 1px solid #f0eefb;
+        color: #777;
+        font-size: 10px;
+    }
+
+        .vt-detail-row strong {
+            color: #26215C;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+    .vt-verified {
+        color: #16803c;
+    }
+
+    .vt-star {
+        color: #E4A11B;
     }
 
     .vt-thread-profile-btn,
     .vt-thread-offer-btn,
     .vt-thread-view-btn {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
         width: 100%;
-        padding: 8px;
-        border-radius: 7px;
-        font-size: 10px;
-        text-decoration: none;
-        margin-top: 6px;
-    }
-
-    .vt-thread-profile-btn,
-    .vt-thread-view-btn {
-        border: 0.5px solid #ddd;
-        color: var(--vt-primary);
+        margin-top: 8px;
+        box-sizing: border-box;
     }
 
     .vt-thread-offer-btn {
-        background: var(--vt-primary);
+        border-color: #4B3BC7;
+        background: #4B3BC7;
         color: #fff;
     }
 
     .vt-listing-preview {
-        background: #f5f4f9;
-        border-radius: 8px;
         overflow: hidden;
+        border-radius: 8px;
+        background: #f5f4f9;
     }
 
     .vt-listing-preview-image {
-        height: 70px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #eeedfe;
-        color: var(--vt-primary);
+        height: 100px;
         overflow: hidden;
+        background: #EEEDFE;
+        color: #4B3BC7;
     }
 
-    .vt-listing-preview-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+        .vt-listing-preview-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
     .vt-listing-preview-title {
-        padding: 7px 9px 2px;
-        font-size: 10px;
-        font-weight: 500;
+        padding: 9px 9px 3px;
+        color: #26215C;
+        font-size: 11px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
     .vt-listing-preview-price {
-        padding: 0 9px 7px;
+        padding: 0 9px 9px;
+        color: #4B3BC7;
         font-size: 11px;
-        color: var(--vt-primary);
     }
 
     .vt-thread-safety {
         padding: 12px;
-        background: #eeedfe;
         border-color: #afa9ec;
+        background: #EEEDFE;
         color: #534ab7;
-        font-size: 9px;
-        line-height: 1.5;
+        font-size: 10px;
+        line-height: 1.6;
     }
 
     .vt-thread-safety-title {
-        font-size: 10px;
-        font-weight: 500;
-        margin-bottom: 6px;
+        margin-bottom: 7px;
+        font-size: 11px;
+        font-weight: 600;
     }
 
     .vt-thread-safety div:not(.vt-thread-safety-title) {
-        margin-bottom: 4px;
+        display: flex;
+        gap: 5px;
+        margin-bottom: 5px;
+    }
+
+    @@media (max-width: 1200px) {
+        .vt-conversation-layout {
+            grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+        }
+
+        .vt-thread-right {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: start;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .vt-conversation-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .vt-thread-right {
+            grid-column: auto;
+            display: flex;
+        }
+
+        .vt-thread-actions {
+            flex-wrap: wrap;
+        }
+
+        .vt-messages {
+            max-height: 450px;
+        }
     }
 </style>
+
+@section Scripts {
+    <script>
+        (() => {
+            const searchInput =
+                document.getElementById('conversationSearch');
+
+            const threads = Array.from(
+                document.querySelectorAll('.vt-thread[data-search]'));
+
+            const tabs = Array.from(
+                document.querySelectorAll('.vt-inbox-tab'));
+
+            const emptyState =
+                document.getElementById('conversationSearchEmpty');
+
+            let activeFilter = 'all';
+
+            function applyFilters() {
+                const query = (searchInput?.value || '')
+                    .trim()
+                    .toLowerCase();
+
+                let visibleCount = 0;
+
+                threads.forEach(thread => {
+                    const searchText =
+                        (thread.dataset.search || '').toLowerCase();
+
+                    const isUnread =
+                        thread.dataset.unread === 'true';
+
+                    const matchesSearch =
+                        !query || searchText.includes(query);
+
+                    const matchesFilter =
+                        activeFilter !== 'unread' || isUnread;
+
+                    const visible =
+                        matchesSearch && matchesFilter;
+
+                    thread.hidden = !visible;
+
+                    if (visible) {
+                        visibleCount++;
+                    }
+                });
+
+                if (emptyState) {
+                    emptyState.hidden = visibleCount > 0;
+                }
+            }
+
+            searchInput?.addEventListener('input', applyFilters);
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    activeFilter = tab.dataset.filter || 'all';
+
+                    tabs.forEach(item => {
+                        const active = item === tab;
+
+                        item.classList.toggle('active', active);
+                        item.setAttribute(
+                            'aria-pressed',
+                            active.toString());
+                    });
+
+                    applyFilters();
+                });
+            });
+
+            applyFilters();
+
+            const messages =
+                document.getElementById('messageContainer');
+
+            if (messages) {
+                messages.scrollTop = messages.scrollHeight;
+            }
+        })();
+    </script>
+}

@@ -213,12 +213,11 @@ namespace VarsityTrade.Web.Controllers
             {
                 Conversation = conversation,
                 Messages = messages ?? new List<MessageViewModel>(),
-                CurrentUserId = GetUserId(),
+                CurrentUserId = GetUserId()
             };
 
             ViewData["SidebarPage"] = "inbox";
 
-            // Explicitly specify view path to avoid naming conflicts
             return View("~/Views/Buyer/Conversation.cshtml", model);
         }
 
@@ -518,19 +517,41 @@ namespace VarsityTrade.Web.Controllers
         // POST /buyer/inbox/send
         // Sends a message in a conversation
         // ─────────────────────────────────────────────────────────────
+        [ValidateAntiForgeryToken]
         [HttpPost("inbox/send")]
         public async Task<IActionResult> SendMessage(int conversationId, string content)
         {
             var auth = RequireAuth();
-            if (auth != null) return auth;
+            if (auth !=null) return auth;
 
-            await _api.PostAsync<object>($"api/messaging/conversations/{conversationId}/messages", new
+            if(conversationId <-0 || string.IsNullOrWhiteSpace(content) || content.Length>2000)
             {
-                content = content,
+                TempData["Error"] = "Enter a valid message. ";
+                return RedirectToAction("Conversation", new {id = conversationId });
+            }
+
+            var result = await _api.PostWithStatusAsync<object>(
+            $"api/messaging/conversations/{conversationId}/messages",
+            new
+            {
+                content = content.Trim(),
                 messageType = "Text"
             });
 
-            return RedirectToAction("Conversation", new { id = conversationId });
+                if (!result.Success)
+                {
+                    TempData["Error"] =
+                        "Message could not be sent. Please try again.";
+                }
+                else
+                {
+                    TempData["Success"] = "Message sent.";
+                }
+
+                return RedirectToAction(
+                    "Conversation",
+                    new { id = conversationId });
+
         }
 
         // ─────────────────────────────────────────────────────────────

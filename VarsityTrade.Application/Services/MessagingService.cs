@@ -42,7 +42,8 @@ namespace VarsityTrade.Application.Services
             var conversations=await _context.Conversations
                 .Include(c => c.Listing)            //Load listing for title and price
                     .ThenInclude(l => l.ListingImages)     //Load listing images for thumbnail
-                .Include(c => c.Buyer)              //Load buyer for name and profile picture
+                .Include(c => c.Buyer)
+                    .ThenInclude(b => b.University)      //Load buyer for name and profile picture
                 .Include(c => c.SellerProfile)
                     .ThenInclude(sp => sp.User)
                         .ThenInclude(u => u.University)      //Load seller profile for name and profile picture
@@ -76,7 +77,8 @@ namespace VarsityTrade.Application.Services
             var conversation = await _context.Conversations
                 .Include(c=> c.Listing)            //Load listing for title and price
                     .ThenInclude(l => l.ListingImages)     //Load listing images for thumbnail
-                .Include(c => c.Buyer)              //Load buyer for name and profile picture
+                .Include(c => c.Buyer)
+                    .ThenInclude(b => b.University)      //Load buyer for name and profile picture
                 .Include(c => c.SellerProfile)
                     .ThenInclude(sp => sp.User)
                         .ThenInclude(u => u.University)   //Load seller profile for name and profile picture
@@ -157,6 +159,7 @@ namespace VarsityTrade.Application.Services
                 .Include(c=>c.Listing)
                     .ThenInclude(l=> l.ListingImages)
                 .Include(c => c.Buyer)
+                    .ThenInclude(b => b.University)
                 .Include(c => c.SellerProfile)
                     .ThenInclude(sp => sp.User)
                         .ThenInclude(u => u.University)
@@ -311,6 +314,19 @@ namespace VarsityTrade.Application.Services
                 BuyerId = conversation.BuyerId,  
                 BuyerFirstName=conversation.Buyer?.FirstName?? string.Empty,
                 BuyerLastName= conversation.Buyer?.LastName?? string.Empty,
+
+                BuyerUniversityName =
+                    conversation.Buyer?.University?.Name ?? string.Empty,
+
+                BuyerUniversityShortName =
+                    conversation.Buyer?.University?.ShortName ?? string.Empty,
+
+                BuyerStudentVerified =
+                    conversation.Buyer?.StudentVerified ?? false,
+
+                BuyerJoinedAt =
+                    conversation.Buyer?.CreatedAt ?? DateTime.MinValue,
+
                 SellerProfileId = conversation.SellerProfileId,
                 StoreName = conversation.SellerProfile?.StoreName ?? string.Empty,
 

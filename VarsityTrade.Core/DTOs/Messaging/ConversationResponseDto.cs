@@ -21,6 +21,10 @@ namespace VarsityTrade.Core.DTOs.Messaging
         public int BuyerId { get; set; }
         public string BuyerFirstName { get; set; }= string.Empty;
         public string BuyerLastName { get; set; }= string.Empty;
+        public string BuyerUniversityName { get; set; } = string.Empty;
+        public string BuyerUniversityShortName { get; set; } = string.Empty;
+        public bool BuyerStudentVerified { get; set; }
+        public DateTime BuyerJoinedAt { get; set; }
 
         //The seller in this conversation
         public int SellerProfileId { get; set; }

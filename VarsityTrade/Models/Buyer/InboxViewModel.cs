@@ -15,9 +15,17 @@
         public string ListingTitle { get; set; } = string.Empty;
         public decimal ListingPrice { get; set; }
         public string? ListingCoverImage { get; set; }
+
+        //Buyer properties
         public int BuyerId { get; set; }
         public string BuyerFirstName { get; set; } = string.Empty;
         public string BuyerLastName { get; set; } = string.Empty;
+        public string BuyerUniversityName { get; set; } = string.Empty;
+        public string BuyerUniversityShortName { get; set; } = string.Empty;
+        public bool BuyerStudentVerified { get; set; }
+        public DateTime BuyerJoinedAt { get; set; }
+        //-------------------------------------------------------
+
         public int SellerProfileId { get; set; }
         public string StoreName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
@@ -52,5 +60,6 @@
         public ConversationViewModel Conversation { get; set; } = new();
         public List<MessageViewModel> Messages { get; set; } = new();
         public int CurrentUserId { get; set; }
+        public List<ConversationViewModel> Conversations { get; set; } = new();
     }
 }
