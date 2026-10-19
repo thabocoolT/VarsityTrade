@@ -95,18 +95,20 @@ namespace VarsityTrade.Web.Controllers
             return View(model);
         }
 
-        // ─────────────────────────────────────────────────────────────
+        /// ─────────────────────────────────────────────────────────────
         // GET /buyer/inbox
-        // Inbox — shows all conversations
+        // Inbox — conversation list + optional selected conversation
         // ─────────────────────────────────────────────────────────────
         [HttpGet("inbox")]
-        public async Task<IActionResult> Inbox()
+        public async Task<IActionResult> Inbox(int? conversationId = null)
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
 
-            var conversations = await _api.GetAsync<List<ConversationViewModel>>("api/messaging/conversations")
-                                ?? new List<ConversationViewModel>();
+            var conversations =
+                await _api.GetAsync<List<ConversationViewModel>>(
+                    "api/messaging/conversations")
+                ?? new List<ConversationViewModel>();
 
             var model = new InboxViewModel
             {
@@ -114,13 +116,45 @@ namespace VarsityTrade.Web.Controllers
                 UnreadCount = conversations.Sum(c => c.UnreadCount),
             };
 
-            // Use seller inbox view when in seller mode
-            var currentMode = HttpContext.Session.GetString("CurrentMode") ?? "Buyer";
-            ViewData["SidebarPage"] = currentMode == "Seller" ? "seller-inbox" : "inbox";
+            // Load the selected conversation only when one was requested.
+            ConversationThreadViewModel? selectedConversation = null;
+
+            if (conversationId.HasValue && conversationId.Value > 0)
+            {
+                var conversation =
+                    await _api.GetAsync<ConversationViewModel>(
+                        $"api/messaging/conversations/{conversationId.Value}");
+
+                if (conversation != null)
+                {
+                    var messages =
+                        await _api.GetAsync<List<MessageViewModel>>(
+                            $"api/messaging/conversations/{conversationId.Value}/messages")
+                        ?? new List<MessageViewModel>();
+
+                    selectedConversation = new ConversationThreadViewModel
+                    {
+                        Conversation = conversation,
+                        Messages = messages,
+                        CurrentUserId = GetUserId(),
+                    };
+                }
+            }
+
+            ViewBag.SelectedConversation = selectedConversation;
+
+            // Determine whether the user is currently in buyer or seller mode.
+            var currentMode =
+                HttpContext.Session.GetString("CurrentMode") ?? "Buyer";
+
+            ViewData["SidebarPage"] =
+                currentMode == "Seller"
+                    ? "seller-inbox"
+                    : "inbox";
 
             return currentMode == "Seller"
                 ? View("~/Views/Seller/Inbox.cshtml", model)
-                : View(model);
+                : View("~/Views/Buyer/Inbox.cshtml", model);
         }
 
         // GET /buyer/inbox/start?listingId=123

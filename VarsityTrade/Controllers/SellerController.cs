@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc; // Provides Controller and IActionResult
 using System.Text.Json; // Provides JsonElement for safe API response mapping
 using VarsityTrade.Web.Models.Seller; // Provides Seller view models
+using VarsityTrade.Web.Models.Buyer;
 using VarsityTrade.Web.Services; // Provides ApiService
 using Newtonsoft.Json;
 
@@ -46,6 +47,14 @@ namespace VarsityTrade.Web.Controllers
             }
             return null;
         }
+
+        // Helper — gets the current user ID from session
+        private int GetUserId() =>
+            int.TryParse(
+                HttpContext.Session.GetString("UserId"),
+                out var id)
+                ? id
+                : 0;
 
         // ─────────────────────────────────────────────────────────────
         // GET /seller
@@ -102,7 +111,7 @@ namespace VarsityTrade.Web.Controllers
         // ─────────────────────────────────────────────────────────────
         [HttpGet("listings")]
         public async Task<IActionResult> Listings(
-    string filter = "All")
+        string filter = "All")
         {
             var auth = RequireSellerMode();
 
@@ -362,6 +371,118 @@ namespace VarsityTrade.Web.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+
+        //--------------------------------------------------------------
+        //GET/seller/inbox
+        //Seller inbox-shows all conversations
+        //-------------------------------------------------------------
+        [HttpGet("inbox")]
+        public async Task<IActionResult> Inbox()
+        {
+            var auth = RequireSellerMode();
+
+            if (auth != null)
+                return auth;
+
+            var conversations =
+                await _api.GetAsync<List<ConversationViewModel>>(
+                    "api/messaging/conversations")
+                ?? new List<ConversationViewModel>();
+
+            var model = new InboxViewModel
+            {
+                Conversations = conversations,
+                UnreadCount = conversations.Sum(c => c.UnreadCount),
+            };
+
+            ViewData["SidebarPage"] = "seller-inbox";
+
+            return View("~/Views/Seller/Inbox.cshtml", model);
+        }
+
+
+        // ─────────────────────────────────────────────────────────────
+        // GET /seller/inbox/{id}
+        // Seller conversation — shows messages in a conversation
+        // ─────────────────────────────────────────────────────────────
+        [HttpGet("inbox/{id:int}")]
+        public async Task<IActionResult> Conversation(int id)
+        {
+            var auth = RequireSellerMode();
+
+            if (auth != null)
+                return auth;
+
+            var conversation =
+                await _api.GetAsync<ConversationViewModel>(
+                    $"api/messaging/conversations/{id}");
+
+            if (conversation == null)
+                return NotFound();
+
+            var messages =
+                await _api.GetAsync<List<MessageViewModel>>(
+                    $"api/messaging/conversations/{id}/messages");
+
+            var model = new ConversationThreadViewModel
+            {
+                Conversation = conversation,
+                Messages = messages ?? new List<MessageViewModel>(),
+                CurrentUserId = GetUserId(),
+            };
+
+            ViewData["SidebarPage"] = "seller-inbox";
+
+            return View(
+                "~/Views/Seller/Conversation.cshtml",
+                model);
+        }
+
+
+        // ─────────────────────────────────────────────────────────────
+        // POST /seller/inbox/send
+        // Sends a message in an existing conversation
+        // ─────────────────────────────────────────────────────────────
+        [HttpPost("inbox/send")]
+        public async Task<IActionResult> SendMessage(
+            int conversationId,
+            string content)
+        {
+            var auth = RequireSellerMode();
+
+            if (auth != null)
+                return auth;
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                TempData["Error"] = "Message cannot be empty.";
+
+                return RedirectToAction(
+                    "Conversation",
+                    new { id = conversationId });
+            }
+
+            var result =
+                await _api.PostAsync<object>(
+                    $"api/messaging/conversations/{conversationId}/messages",
+                    new
+                    {
+                        content = content,
+                        messageType = "Text"
+                    });
+
+            if (result == null)
+            {
+                TempData["Error"] =
+                    "Could not send the message. Please try again.";
+            }
+
+            return RedirectToAction(
+                "Conversation",
+                new { id = conversationId });
+        }
+
+
 
         //----------------------------------------------------------------
         //GET/seller/reviews

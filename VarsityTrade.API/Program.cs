@@ -190,11 +190,7 @@ var app = builder.Build();
 // SEED DATABASE ON STARTUP
 // ─────────────────────────────────────────────────────────────
 
-using (var scope = app.Services.CreateScope())
-{
-    var seeder = scope.ServiceProvider.GetRequiredService<VarsityTradeSeeder>();
-    await seeder.SeedAsync();
-}
+
 
 // ─────────────────────────────────────────────────────────────
 // MIDDLEWARE PIPELINE
