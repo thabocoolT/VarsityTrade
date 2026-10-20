@@ -80,10 +80,11 @@ namespace VarsityTrade.API.Controllers
         // Returns one conversation for the current participant
         [HttpGet("conversations/{id:int}")]
         public async Task<IActionResult> GetConversationById(
-        int conversationId,
-        [FromQuery] string? mode)
+            int id,
+            [FromQuery] string? mode)
         {
             var userId = GetCurrentUserId();
+
             if (userId == null)
             {
                 return Unauthorized();
@@ -91,11 +92,14 @@ namespace VarsityTrade.API.Controllers
 
             if (!TryGetSellerMode(mode, out bool isSellerMode))
             {
-                return BadRequest(new { message = "Invalid or missing messaging mode." });
+                return BadRequest(new
+                {
+                    message = "Invalid or missing messaging mode."
+                });
             }
 
             var conversation = await _messagingService.GetConversationByIdAsync(
-                conversationId,
+                id,
                 userId.Value,
                 isSellerMode);
 
