@@ -51,11 +51,100 @@
 
     @await Html.PartialAsync("_Sidebar")
 
-    <div style="width:100%;">
+    <div class="vt-main seller-chat-layout">
 
+        <!-- Left: Conversation list -->
+        <div class="seller-chat-inbox">
+
+            <div class="seller-chat-inbox-header">
+                <strong>Seller inbox</strong>
+
+                <span>
+                    (@Model.Conversations.Count conversations)
+                </span>
+            </div>
+
+            <div class="seller-chat-conversation-list">
+
+                @if (Model.Conversations.Any())
+                {
+                    @foreach (var conv in Model.Conversations
+                        .OrderByDescending(c => c.LastMessageAt ?? c.CreatedAt))
+                    {
+                        var listBuyerName =
+                            $"{conv.BuyerFirstName} {conv.BuyerLastName}".Trim();
+
+                        if (string.IsNullOrWhiteSpace(listBuyerName))
+                        {
+                            listBuyerName = "Buyer";
+                        }
+
+                        var isSelected =
+                            conv.ConversationId ==
+                            Model.Conversation.ConversationId;
+
+                        <a asp-controller="Seller"
+                           asp-action="Conversation"
+                           asp-route-id="@conv.ConversationId"
+                           class="seller-chat-conversation @(isSelected ? "selected" : "")">
+
+                            <div class="seller-chat-avatar">
+                                @(string.IsNullOrWhiteSpace(conv.BuyerFirstName)
+                                    ? "?"
+                                    : conv.BuyerFirstName.Substring(0, 1).ToUpper())
+                            </div>
+
+                            <div class="seller-chat-preview">
+
+                                <div class="seller-chat-preview-top">
+
+                                    <strong>@listBuyerName</strong>
+
+                                    @if (conv.LastMessageAt.HasValue)
+                                    {
+                                        <small>
+                                            @conv.LastMessageAt.Value
+                                            .ToLocalTime()
+                                            .ToString("HH:mm")
+                                        </small>
+                                    }
+
+                                </div>
+
+                                <div class="seller-chat-listing">
+                                    Re: @conv.ListingTitle
+                                </div>
+
+                                <div class="seller-chat-last-message">
+                                    @(conv.LastMessageContent ?? "Started conversation")
+                                </div>
+
+                            </div>
+
+                            @if (conv.UnreadCount > 0)
+                            {
+                                <span class="seller-chat-unread">
+                                    @conv.UnreadCount
+                                </span>
+                            }
+
+                        </a>
+                    }
+                }
+                else
+                {
+                    <div class="seller-chat-no-conversations">
+                        No conversations yet.
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- Right: Selected conversation -->
         <div class="vt-seller-conversation">
 
-            <!-- Conversation panel -->
             <div class="vt-thread-panel">
 
                 <!-- Conversation header -->
@@ -86,10 +175,12 @@
                             </div>
 
                             <span class="vt-view-profile-btn">
+
                                 <i class="ti ti-user"
                                    aria-hidden="true"></i>
 
                                 Buyer
+
                             </span>
 
                         </div>
@@ -132,7 +223,6 @@
                     </div>
 
                 </div>
-
 
                 <!-- Listing bar -->
                 <div class="vt-listing-bar">
@@ -197,7 +287,6 @@
 
                 </div>
 
-
                 <!-- Messages -->
                 <div class="vt-messages">
 
@@ -207,8 +296,7 @@
 
                         foreach (var message in Model.Messages)
                         {
-                            var messageDate =
-                                message.SentAt.Date;
+                            var messageDate = message.SentAt.Date;
 
                             if (currentDate != messageDate)
                             {
@@ -222,8 +310,7 @@
                             }
 
                             var isMine =
-                                message.SenderId ==
-                                Model.CurrentUserId;
+                                message.SenderId == Model.CurrentUserId;
 
                             var senderInitials = "";
 
@@ -245,8 +332,7 @@
                                         .ToUpper();
                             }
 
-                            if (string.IsNullOrWhiteSpace(
-                                senderInitials))
+                            if (string.IsNullOrWhiteSpace(senderInitials))
                             {
                                 senderInitials = "?";
                             }
@@ -274,11 +360,9 @@
                                     </div>
 
                                     <div class="vt-msg-time">
-
                                         @message.SentAt
                                         .ToLocalTime()
                                         .ToString("HH:mm")
-
                                     </div>
 
                                 </div>
@@ -307,14 +391,12 @@
 
                 </div>
 
-
                 <!-- Reply -->
                 <form method="post"
                       action="/seller/inbox/send"
                       class="vt-reply-bar">
 
-                    <i class="ti ti-paperclip
-                    vt-reply-attach"
+                    <i class="ti ti-paperclip vt-reply-attach"
                        aria-hidden="true"></i>
 
                     <input type="hidden"
@@ -348,11 +430,147 @@
 
 </div>
 
-
 <style>
 
+    /* Main layout */
+    .seller-chat-layout {
+        width: 100%;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: minmax(260px, 350px) minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    /* Left inbox */
+    .seller-chat-inbox {
+        min-width: 0;
+        background: #fff;
+        border: 1px solid #e0ddf5;
+        border-radius: 12px;
+        overflow: hidden;
+        align-self: stretch;
+    }
+
+    .seller-chat-inbox-header {
+        padding: 14px;
+        border-bottom: 1px solid #e0ddf5;
+        color: #26215C;
+        font-size: 13px;
+    }
+
+        .seller-chat-inbox-header span {
+            color: #888;
+            font-size: 11px;
+            margin-left: 4px;
+        }
+
+    .seller-chat-conversation-list {
+        display: flex;
+        flex-direction: column;
+        max-height: 650px;
+        overflow-y: auto;
+    }
+
+    .seller-chat-conversation {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-bottom: 1px solid #f0eefb;
+        text-decoration: none;
+        color: inherit;
+        min-width: 0;
+    }
+
+        .seller-chat-conversation:hover {
+            background: #f8f7fd;
+        }
+
+        .seller-chat-conversation.selected {
+            background: #eeedfe;
+            border-left: 3px solid #4B3BC7;
+        }
+
+    .seller-chat-avatar {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #4B3BC7;
+        color: #fff;
+        font-size: 13px;
+    }
+
+    .seller-chat-preview {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .seller-chat-preview-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .seller-chat-preview-top strong {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px;
+            color: #26215C;
+        }
+
+        .seller-chat-preview-top small {
+            flex-shrink: 0;
+            font-size: 10px;
+            color: #888;
+        }
+
+    .seller-chat-listing {
+        margin-top: 3px;
+        font-size: 10px;
+        color: #4B3BC7;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .seller-chat-last-message {
+        margin-top: 3px;
+        font-size: 11px;
+        color: #888;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .seller-chat-unread {
+        flex-shrink: 0;
+        min-width: 20px;
+        padding: 3px 6px;
+        border-radius: 12px;
+        background: #4B3BC7;
+        color: #fff;
+        text-align: center;
+        font-size: 10px;
+    }
+
+    .seller-chat-no-conversations {
+        padding: 24px 14px;
+        text-align: center;
+        color: #888;
+        font-size: 12px;
+    }
+
+    /* Existing conversation panel */
     .vt-seller-conversation {
         width: 100%;
+        min-width: 0;
     }
 
     .vt-thread-panel {
@@ -441,6 +659,7 @@
         cursor: pointer;
     }
 
+    /* Listing details */
     .vt-listing-bar {
         background: #f5f4f9;
         border-bottom: 0.5px solid #e0ddf5;
@@ -498,6 +717,7 @@
         border-color: #AFA9EC;
     }
 
+    /* Message thread */
     .vt-messages {
         padding: 16px;
         display: flex;
@@ -521,9 +741,9 @@
         align-items: flex-end;
     }
 
-    .vt-msg.mine {
-        flex-direction: row-reverse;
-    }
+        .vt-msg.mine {
+            flex-direction: row-reverse;
+        }
 
     .vt-msg-avatar {
         width: 28px;
@@ -556,6 +776,7 @@
         border-radius: 12px;
         font-size: 12px;
         line-height: 1.5;
+        overflow-wrap: anywhere;
     }
 
     .vt-msg-other {
@@ -586,13 +807,14 @@
         font-size: 12px;
     }
 
-    .vt-no-messages i {
-        font-size: 38px;
-        color: #AFA9EC;
-        display: block;
-        margin-bottom: 10px;
-    }
+        .vt-no-messages i {
+            font-size: 38px;
+            color: #AFA9EC;
+            display: block;
+            margin-bottom: 10px;
+        }
 
+    /* Reply form */
     .vt-reply-bar {
         border-top: 0.5px solid #e0ddf5;
         padding: 10px 16px;
@@ -604,6 +826,7 @@
 
     .vt-reply-input {
         flex: 1;
+        min-width: 0;
         border: 0.5px solid #ddd;
         border-radius: 20px;
         padding: 8px 14px;
@@ -634,7 +857,23 @@
         cursor: pointer;
     }
 
+    /* Responsive layout */
+    @@media (max-width: 1100px) {
+
+        .seller-chat-layout {
+            grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+        }
+    }
+
     @@media (max-width: 900px) {
+
+        .seller-chat-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .seller-chat-conversation-list {
+            max-height: 260px;
+        }
 
         .vt-thread-header {
             flex-wrap: wrap;
@@ -648,7 +887,6 @@
         .vt-listing-actions {
             flex-wrap: wrap;
         }
-
     }
 
 </style>

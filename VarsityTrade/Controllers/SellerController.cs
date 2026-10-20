@@ -78,7 +78,7 @@ namespace VarsityTrade.Web.Controllers
             var offers = await _api.GetAsync<List<ReceivedOfferViewModel>>("api/offers/received");
 
             // Load conversations for unread count
-            var conversations = await _api.GetAsync<List<dynamic>>("api/messaging/conversations");
+            var conversations = await _api.GetAsync<List<dynamic>>("api/messaging/conversations?mode=seller");
 
             var model = new SellerDashboardViewModel
             {
@@ -386,7 +386,7 @@ namespace VarsityTrade.Web.Controllers
 
             var conversations =
                 await _api.GetAsync<List<ConversationViewModel>>(
-                    "api/messaging/conversations")
+                        "api/messaging/conversations?mode=seller")
                 ?? new List<ConversationViewModel>();
 
             var model = new InboxViewModel
@@ -413,22 +413,32 @@ namespace VarsityTrade.Web.Controllers
             if (auth != null)
                 return auth;
 
+            // Load conversations for the seller's left-hand inbox.
+            var conversations =
+                await _api.GetAsync<List<ConversationViewModel>>(
+                    "api/messaging/conversations?mode=seller")
+                ?? new List<ConversationViewModel>();
+
+            // Load the selected conversation.
             var conversation =
                 await _api.GetAsync<ConversationViewModel>(
-                    $"api/messaging/conversations/{id}");
+                    $"api/messaging/conversations/{id}?mode=seller");
 
             if (conversation == null)
                 return NotFound();
 
+            // Load messages belonging to the selected conversation.
             var messages =
                 await _api.GetAsync<List<MessageViewModel>>(
-                    $"api/messaging/conversations/{id}/messages");
+                    $"api/messaging/conversations/{id}/messages?mode=seller")
+                ?? new List<MessageViewModel>();
 
             var model = new ConversationThreadViewModel
             {
                 Conversation = conversation,
-                Messages = messages ?? new List<MessageViewModel>(),
+                Messages = messages,
                 CurrentUserId = GetUserId(),
+                Conversations = conversations
             };
 
             ViewData["SidebarPage"] = "seller-inbox";
@@ -437,7 +447,6 @@ namespace VarsityTrade.Web.Controllers
                 "~/Views/Seller/Conversation.cshtml",
                 model);
         }
-
 
         // ─────────────────────────────────────────────────────────────
         // POST /seller/inbox/send
@@ -464,7 +473,7 @@ namespace VarsityTrade.Web.Controllers
 
             var result =
                 await _api.PostAsync<object>(
-                    $"api/messaging/conversations/{conversationId}/messages",
+                    $"api/messaging/conversations/{conversationId}/messages?mode=seller",
                     new
                     {
                         content = content,

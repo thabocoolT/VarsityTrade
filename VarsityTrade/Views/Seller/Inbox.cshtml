@@ -389,7 +389,7 @@
                         var searchText =
                             $"{buyerName} {conv.ListingTitle} {conv.LastMessageContent}";
 
-                        <a asp-controller="Buyer"
+                        <a asp-controller="Seller"
                            asp-action="Conversation"
                            asp-route-id="@conv.ConversationId"
                            class="vt-thread @(isUnread ? "unread" : "")"

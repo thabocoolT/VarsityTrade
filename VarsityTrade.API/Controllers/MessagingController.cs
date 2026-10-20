@@ -30,6 +30,21 @@ namespace VarsityTrade.API.Controllers
                 ?? User.FindFirst("sub");
             return claim != null ? int.Parse(claim.Value) : null;
         }
+        private bool TryGetSellerMode(string? mode, out bool isSellerMode)
+        {
+            isSellerMode = false;
+
+            if (string.Equals(mode, "buyer", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (string.Equals(mode, "seller", StringComparison.OrdinalIgnoreCase))
+            {
+                isSellerMode = true;
+                return true;
+            }
+
+            return false;
+        }
 
         // ─────────────────────────────────────────────────────────────
         // GET /api/messaging/conversations
@@ -38,25 +53,10 @@ namespace VarsityTrade.API.Controllers
         // ─────────────────────────────────────────────────────────────
         /// <summary>Returns all conversations for the logged in user — buyer and seller threads.</summary>
         [HttpGet("conversations")]
-        public async Task<IActionResult> GetConversations()
+        public async Task<IActionResult> GetConversations(int id, [FromQuery]string? mode)
         {
             var userId = GetCurrentUserId();
-            if (userId == null)
-                return Unauthorized(new { message = "User identity not found in token." });
 
-            var conversation = await _messagingService.GetConversationsAsync(userId.Value);
-
-            if (conversation == null)
-                return NotFound(new { message = "Conversation not found." });
-
-            return Ok(conversation);
-        }
-        // GET /api/messaging/conversations/{id}
-        // Returns one conversation for the current participant
-        [HttpGet("conversations/{id:int}")]
-        public async Task<IActionResult> GetConversation(int id)
-        {
-            var userId = GetCurrentUserId();
 
             if (userId == null)
                 return Unauthorized(new
@@ -64,16 +64,45 @@ namespace VarsityTrade.API.Controllers
                     message = "User identity not found in token."
                 });
 
-            var conversation =
-                await _messagingService.GetConversationByIdAsync(
-                    id,
-                    userId.Value);
+            if (!TryGetSellerMode(mode, out var isSellerMode))
+                return BadRequest(new
+                {
+                    message = "Specify mode as 'buyer' or 'seller'."
+                });
+
+            var conversations = await _messagingService.GetConversationsAsync(
+                userId.Value,
+                isSellerMode);
+
+            return Ok(conversations);
+        }
+        // GET /api/messaging/conversations/{id}
+        // Returns one conversation for the current participant
+        [HttpGet("conversations/{id:int}")]
+        public async Task<IActionResult> GetConversationById(
+        int conversationId,
+        [FromQuery] string? mode)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            if (!TryGetSellerMode(mode, out bool isSellerMode))
+            {
+                return BadRequest(new { message = "Invalid or missing messaging mode." });
+            }
+
+            var conversation = await _messagingService.GetConversationByIdAsync(
+                conversationId,
+                userId.Value,
+                isSellerMode);
 
             if (conversation == null)
-                return NotFound(new
-                {
-                    message = "Conversation not found."
-                });
+            {
+                return NotFound();
+            }
 
             return Ok(conversation);
         }
@@ -84,9 +113,16 @@ namespace VarsityTrade.API.Controllers
         // ─────────────────────────────────────────────────────────────
         /// <summary>Returns a single conversation by ID — user must be a participant.</summary>
         [HttpGet("conversations/{id}/messages")]
-        public async Task<IActionResult> GetMessages(int id)
+        public async Task<IActionResult> GetMessages(
+        int id,
+        [FromQuery] string? mode)
         {
             var userId = GetCurrentUserId();
+            if (!TryGetSellerMode(mode, out var isSellerMode))
+                return BadRequest(new
+                {
+                    message = "Specify mode as 'buyer' or 'seller'."
+                });
 
             if (userId == null)
                 return Unauthorized(new
@@ -94,10 +130,10 @@ namespace VarsityTrade.API.Controllers
                     message = "User identity not found in token."
                 });
 
-            var conversation =
-                await _messagingService.GetConversationByIdAsync(
-                    id,
-                    userId.Value);
+            var conversation = await _messagingService.GetConversationByIdAsync(
+                id,
+                userId.Value,
+                isSellerMode);
 
             if (conversation == null)
                 return NotFound(new
@@ -105,10 +141,10 @@ namespace VarsityTrade.API.Controllers
                     message = "Conversation not found."
                 });
 
-            var messages =
-                await _messagingService.GetMessagesAsync(
-                    id,
-                    userId.Value);
+            var messages = await _messagingService.GetMessagesAsync(
+                id,
+                userId.Value,
+                isSellerMode);
 
             return Ok(messages);
         }
@@ -145,14 +181,24 @@ namespace VarsityTrade.API.Controllers
         [HttpPost("conversations/{id}/messages")]
         public async Task<IActionResult> SendMessage(
             int id,
+            [FromQuery] string? mode,
             [FromBody] SendMessageRequestDto request)
 
         {
             var userId = GetCurrentUserId();
+            if (!TryGetSellerMode(mode, out var isSellerMode))
+                return BadRequest(new
+                {
+                    message = "Specify mode as 'buyer' or 'seller'."
+                });
             if (userId == null)
                 return Unauthorized(new { message = "User identity not found in token." });
 
-            var result = await _messagingService.SendMessageAsync(id, userId.Value, request);
+            var result = await _messagingService.SendMessageAsync(
+                id,
+                userId.Value,
+                request,
+                isSellerMode);
 
             if (result == null)
                 return BadRequest(new { message = "Could not send message. You may not be a participant in this conversation." });
@@ -167,15 +213,24 @@ namespace VarsityTrade.API.Controllers
         //-------------------------------------------------------------------------------
         /// <summary>Marks all messages in a conversation as read.</summary>
         [HttpPut("conversations/{id}/read")]
-        public async Task<IActionResult> MarkAsRead(int id)
+        public async Task<IActionResult> MarkAsRead(
+            int id,
+            [FromQuery] string? mode)
         {
             var userId = GetCurrentUserId();
+            if (!TryGetSellerMode(mode, out var isSellerMode))
+                return BadRequest(new
+                {
+                    message = "Specify mode as 'buyer' or 'seller'."
+                });
+
             if (userId == null)
                 return Unauthorized(new { message = "User identity not found in token" });
 
-            var conversation =
-            await _messagingService.GetConversationByIdAsync(
-                id, userId.Value);
+            var conversation = await _messagingService.GetConversationByIdAsync(
+             id,
+             userId.Value,
+             isSellerMode);
 
             if (conversation == null)
                 return NotFound(new
@@ -183,7 +238,10 @@ namespace VarsityTrade.API.Controllers
                     message = "Conversation not found."
                 });
 
-            await _messagingService.MarkMessagesAsReadAsync(id, userId.Value);
+            await _messagingService.MarkMessagesAsReadAsync(
+                id,
+                userId.Value,
+                isSellerMode);
             //Return 204 No content-action succeeded with no response body needed
             return NoContent();
         }

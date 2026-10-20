@@ -27,66 +27,84 @@ namespace VarsityTrade.Application.Services
         //GET Conversations
         //Returns all conversations for a user-both as buyer and as seller
         //---------------------------------------------------------------------
-        public async Task<IEnumerable<ConversationResponseDto>> GetConversationsAsync(int userId)
+        public async Task<IEnumerable<ConversationResponseDto>> GetConversationsAsync(
+        int userId,
+        bool isSellerMode)
         {
-            //Find the seller profile for this user-may be null if not a seller
-            var sellerProfile=await _context.SellerProfiles
-                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.IsActive);
+            // Load the active seller profile when seller mode is requested.
+            int? sellerProfileId = null;
 
-            //Get the seller profile ID-0 if user has no seller profile
-            //This allows the query to work for buyers who are not sellers
-            var sellerProfileId = sellerProfile?.SellerProfileId ?? 0;
+            if (isSellerMode)
+            {
+                sellerProfileId = await _context.SellerProfiles
+                    .Where(sp => sp.UserId == userId && sp.IsActive)
+                    .Select(sp => (int?)sp.SellerProfileId)
+                    .FirstOrDefaultAsync();
 
-            //Load all conversations where the user is the buyer OR the seller
-            //Include all related data needed for the inbox card
-            var conversations=await _context.Conversations
-                .Include(c => c.Listing)            //Load listing for title and price
-                    .ThenInclude(l => l.ListingImages)     //Load listing images for thumbnail
+                // Seller mode requires an active seller profile.
+                if (sellerProfileId == null)
+                    return Enumerable.Empty<ConversationResponseDto>();
+            }
+
+            var conversations = await _context.Conversations
+                .Include(c => c.Listing)
+                    .ThenInclude(l => l.ListingImages)
                 .Include(c => c.Buyer)
-                    .ThenInclude(b => b.University)      //Load buyer for name and profile picture
+                    .ThenInclude(b => b.University)
                 .Include(c => c.SellerProfile)
                     .ThenInclude(sp => sp.User)
-                        .ThenInclude(u => u.University)      //Load seller profile for name and profile picture
-                .Include(c => c.Messages)            //Load messages for last message and timestamp
+                        .ThenInclude(u => u.University)
+                .Include(c => c.Messages)
                 .Where(c =>
-                       (c.BuyerId==userId || c.SellerProfileId==sellerProfileId)
-                       && c.DeletedAt==null)        //Exclude soft-deleted conversations
-                .OrderByDescending(c => c.LastMessageAt ?? c.CreatedAt) //Order by most recent activity
+                    !isSellerMode
+                        ? c.BuyerId == userId
+                        : c.SellerProfileId == sellerProfileId)
+                .Where(c => c.DeletedAt == null)
+                .OrderByDescending(c => c.LastMessageAt ?? c.CreatedAt)
                 .ToListAsync();
 
-            //Map each conversation to a ConversationResponseDto for the inbox view
-            return conversations.Select(c=>MapToConversationDto(c, userId));
-
-
-
+            return conversations.Select(c => MapToConversationDto(c, userId));
         }
         //----------------------------------------------------------------
         //GET Conversation by ID
         //Returns a single conversation by ID for the conversation page
         //----------------------------------------------------------------
 
-        public async Task<ConversationResponseDto?> GetConversationByIdAsync(int conversationId, int userId)
+        public async Task<ConversationResponseDto?> GetConversationByIdAsync(
+    int conversationId,
+    int userId,
+    bool isSellerMode)
         {
-            //Find the seller profile for this user
-            var sellerProfile=await _context.SellerProfiles
-                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.IsActive);
+            int? sellerProfileId = null;
 
-            var sellerProfileId=sellerProfile?.SellerProfileId ?? 0;
+            if (isSellerMode)
+            {
+                sellerProfileId = await _context.SellerProfiles
+                    .Where(sp => sp.UserId == userId && sp.IsActive)
+                    .Select(sp => (int?)sp.SellerProfileId)
+                    .FirstOrDefaultAsync();
 
-            //Load the conversation-must be participant to view it
+                if (sellerProfileId == null)
+                    return null;
+            }
+
             var conversation = await _context.Conversations
-                .Include(c=> c.Listing)            //Load listing for title and price
-                    .ThenInclude(l => l.ListingImages)     //Load listing images for thumbnail
+                .Include(c => c.Listing)
+                    .ThenInclude(l => l.ListingImages)
                 .Include(c => c.Buyer)
-                    .ThenInclude(b => b.University)      //Load buyer for name and profile picture
+                    .ThenInclude(b => b.University)
                 .Include(c => c.SellerProfile)
                     .ThenInclude(sp => sp.User)
-                        .ThenInclude(u => u.University)   //Load seller profile for name and profile picture
-                .Include(c => c.Messages)            //Load messages for last message and timestamp
+                        .ThenInclude(u => u.University)
+                .Include(c => c.Messages)
                 .FirstOrDefaultAsync(c =>
-                    c.ConversationId == conversationId &&
-                    (c.BuyerId == userId || c.SellerProfileId == sellerProfileId) &&
-                    c.DeletedAt == null); //Exclude soft-deleted conversations
+                    c.ConversationId == conversationId
+                    && c.DeletedAt == null
+                    && (
+                        !isSellerMode
+                            ? c.BuyerId == userId
+                            : c.SellerProfileId == sellerProfileId
+                    ));
 
             if (conversation == null)
                 return null;
@@ -97,38 +115,35 @@ namespace VarsityTrade.Application.Services
         //GET Messages in a Conversation
         //Returns all messages in a conversation-ordered oldest to newest
         //----------------------------------------------------------------
-        public async Task<IEnumerable<MessageResponseDto>> GetMessagesAsync(int conversationId, int userId)
+        public async Task<IEnumerable<MessageResponseDto>> GetMessagesAsync(
+    int conversationId,
+    int userId,
+    bool isSellerMode)
         {
-            //Find the seller profile for this user
-            var sellerProfile = await _context.SellerProfiles
-                .FirstOrDefaultAsync(sp => sp.UserId == userId && sp.IsActive);
+            // Confirm that this conversation belongs to the active profile mode.
+            var conversation = await GetConversationByIdAsync(
+                conversationId,
+                userId,
+                isSellerMode);
 
-            var sellerProfileId = sellerProfile?.SellerProfileId ?? 0;
-
-            //Verify that the user is a participant in the conversation
-            var conversation = await _context.Conversations
-                .FirstOrDefaultAsync(c =>
-                    c.ConversationId == conversationId
-                    && (c.BuyerId == userId || c.SellerProfileId == sellerProfileId)
-                    && c.DeletedAt == null);
-
-            //Return empty list if conversation not found or user is not a participant
             if (conversation == null)
                 return Enumerable.Empty<MessageResponseDto>();
 
-            //Load all messages in this conversation with sender info
-            var message=await _context.Messages
-                .Include(m=>m.Sender)       //Load sender for name and profile picture
-                .Where(m=>
-                    m.ConversationId==conversationId
-                    && !m.DeletedBySender               //Exclude messages deleted by sender
-                    && !m.DeletedByReceiver)            //Exclude messages deleted by receiver
-                .OrderBy(m=>m.SentAt)               //Oldest first-chronological order
+            var messages = await _context.Messages
+                .Include(m => m.Sender)
+                .Where(m =>
+                    m.ConversationId == conversationId
+                    && !m.DeletedBySender
+                    && !m.DeletedByReceiver)
+                .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            //Mark messages as read when the user opens the conversation thread
-            await MarkMessagesAsReadAsync(conversationId, userId);
-            return message.Select(m=>MapToMessageDto(m));
+            await MarkMessagesAsReadAsync(
+                conversationId,
+                userId,
+                isSellerMode);
+
+            return messages.Select(m => MapToMessageDto(m));
         }
         //----------------------------------------------------------------
         //Start a conversation
@@ -209,79 +224,98 @@ namespace VarsityTrade.Application.Services
             // Reload with all related data for the response
             return await GetConversationByIdAsync(
                 conversation.ConversationId,
-                buyerId);
+                buyerId,
+                false);
         }
         //-------------------------------------------------------------------------
         //SEND message
         //Send a new message in an existing conversation
         //--------------------------------------------------------------------------
-        public async Task<MessageResponseDto?> SendMessageAsync(int conversationId, int senderId, SendMessageRequestDto request)
+        public async Task<MessageResponseDto?> SendMessageAsync(
+    int conversationId,
+    int senderId,
+    SendMessageRequestDto request,
+    bool isSellerMode)
         {
-            // Find the sender's seller profile — may be null if they are a buyer
-            var sellerProfile = await _context.SellerProfiles
-                .FirstOrDefaultAsync(sp => sp.UserId == senderId && sp.IsActive);
+            // Verify access using the active profile mode.
+            var conversation = await GetConversationByIdAsync(
+                conversationId,
+                senderId,
+                isSellerMode);
 
-            var sellerProfileId = sellerProfile?.SellerProfileId ?? 0;
-
-            //Verify then sender is a participant in this conversation
-            var conversation = await _context.Conversations
-                .FirstOrDefaultAsync(c =>
-                c.ConversationId == conversationId
-                && (c.BuyerId==senderId || c.SellerProfileId== sellerProfileId)
-                && c.DeletedAt==null);
-
-            //Return null if conversation not found or sender is not a participant
             if (conversation == null)
                 return null;
 
+            if (string.IsNullOrWhiteSpace(request.Content)
+                || request.Content.Length > 2000)
+            {
+                return null;
+            }
 
-            //Create the new message
             var message = new Message
             {
                 ConversationId = conversationId,
                 SenderId = senderId,
-                Content = request.Content,
+                Content = request.Content.Trim(),
                 MessageType = request.MessageType,
-                IsRead = false,            // Unread until recipient opens the thread
+                IsRead = false,
                 SentAt = DateTime.UtcNow,
             };
+
             await _context.Messages.AddAsync(message);
 
-            //Update the LastMessageAt on the conversation on the conversation for inbox sorting
-            conversation.LastMessageAt= DateTime.UtcNow;
-            _context.Conversations.Update(conversation);
+            var conversationEntity = await _context.Conversations
+                .FirstOrDefaultAsync(c =>
+                    c.ConversationId == conversationId
+                    && c.DeletedAt == null);
+
+            if (conversationEntity == null)
+                return null;
+
+            conversationEntity.LastMessageAt = message.SentAt;
 
             await _context.SaveChangesAsync();
 
-            //Reload the message with sender info for the response DTO
-            var savedMessage=await _context.Messages
-                .Include(m=>m.Sender)
-                .FirstOrDefaultAsync(m=>m.MessageId==message.MessageId);
+            var savedMessage = await _context.Messages
+                .Include(m => m.Sender)
+                .FirstOrDefaultAsync(m => m.MessageId == message.MessageId);
 
-            return savedMessage != null ? MapToMessageDto(savedMessage) : null;
+            return savedMessage != null
+                ? MapToMessageDto(savedMessage)
+                : null;
         }
         //--------------------------------------------------------------------------------------------
         //MARK messages as read
         //Marks all unread messages as read when a user opens a conversation
         //Only marks messages sent by OTHER participant as read
         //_____________________________________________________________________________________________
-        public async Task MarkMessagesAsReadAsync(int conversationId, int userId)
+        public async Task MarkMessagesAsReadAsync(
+    int conversationId,
+    int userId,
+    bool isSellerMode)
         {
-            //Get all unread messages in this conversation NOT sent by this user
-            //We only mark messages as read that weresent TO this user
-            var unreadMessages=await _context.Messages
-                .Where(m=>
-                   m.ConversationId == conversationId
-                    && m.SenderId != userId  // Only mark messages from the other person
-                    && !m.IsRead)            // Only mark currently unread messages
+            // Verify access before changing read status.
+            var conversation = await GetConversationByIdAsync(
+                conversationId,
+                userId,
+                isSellerMode);
+
+            if (conversation == null)
+                return;
+
+            var unreadMessages = await _context.Messages
+                .Where(m =>
+                    m.ConversationId == conversationId
+                    && m.SenderId != userId
+                    && !m.IsRead)
                 .ToListAsync();
 
             if (!unreadMessages.Any())
-                return; //Nothing to mark as read
+                return;
 
-            //Mark each message as read
-            foreach(var msg in unreadMessages)
-                msg.IsRead = true;
+            foreach (var message in unreadMessages)
+                message.IsRead = true;
+
             await _context.SaveChangesAsync();
         }
 

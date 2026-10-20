@@ -88,7 +88,8 @@ namespace VarsityTrade.Web.Controllers
             model.UnreadNotificationsCount = unreadResult?.UnreadCount ?? 0;
 
             // Load conversations for unread message count
-            var conversations = await _api.GetAsync<List<ConversationViewModel>>("api/messaging/conversations");
+            var conversations = await _api.GetAsync<List<ConversationViewModel>>(
+            "api/messaging/conversations?mode=buyer");
             model.UnreadMessagesCount = conversations?.Sum(c => c.UnreadCount) ?? 0;
 
             ViewData["SidebarPage"] = "buyer-dashboard";
@@ -104,10 +105,12 @@ namespace VarsityTrade.Web.Controllers
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
+            if (HttpContext.Session.GetString("CurrentMode") == "Seller")
+                return RedirectToAction("Inbox", "Seller");
 
             var conversations =
                 await _api.GetAsync<List<ConversationViewModel>>(
-                    "api/messaging/conversations")
+                    "api/messaging/conversations?mode=buyer")
                 ?? new List<ConversationViewModel>();
 
             var model = new InboxViewModel
@@ -123,13 +126,13 @@ namespace VarsityTrade.Web.Controllers
             {
                 var conversation =
                     await _api.GetAsync<ConversationViewModel>(
-                        $"api/messaging/conversations/{conversationId.Value}");
+                        $"api/messaging/conversations/{conversationId.Value}?mode=buyer");
 
                 if (conversation != null)
                 {
                     var messages =
                         await _api.GetAsync<List<MessageViewModel>>(
-                            $"api/messaging/conversations/{conversationId.Value}/messages")
+                            $"api/messaging/conversations/{conversationId.Value}/messages?mode=buyer")
                         ?? new List<MessageViewModel>();
 
                     selectedConversation = new ConversationThreadViewModel
@@ -199,15 +202,17 @@ namespace VarsityTrade.Web.Controllers
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
+            if (HttpContext.Session.GetString("CurrentMode") == "Seller")
+                return RedirectToAction("Inbox", "Seller");
 
             var conversation = await _api.GetAsync<ConversationViewModel>(
-                $"api/messaging/conversations/{id}");
+                $"api/messaging/conversations/{id}?mode=buyer");
 
             if (conversation == null)
                 return NotFound();
 
             var messages = await _api.GetAsync<List<MessageViewModel>>(
-                $"api/messaging/conversations/{id}/messages");
+                $"api/messaging/conversations/{id}/messages?mode=buyer");
 
             var model = new ConversationThreadViewModel
             {
@@ -218,7 +223,7 @@ namespace VarsityTrade.Web.Controllers
 
             ViewData["SidebarPage"] = "inbox";
 
-            return View("~/Views/Buyer/Conversation.cshtml", model);
+            return View("~/Views/Buyer/Inbox.cshtml", model);
         }
 
 
@@ -523,15 +528,17 @@ namespace VarsityTrade.Web.Controllers
         {
             var auth = RequireAuth();
             if (auth !=null) return auth;
+            if (HttpContext.Session.GetString("CurrentMode") == "Seller")
+                return RedirectToAction("Inbox", "Seller");
 
-            if(conversationId <-0 || string.IsNullOrWhiteSpace(content) || content.Length>2000)
+            if (conversationId <-0 || string.IsNullOrWhiteSpace(content) || content.Length>2000)
             {
                 TempData["Error"] = "Enter a valid message. ";
                 return RedirectToAction("Conversation", new {id = conversationId });
             }
 
             var result = await _api.PostWithStatusAsync<object>(
-            $"api/messaging/conversations/{conversationId}/messages",
+            $"api/messaging/conversations/{conversationId}/messages?mode=buyer",
             new
             {
                 content = content.Trim(),
