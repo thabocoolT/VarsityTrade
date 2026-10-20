@@ -195,29 +195,49 @@ namespace VarsityTrade.Web.Controllers
 
         // ─────────────────────────────────────────────────────────────
         // GET /buyer/inbox/{id}
-        // Conversation thread — shows messages in a conversation
+        // Conversation thread — shows the selected conversation
         // ─────────────────────────────────────────────────────────────
         [HttpGet("inbox/{id:int}")]
         public async Task<IActionResult> Conversation(int id)
         {
             var auth = RequireAuth();
             if (auth != null) return auth;
+
             if (HttpContext.Session.GetString("CurrentMode") == "Seller")
                 return RedirectToAction("Inbox", "Seller");
 
-            var conversation = await _api.GetAsync<ConversationViewModel>(
-                $"api/messaging/conversations/{id}?mode=buyer");
+            // Load the buyer's conversation list.
+            var conversations =
+                await _api.GetAsync<List<ConversationViewModel>>(
+                    "api/messaging/conversations?mode=buyer")
+                ?? new List<ConversationViewModel>();
+
+            // Load the selected conversation.
+            var conversation =
+                await _api.GetAsync<ConversationViewModel>(
+                    $"api/messaging/conversations/{id}?mode=buyer");
 
             if (conversation == null)
                 return NotFound();
 
-            var messages = await _api.GetAsync<List<MessageViewModel>>(
-                $"api/messaging/conversations/{id}/messages?mode=buyer");
+            // Load messages for the selected conversation.
+            var messages =
+                await _api.GetAsync<List<MessageViewModel>>(
+                    $"api/messaging/conversations/{id}/messages?mode=buyer")
+                ?? new List<MessageViewModel>();
 
-            var model = new ConversationThreadViewModel
+            // Build the same model type expected by Inbox.cshtml.
+            var model = new InboxViewModel
+            {
+                Conversations = conversations,
+                UnreadCount = conversations.Sum(c => c.UnreadCount)
+            };
+
+            // Pass the selected conversation separately.
+            ViewBag.SelectedConversation = new ConversationThreadViewModel
             {
                 Conversation = conversation,
-                Messages = messages ?? new List<MessageViewModel>(),
+                Messages = messages,
                 CurrentUserId = GetUserId()
             };
 
