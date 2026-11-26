@@ -54,6 +54,31 @@ This project has pushed me beyond simply writing code that works. I am practisin
 - Use Git and feature-based development workflows
 - Think about security, data integrity and maintainability
 
+## Local setup
+
+### Requirements
+- .NET 10 SDK
+- SQL Server (LocalDB or SQL Server Express)
+- Visual Studio or another .NET IDE
+
+### Configure secrets
+The API reads its database connection string and JWT signing key from .NET configuration. Do not commit real credentials to `appsettings.json`.
+
+From the repository root, configure Development User Secrets for the API project:
+
+```powershell
+dotnet user-secrets --project VarsityTrade.API set "ConnectionStrings:DefaultConnection" "Server=localhost\\SQLEXPRESS;Database=VarsityTradeDB;Trusted_Connection=True;TrustServerCertificate=True;"
+dotnet user-secrets --project VarsityTrade.API set "JwtSettings:SecretKey" "<generate-a-new-random-secret-at-least-32-characters-long>"
+```
+
+Use your own SQL Server instance and database settings. Generate a new JWT signing secret before running the application; never reuse a secret that was previously committed. In production, provide these values through your hosting environment's secret manager or environment variables.
+
+### Run the solution
+1. Restore packages: `dotnet restore VarsityTrade.slnx`
+2. Apply database migrations using your configured SQL Server connection.
+3. Start `VarsityTrade.API`.
+4. Start `VarsityTrade` (the MVC web project) and ensure its `ApiSettings:BaseUrl` points to the API's local HTTPS address.
+
 ## Project Status
 
 🚧 **Active development**

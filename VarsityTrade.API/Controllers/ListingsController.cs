@@ -25,12 +25,24 @@ namespace VarsityTrade.API.Controllers
         //Requires authentication-only logged in students can browse
         //-------------------------------------------------
         /// <summary>Returns all active listings for a specific university — campus locked.</summary>
-        [HttpGet("University/{university}")]
-        [Authorize]//Must be logged in to view listins
+        [HttpGet("University/{universityId:int}")]
+        [Authorize] // The signed-in student may only browse their own university.
         public async Task<IActionResult> GetListingsByUniversity(int universityId)
         {
+            var universityClaim = User.FindFirst("universityId");
+            if (universityClaim == null ||
+                !int.TryParse(universityClaim.Value, out var currentUniversityId))
+            {
+                return Unauthorized(new { message = "University identity not found in token." });
+            }
+
+            if (universityId != currentUniversityId)
+            {
+                return Forbid();
+            }
+
             var listings = await _listingService
-                .GetListingsByUniversityAsync(universityId);
+                .GetListingsByUniversityAsync(currentUniversityId);
 
             return Ok(listings);
         }
