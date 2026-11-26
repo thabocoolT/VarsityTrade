@@ -67,7 +67,6 @@ The API reads its database connection string and JWT signing key from .NET confi
 From the repository root, configure Development User Secrets for the API project:
 
 ```powershell
-dotnet user-secrets --project VarsityTrade.API init
 dotnet user-secrets --project VarsityTrade.API set "ConnectionStrings:DefaultConnection" "Server=localhost\\SQLEXPRESS;Database=VarsityTradeDB;Trusted_Connection=True;TrustServerCertificate=True;"
 dotnet user-secrets --project VarsityTrade.API set "JwtSettings:SecretKey" "<generate-a-new-random-secret-at-least-32-characters-long>"
 ```
