@@ -1,92 +1,195 @@
+
+<div align="center">
+
 # Varsity Trade
 
-Varsity Trade is a full-stack student marketplace web application being built for South African university students. The goal is to make buying, selling and trading within a university community simpler and safer by keeping marketplace activity tied to a student's registered university.
+### A Student Marketplace for South African Universities
 
-## Why I built it
+A full-stack marketplace built to help university students buy, sell, and trade within their campus community.
 
-I wanted to build something beyond a small academic exercise: a real software product based on a problem students can actually experience. The project has helped me practise backend development, database design, API development, authentication, debugging, architecture and Git-based development.
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![C#](https://img.shields.io/badge/C%23-Backend-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/csharp/)
+[![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-Web_API-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/en-us/aspnet/core/)
+[![SQL Server](https://img.shields.io/badge/SQL_Server-Database-CC2927?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/en-us/sql-server)
+[![Status](https://img.shields.io/badge/Status-Active_Development-orange)]()
 
-## Technology Stack
+</div>
 
-- **C# / .NET** — primary development language and platform
-- **ASP.NET Core Web API** — REST API backend
-- **ASP.NET MVC / Razor** — web application frontend
-- **Entity Framework Core** — ORM and data access
-- **SQL Server** — relational database
-- **JWT + refresh tokens** — authentication
-- **Git / GitHub** — version control
-- **Postman / Swagger/OpenAPI** — API testing and documentation
-- **.NET MAUI** — planned mobile application phase
+---
 
-## Current Architecture
+## About the Project
 
-The solution is organised into separate projects to keep responsibilities clear:
+Varsity Trade is a full-stack student marketplace web application designed for South African university students.
 
-- `VarsityTrade.API` — controllers, HTTP endpoints and application startup
-- `VarsityTrade.Application` — application services and business operations
-- `VarsityTrade.Core` — core models, DTOs and domain-level definitions
-- `VarsityTrade.Infrastructure` — database and external infrastructure concerns
+The idea is simple: make buying, selling, and trading within a university community easier and safer by connecting marketplace activity to a student's registered university.
+
+The platform is being developed as a real-world software project, with a focus on backend engineering, database design, authentication, API development, and maintainable application architecture.
+
+## The Problem
+
+Students often need affordable items such as textbooks, electronics, furniture, and other university essentials. Finding trustworthy buyers and sellers within the same campus community can be difficult.
+
+Varsity Trade aims to provide a dedicated marketplace where students can connect, negotiate, and exchange items within a university-based environment.
 
 ## Key Features
 
-- University-locked marketplace
+- University-based marketplace
 - Buyer and seller functionality
 - Seller profiles
-- Listings and categories
-- In-app buyer/seller messaging
+- Product listings and categories
+- Buyer-seller messaging
 - Cash and trade offers
-- Transactions
+- Transaction management
 - Reviews linked to completed transactions
 - Notifications
 - Admin moderation and platform management
 - Hero banner management
 - JWT authentication with refresh-token support
 
-## What I am learning through the project
+## Project Screenshots
 
-This project has pushed me beyond simply writing code that works. I am practising how to:
+<!-- Add screenshots or a short demo GIF here once captured.
+     Suggested location: docs/images/
+     
+     Example:
+     ![Varsity Trade Marketplace](docs/images/marketplace.png)
+-->
 
-- Break a large application into maintainable components
-- Design relationships between users, listings, offers and transactions
-- Build and test REST APIs
-- Validate user input and protect application resources
-- Debug backend and database problems
-- Use Git and feature-based development workflows
-- Think about security, data integrity and maintainability
+*Application screenshots and a feature walkthrough will be added as development progresses.*
 
-## Local setup
+## Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| C# / .NET | Primary development platform |
+| ASP.NET Core Web API | REST API and backend services |
+| ASP.NET MVC / Razor | Web application frontend |
+| Entity Framework Core | ORM and database access |
+| SQL Server | Relational database |
+| JWT + Refresh Tokens | Authentication |
+| Swagger / OpenAPI | API documentation and testing |
+| Postman | API testing |
+| Git / GitHub | Version control and collaboration |
+| .NET MAUI | Planned mobile application |
+
+## Architecture
+
+The solution follows a layered structure to separate application responsibilities and improve maintainability.
+
+```text
+VarsityTrade
+│
+├── VarsityTrade.API
+│   └── Controllers, HTTP endpoints and startup
+│
+├── VarsityTrade.Application
+│   └── Application services and business operations
+│
+├── VarsityTrade.Core
+│   └── Core models, DTOs and domain definitions
+│
+├── VarsityTrade.Infrastructure
+│   └── Database and infrastructure concerns
+│
+└── VarsityTrade
+    └── ASP.NET MVC / Razor web application
+```
+
+### Architecture Overview
+
+```mermaid
+flowchart TD
+    User[Student / Administrator]
+    Web[ASP.NET MVC Web Application]
+    API[ASP.NET Core Web API]
+    App[Application Layer]
+    Core[Core / Domain Layer]
+    Infra[Infrastructure Layer]
+    DB[(SQL Server)]
+
+    User --> Web
+    Web --> API
+    API --> App
+    App --> Core
+    App --> Infra
+    Infra --> DB
+```
+
+## Engineering Focus
+
+This project gives me practical experience with:
+
+- Designing and maintaining a layered application architecture
+- Building RESTful APIs with ASP.NET Core
+- Modelling relational data and entity relationships
+- Implementing authentication and protected resources
+- Managing database access with Entity Framework Core
+- Separating business logic from infrastructure concerns
+- Debugging API, database, and frontend integration issues
+- Working with Git branches and feature-based development
+
+## Local Setup
 
 ### Requirements
+
 - .NET 10 SDK
 - SQL Server (LocalDB or SQL Server Express)
 - Visual Studio or another .NET IDE
 
-### Configure secrets
-The API reads its database connection string and JWT signing key from .NET configuration. Do not commit real credentials to `appsettings.json`.
+### 1. Clone the repository
 
-From the repository root, configure Development User Secrets for the API project:
-
-```powershell
-dotnet user-secrets --project VarsityTrade.API set "ConnectionStrings:DefaultConnection" "Server=localhost\\SQLEXPRESS;Database=VarsityTradeDB;Trusted_Connection=True;TrustServerCertificate=True;"
-dotnet user-secrets --project VarsityTrade.API set "JwtSettings:SecretKey" "<generate-a-new-random-secret-at-least-32-characters-long>"
+```bash
+git clone https://github.com/thabocoolT/VarsityTrade.git
+cd VarsityTrade
 ```
 
-Use your own SQL Server instance and database settings. Generate a new JWT signing secret before running the application; never reuse a secret that was previously committed. In production, provide these values through your hosting environment's secret manager or environment variables.
+### 2. Configure development secrets
 
-### Run the solution
-1. Restore packages: `dotnet restore VarsityTrade.slnx`
-2. Apply database migrations using your configured SQL Server connection.
-3. Start `VarsityTrade.API`.
-4. Start `VarsityTrade` (the MVC web project) and ensure its `ApiSettings:BaseUrl` points to the API's local HTTPS address.
+The API reads its database connection string and JWT signing key from .NET configuration.
+
+From the repository root, configure User Secrets for the API project:
+
+```powershell
+dotnet user-secrets --project VarsityTrade.API set "ConnectionStrings:DefaultConnection" "Server=localhost\SQLEXPRESS;Database=VarsityTradeDB;Trusted_Connection=True;TrustServerCertificate=True;"
+
+dotnet user-secrets --project VarsityTrade.API set "JwtSettings:SecretKey" "<your-new-random-secret-at-least-32-characters-long>"
+```
+
+Use your own SQL Server instance and database settings. Never commit real credentials or signing keys.
+
+### 3. Restore and run
+
+```bash
+dotnet restore VarsityTrade.slnx
+```
+
+Then:
+
+1. Apply the database migrations using your configured SQL Server connection.
+2. Start the `VarsityTrade.API` project.
+3. Start the `VarsityTrade` MVC web project.
+4. Ensure `ApiSettings:BaseUrl` points to the API's local HTTPS address.
 
 ## Project Status
 
-🚧 **Active development**
+🚧 **Active Development**
 
-The application is still being developed and features may change as the architecture and requirements evolve.
+Varsity Trade is being developed incrementally. The architecture and features may evolve as the application grows.
 
-## Repository
+The current focus is on building a reliable web marketplace, with a mobile application planned as a future phase.
 
-GitHub: https://github.com/thabocoolT/VarsityTrade
+## Future Direction
 
-> This is a personal software-development project and is continuously improved as I learn new engineering practices.
+- Complete and refine the marketplace experience
+- Improve validation, security, and error handling
+- Add more comprehensive automated testing
+- Capture application screenshots and create a feature demo
+- Develop the planned mobile application using .NET MAUI
+
+## About the Developer
+
+Built as a personal software-development project to apply and strengthen practical skills in backend development, database design, API engineering, and software architecture.
+
+---
+
+**Repository:** [thabocoolT/VarsityTrade](https://github.com/thabocoolT/VarsityTrade)
