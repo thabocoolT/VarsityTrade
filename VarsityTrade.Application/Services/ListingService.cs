@@ -99,7 +99,7 @@ namespace VarsityTrade.Application.Services
             var listing = new Listing
             {
                 SellerProfileId = sellerProfile.SellerProfileId,//Link to seller profile
-                UniversityId = sellerProfile.UserId, // Campus lock from seller's university
+                UniversityId = sellerProfile.User.UniversityId, // Derive campus from the seller's university, not their user ID.
                 CategoryId = request.CategoryId,
                 ConditionId = request.ConditionId,
                 ListingStatusId = activeStatus.ListingStatusId,
